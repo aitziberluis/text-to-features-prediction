@@ -10,7 +10,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from tiny_sae import Sae, SaeConfig, TrainConfig, train_sae
 from tqdm import tqdm
 
-from preprocesamiento import normalizar_genero
+from preprocesamiento import preparar_dataset_para_sae
 
 
 dotenv.load_dotenv()
@@ -42,50 +42,30 @@ MAX_COMMENTS = None  # p.ej. 200_000 para un subset
 
 
 def cargar_dataset_genero() -> Dataset:
-	"""Carga comentarios + autores, asocia género por autor y devuelve un Dataset de HuggingFace.
+	"""Carga comentarios + autores usando la función centralizada de preprocesamiento.
 
 	El Dataset tendrá columnas:
-	- 'text': texto del comentario
-	- 'gender_clean': 'm', 'f' o 'unknown'
+	- 'text': texto del comentario (columna 'body' renombrada)
+	- 'gender_clean': 'm' o 'f'
 	"""
 
-	if not os.path.exists(PATH_COMENTARIOS):
-		raise FileNotFoundError(f"No se encuentra el CSV de comentarios: {PATH_COMENTARIOS}")
-	if not os.path.exists(PATH_AUTORES):
-		raise FileNotFoundError(f"No se encuentra el CSV de autores: {PATH_AUTORES}")
-
-	print("Cargando comentarios...")
-	df_comments = pd.read_csv(PATH_COMENTARIOS, usecols=["author", TEXT_COLUMN])
-
-	if MAX_COMMENTS is not None:
-		df_comments = df_comments.iloc[:MAX_COMMENTS].copy()
-
-	print("Cargando autores...")
-	df_authors_raw = pd.read_csv(PATH_AUTORES)
-
-	print("Normalizando género...")
-	df_authors = normalizar_genero(df_authors_raw)
-
-	# Nos quedamos sólo con columnas necesarias de autores
-	df_authors_small = df_authors[["author", "gender_clean"]].copy()
-
-	# Limpiar autor
-	df_comments["author"] = df_comments["author"].astype(str).str.strip()
-	df_authors_small["author"] = df_authors_small["author"].astype(str).str.strip()
-
-	print("Uniendo comentarios con género por autor...")
-	df = df_comments.merge(df_authors_small, on="author", how="left")
-
-	# Renombrar columna de texto a 'text' para la función de tokenización
-	df = df.rename(columns={TEXT_COLUMN: "text"})
-
-	# Opcional: quedarnos sólo con ejemplos donde el género es conocido (m/f)
-	df = df[df["gender_clean"].isin(["m", "f"])].reset_index(drop=True)
-
-	print(f"Total de comentarios con género conocido: {len(df)}")
-
-	# Creamos Dataset de HuggingFace
-	dataset = Dataset.from_pandas(df[["text", "gender_clean"]])
+	# Usar la función centralizada de preprocesamiento
+	df_comentarios_con_genero, _ = preparar_dataset_para_sae(
+		path_comentarios=PATH_COMENTARIOS,
+		path_autores=PATH_AUTORES,
+		max_comments=MAX_COMMENTS,
+		solo_genero_conocido=True
+	)
+	
+	# Renombrar la columna 'body' a 'text' si es necesario
+	if TEXT_COLUMN in df_comentarios_con_genero.columns and TEXT_COLUMN != "text":
+		df_comentarios_con_genero = df_comentarios_con_genero.rename(columns={TEXT_COLUMN: "text"})
+	
+	# Limpiar NaNs en la columna de texto
+	df_comentarios_con_genero = df_comentarios_con_genero.dropna(subset=["text"]).reset_index(drop=True)
+	
+	# Crear Dataset de HuggingFace solo con columnas necesarias
+	dataset = Dataset.from_pandas(df_comentarios_con_genero[["text", "gender_clean"]])
 
 	return dataset
 
@@ -176,7 +156,7 @@ def entrenar_sae(dataset: Dataset):
 	)
 
 	# Guardamos la SAE en disco para usarla luego como extractor de características
-	output_dir = "sae-ckpts/genero-gpt2"
+	output_dir = "sae-ckpts/sae-gpt2-genero"
 	os.makedirs(output_dir, exist_ok=True)
 	print(f"Guardando SAE entrenada en {output_dir} ...")
 	sae.save_to_disk(output_dir)
