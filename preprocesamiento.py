@@ -100,11 +100,11 @@ def calcular_num_comentarios_por_autor(df_comentarios: pd.DataFrame) -> pd.DataF
 	if "author" not in df_comentarios.columns:
 		raise ValueError("El DataFrame de comentarios debe tener una columna 'author'.")
 
+	# Usamos un agg explícito para asegurarnos del nombre de la columna
 	conteo = (
 		df_comentarios
 		.groupby("author", as_index=False)
-		.size()
-		.rename(columns={"size": "num_comments"})
+		.agg(num_comments=("author", "size"))
 	)
 	return conteo
 
@@ -212,13 +212,13 @@ def analisis_exploratorio_por_genero(df_merged: pd.DataFrame) -> Dict[str, Any]:
 if __name__ == "__main__":
 	# EJEMPLO DE USO: ajusta estas rutas a las de tu Drive
 	# Comentarios
-	path_comentarios = "data/coments/all_comments_since_2015.csv"
+	path_comentarios = "data/all_comments_since_2015.csv"
 
-	# Autores (ejemplo: donde tengas el CSV de autores que has mostrado)
-	path_autores = "data/autores/autores.csv"
+	# Autores (según los ficheros presentes en TFM/data)
+	path_autores = "data/author_profiles.csv"
 
 	# 1. Cargar datos (puedes quitar nrows para usar todo el dataset)
-	df_comentarios = cargar_comentarios(path_comentarios, nrows=200000)
+	df_comentarios = cargar_comentarios(path_comentarios, nrows=None)
 	df_autores_raw = cargar_autores(path_autores)
 
 	# 2. Normalizar género en la tabla de autores
