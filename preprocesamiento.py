@@ -124,6 +124,18 @@ def unir_comentarios_y_autores(
 		raise ValueError("df_autores debe contener la columna 'author'.")
 
 	df_merged = df_conteo_comentarios.merge(df_autores, on="author", how="left")
+
+	# Resolver posibles duplicados de la columna num_comments
+	cols = df_merged.columns
+	if "num_comments_x" in cols and "num_comments_y" in cols:
+		# Preferimos el conteo calculado a partir del CSV de comentarios ("_x")
+		df_merged["num_comments"] = df_merged["num_comments_x"]
+		df_merged = df_merged.drop(columns=["num_comments_x", "num_comments_y"])
+	elif "num_comments_x" in cols:
+		df_merged = df_merged.rename(columns={"num_comments_x": "num_comments"})
+	elif "num_comments_y" in cols:
+		df_merged = df_merged.rename(columns={"num_comments_y": "num_comments"})
+
 	return df_merged
 
 
