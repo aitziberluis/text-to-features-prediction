@@ -35,7 +35,14 @@ PATH_CLASIFICADOR = "modelos/clasificador_genero.pkl"
 
 
 class PredictorGenero:
-    """Predictor de género que usa SAE + clasificador."""
+    """Predictor de género que usa SAE + clasificador.
+    
+    IMPORTANTE: Este predictor clasifica en género BINARIO:
+    - 'female' (f)
+    - 'male' (m)
+    
+    No predice 'unknown' porque el modelo fue entrenado solo con 'f' y 'm'.
+    """
 
     def __init__(
         self,

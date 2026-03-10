@@ -35,6 +35,9 @@ TEXT_COLUMN = "body"  # en tu CSV hemos visto que es 'body'
 # Limitar nº de comentarios para pruebas (None = todos)
 MAX_COMMENTS = None  # p.ej. 200_000 para un subset
 
+# IMPORTANTE: Este experimento usa SOLO género 'f' y 'm'
+# Se excluye 'unknown' porque es una clasificación binaria
+
 
 # =====================
 # CARGA Y PREPARACIÓN DE DATOS
@@ -50,11 +53,12 @@ def cargar_dataset_genero() -> Dataset:
 	"""
 
 	# Usar la función centralizada de preprocesamiento
+	# solo_genero_conocido=True → Filtra SOLO 'f' y 'm', excluye 'unknown'
 	df_comentarios_con_genero, _ = preparar_dataset_para_sae(
 		path_comentarios=PATH_COMENTARIOS,
 		path_autores=PATH_AUTORES,
 		max_comments=MAX_COMMENTS,
-		solo_genero_conocido=True
+		solo_genero_conocido=True  # ← SOLO 'f' y 'm'
 	)
 	
 	# Renombrar la columna 'body' a 'text' si es necesario

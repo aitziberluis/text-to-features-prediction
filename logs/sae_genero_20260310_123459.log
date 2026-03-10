@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/aitziber.l/TFM/sae_genero.py", line 10, in <module>
+    from tiny_sae import Sae, SaeConfig, TrainConfig, train_sae
+ModuleNotFoundError: No module named 'tiny_sae'

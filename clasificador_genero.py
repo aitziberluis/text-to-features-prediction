@@ -52,6 +52,9 @@ TEXT_COLUMN = "body"
 # Para testing/desarrollo, limitar comentarios
 MAX_COMMENTS = None  # None = todos
 
+# IMPORTANTE: Clasificación BINARIA - Solo usa género 'f' y 'm'
+# Se excluye 'unknown' del entrenamiento y evaluación
+
 # Test split
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
@@ -66,11 +69,12 @@ def cargar_dataset_genero() -> Dataset:
     """Carga comentarios + autores con género usando función centralizada."""
 
     # Usar la función centralizada de preprocesamiento
+    # solo_genero_conocido=True → SOLO 'f' y 'm', excluye 'unknown'
     df_comentarios_con_genero, _ = preparar_dataset_para_sae(
         path_comentarios=PATH_COMENTARIOS,
         path_autores=PATH_AUTORES,
         max_comments=MAX_COMMENTS,
-        solo_genero_conocido=True
+        solo_genero_conocido=True  # ← CLASIFICACIÓN BINARIA: solo 'f' y 'm'
     )
     
     # Renombrar la columna 'body' a 'text' si es necesario
