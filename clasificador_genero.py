@@ -59,6 +59,12 @@ MAX_COMMENTS = None  # None = todos
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 
+# Estrategias de agregación de tokens para representar cada texto.
+# - "mean": promedio de activaciones sobre tokens válidos (actual)
+# - "last_token": usa solo el último token no-padding
+# Se ejecutan en orden para comparar ambos enfoques en una sola corrida.
+POOLING_MODES_TO_RUN = ["mean", "last_token"]
+
 
 # =====================
 # CARGA DE DATOS
@@ -96,7 +102,11 @@ def cargar_dataset_genero() -> Dataset:
 
 
 def extraer_caracteristicas_sae(
-    dataset: Dataset, sae: Sae, model: AutoModelForCausalLM, tokenizer
+    dataset: Dataset,
+    sae: Sae,
+    model: AutoModelForCausalLM,
+    tokenizer,
+    pooling_mode: str = "mean",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Extrae características latentes de la SAE para cada comentario.
 
@@ -108,7 +118,7 @@ def extraer_caracteristicas_sae(
         Género codificado como 0 (f) o 1 (m).
     """
 
-    print("Tokenizando dataset...")
+    print(f"Tokenizando dataset... (pooling={pooling_mode})")
 
     def _tokenize_fn(x: Dict[str, list]):
         out = tokenizer(
@@ -145,6 +155,11 @@ def extraer_caracteristicas_sae(
     print("Extrayendo características con la SAE...")
     dataloader = DataLoader(tokenized, batch_size=16, shuffle=False)
 
+    if pooling_mode not in {"mean", "last_token"}:
+        raise ValueError(
+            f"pooling_mode='{pooling_mode}' no válido. Usa 'mean' o 'last_token'."
+        )
+
     try:
         with torch.no_grad():
             for batch in tqdm(dataloader, desc="Extrayendo features"):
@@ -160,26 +175,50 @@ def extraer_caracteristicas_sae(
                 # Codificar con la SAE
                 top_acts, top_indices = sae.encode(acts)
 
-                # Agregación eficiente a nivel secuencia sin construir tensor denso 3D.
+                # Agregación eficiente sin construir tensor denso 3D completo.
                 batch_size, seq_len, k = top_acts.shape
 
-                token_mask = attention_mask.to(sae.device).unsqueeze(-1).to(top_acts.dtype)
-                top_acts_masked = top_acts * token_mask
+                attention_mask_sae = attention_mask.to(sae.device)
 
                 pooled = torch.zeros(
                     batch_size, sae.cfg.num_latents, device=sae.device, dtype=top_acts.dtype
                 )
-                batch_ids = torch.arange(batch_size, device=sae.device).view(-1, 1, 1)
-                batch_ids = batch_ids.expand(-1, seq_len, k)
 
-                pooled.index_put_(
-                    (batch_ids.reshape(-1), top_indices.reshape(-1)),
-                    top_acts_masked.reshape(-1),
-                    accumulate=True,
-                )
+                if pooling_mode == "mean":
+                    token_mask = attention_mask_sae.unsqueeze(-1).to(top_acts.dtype)
+                    top_acts_masked = top_acts * token_mask
 
-                valid_tokens = attention_mask.sum(dim=1).clamp(min=1).to(sae.device).to(top_acts.dtype)
-                pooled = pooled / valid_tokens.unsqueeze(1)
+                    batch_ids = torch.arange(batch_size, device=sae.device).view(-1, 1, 1)
+                    batch_ids = batch_ids.expand(-1, seq_len, k)
+
+                    pooled.index_put_(
+                        (batch_ids.reshape(-1), top_indices.reshape(-1)),
+                        top_acts_masked.reshape(-1),
+                        accumulate=True,
+                    )
+
+                    valid_tokens = (
+                        attention_mask_sae.sum(dim=1)
+                        .clamp(min=1)
+                        .to(top_acts.dtype)
+                    )
+                    pooled = pooled / valid_tokens.unsqueeze(1)
+                else:
+                    # Último token real por secuencia (ignorando padding a la derecha).
+                    last_pos = attention_mask_sae.sum(dim=1).clamp(min=1).long() - 1
+                    batch_ids = torch.arange(batch_size, device=sae.device)
+
+                    last_top_acts = top_acts[batch_ids, last_pos, :]  # (batch, k)
+                    last_top_indices = top_indices[batch_ids, last_pos, :]  # (batch, k)
+
+                    pooled.index_put_(
+                        (
+                            batch_ids.view(-1, 1).expand(-1, k).reshape(-1),
+                            last_top_indices.reshape(-1),
+                        ),
+                        last_top_acts.reshape(-1),
+                        accumulate=True,
+                    )
 
                 features_list.append(pooled.cpu().numpy())
 
@@ -272,19 +311,33 @@ def main():
     )
     model.eval()
 
-    # 4. Extraer características
-    features, labels = extraer_caracteristicas_sae(dataset, sae, model, tokenizer)
-
-    # 5. Entrenar clasificador
-    clf = entrenar_clasificador(features, labels)
-
-    # 6. Guardar clasificador
+    # 4. Entrenar y guardar clasificadores para cada estrategia de pooling
     import joblib
-
-    output_path = "modelos/clasificador_genero.pkl"
     os.makedirs("modelos", exist_ok=True)
-    joblib.dump(clf, output_path)
-    print(f"\nClasificador guardado en: {output_path}")
+
+    for i, pooling_mode in enumerate(POOLING_MODES_TO_RUN, start=1):
+        print("\n" + "-" * 60)
+        print(f"[RUN {i}/{len(POOLING_MODES_TO_RUN)}] pooling={pooling_mode}")
+        print("-" * 60)
+
+        features, labels = extraer_caracteristicas_sae(
+            dataset=dataset,
+            sae=sae,
+            model=model,
+            tokenizer=tokenizer,
+            pooling_mode=pooling_mode,
+        )
+        clf = entrenar_clasificador(features, labels)
+
+        mode_output_path = f"modelos/clasificador_genero_{pooling_mode}.pkl"
+        joblib.dump(clf, mode_output_path)
+        print(f"\nClasificador guardado en: {mode_output_path}")
+
+        # Mantener compatibilidad con inferencia existente.
+        if i == 1:
+            default_output_path = "modelos/clasificador_genero.pkl"
+            joblib.dump(clf, default_output_path)
+            print(f"Clasificador por defecto actualizado en: {default_output_path}")
 
     print("\n" + "=" * 60)
     print("¡Entrenamiento completado!")
