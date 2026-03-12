@@ -23,6 +23,8 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     f1_score,
+    precision_score,
+    recall_score,
 )
 from sklearn.model_selection import train_test_split
 from tiny_sae import Sae
@@ -262,10 +264,52 @@ def entrenar_clasificador(features: np.ndarray, labels: np.ndarray) -> LogisticR
     y_pred = clf.predict(X_test)
 
     acc = accuracy_score(y_test, y_pred)
+    precision_macro = precision_score(y_test, y_pred, average="macro", zero_division=0)
+    recall_macro = recall_score(y_test, y_pred, average="macro", zero_division=0)
+    f1_macro = f1_score(y_test, y_pred, average="macro", zero_division=0)
+
+    precision_weighted = precision_score(
+        y_test, y_pred, average="weighted", zero_division=0
+    )
+    recall_weighted = recall_score(
+        y_test, y_pred, average="weighted", zero_division=0
+    )
     f1 = f1_score(y_test, y_pred, average="weighted")
 
+    precision_por_clase = precision_score(
+        y_test, y_pred, average=None, labels=[0, 1], zero_division=0
+    )
+    recall_por_clase = recall_score(
+        y_test, y_pred, average=None, labels=[0, 1], zero_division=0
+    )
+    f1_por_clase = f1_score(
+        y_test, y_pred, average=None, labels=[0, 1], zero_division=0
+    )
+
     print(f"\nAccuracy: {acc:.4f}")
-    print(f"F1-score (weighted): {f1:.4f}")
+    print(
+        "Macro avg: "
+        f"precision={precision_macro:.4f}, recall={recall_macro:.4f}, f1={f1_macro:.4f}"
+    )
+    print(
+        "Weighted avg: "
+        f"precision={precision_weighted:.4f}, recall={recall_weighted:.4f}, f1={f1:.4f}"
+    )
+
+    print("\nMétricas por género:")
+    print(
+        "  female (0): "
+        f"precision={precision_por_clase[0]:.4f}, "
+        f"recall={recall_por_clase[0]:.4f}, "
+        f"f1={f1_por_clase[0]:.4f}"
+    )
+    print(
+        "  male   (1): "
+        f"precision={precision_por_clase[1]:.4f}, "
+        f"recall={recall_por_clase[1]:.4f}, "
+        f"f1={f1_por_clase[1]:.4f}"
+    )
+
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred, target_names=["female", "male"]))
     print("\nConfusion Matrix:")
