@@ -1,1 +1,11 @@
 data/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Training artifacts and logs
+logs/
+wandb/
+sae-ckpts/
+modelos/

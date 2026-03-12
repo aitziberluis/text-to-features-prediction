@@ -12,6 +12,7 @@ from typing import List
 
 import joblib
 import numpy as np
+import pandas as pd
 import torch
 from tiny_sae import Sae
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -86,25 +87,20 @@ class PredictorGenero:
 
         print("✓ PredictorGenero listo para usar.\n")
 
-    def predecir(self, textos: List[str]) -> dict:
-        """Predice el género para una lista de textos.
+    def _extraer_features(self, textos: List[str]) -> np.ndarray:
+        """Extrae features SAE para una lista de textos."""
 
-        Parameters
-        ----------
-        textos : List[str]
-            Lista de textos a clasificar.
+        if not textos:
+            raise ValueError("La lista de textos no puede estar vacía.")
 
-        Returns
-        -------
-        dict con:
-            - 'predicciones': lista de 'male' o 'female'
-            - 'probabilidades': probabilidades [P(female), P(male)]
-            - 'features': características extraídas (opcional, para análisis)
-        """
+        # Limpiamos entradas vacías para evitar tokenizaciones inútiles.
+        textos_limpios = [t for t in textos if isinstance(t, str) and t.strip()]
+        if not textos_limpios:
+            raise ValueError("No hay textos válidos tras limpiar entradas vacías.")
 
         # Tokenizar
         tokens = self.tokenizer(
-            textos,
+            textos_limpios,
             max_length=CONTEXT_LEN,
             truncation=True,
             padding="max_length",
@@ -148,6 +144,21 @@ class PredictorGenero:
         finally:
             handle.remove()
 
+        return features
+
+    def predecir(self, textos: List[str]) -> dict:
+        """Predice el género para una lista de textos.
+
+        Returns
+        -------
+        dict con:
+            - 'predicciones': lista de 'male' o 'female'
+            - 'probabilidades': np.ndarray con [P(female), P(male)] por texto
+            - 'features': características SAE por texto
+        """
+
+        features = self._extraer_features(textos)
+
         # Clasificar
         predicciones_num = self.clf.predict(features)
         probabilidades = self.clf.predict_proba(features)
@@ -160,6 +171,82 @@ class PredictorGenero:
             "probabilidades": probabilidades,
             "features": features,
         }
+
+    def predecir_usuario(self, textos_usuario: List[str]) -> dict:
+        """Predice género a nivel usuario agregando varios textos.
+
+        La salida principal es una predicción única basada en la media de
+        probabilidades por comentario.
+        """
+
+        resultado_textos = self.predecir(textos_usuario)
+        probabilidades = resultado_textos["probabilidades"]
+
+        prob_media = probabilidades.mean(axis=0)
+        prob_std = probabilidades.std(axis=0)
+        pred_num = int(np.argmax(prob_media))
+        pred_label = "female" if pred_num == 0 else "male"
+
+        return {
+            "prediccion_usuario": pred_label,
+            "probabilidad_media_female": float(prob_media[0]),
+            "probabilidad_media_male": float(prob_media[1]),
+            "incertidumbre_female": float(prob_std[0]),
+            "incertidumbre_male": float(prob_std[1]),
+            "num_textos": int(probabilidades.shape[0]),
+            "detalle_por_texto": {
+                "predicciones": resultado_textos["predicciones"],
+                "probabilidades": probabilidades,
+            },
+        }
+
+    def predecir_usuario_desde_csv(
+        self,
+        author: str,
+        path_comentarios: str,
+        text_column: str = "body",
+        author_column: str = "author",
+        max_textos: int = 200,
+    ) -> dict:
+        """Predice el género de un autor leyendo sus textos desde CSV."""
+
+        if not Path(path_comentarios).exists():
+            raise FileNotFoundError(f"No se encuentra el CSV: {path_comentarios}")
+
+        df = pd.read_csv(path_comentarios)
+
+        if author_column not in df.columns:
+            raise ValueError(
+                f"La columna de autor '{author_column}' no existe en {path_comentarios}"
+            )
+        if text_column not in df.columns:
+            raise ValueError(
+                f"La columna de texto '{text_column}' no existe en {path_comentarios}"
+            )
+
+        author_norm = str(author).strip()
+        df_author = df[df[author_column].astype(str).str.strip() == author_norm]
+
+        if df_author.empty:
+            raise ValueError(f"No se encontraron textos para el autor '{author_norm}'.")
+
+        textos = (
+            df_author[text_column]
+            .dropna()
+            .astype(str)
+            .str.strip()
+        )
+        textos = textos[textos != ""]
+
+        if max_textos is not None and max_textos > 0:
+            textos = textos.iloc[:max_textos]
+
+        if len(textos) == 0:
+            raise ValueError(f"El autor '{author_norm}' no tiene textos válidos.")
+
+        salida = self.predecir_usuario(textos.tolist())
+        salida["author"] = author_norm
+        return salida
 
     def predecir_uno(self, texto: str) -> dict:
         """Predice el género para un único texto."""
@@ -195,7 +282,7 @@ def main():
         "I enjoy playing video games and watching sports on weekends.",
     ]
 
-    print("Prediciendo género para textos de ejemplo...\n")
+    print("Prediciendo género para textos de ejemplo (por texto)...\n")
 
     for i, texto in enumerate(textos_ejemplo, 1):
         resultado = predictor.predecir_uno(texto)
@@ -207,10 +294,27 @@ def main():
         )
         print()
 
+    print("Predicción agregada a nivel usuario (con los 5 textos):")
+    res_usuario = predictor.predecir_usuario(textos_ejemplo)
+    print(f"  → Predicción usuario: {res_usuario['prediccion_usuario']}")
+    print(
+        "  → Probabilidades medias: "
+        f"female={res_usuario['probabilidad_media_female']:.3f}, "
+        f"male={res_usuario['probabilidad_media_male']:.3f}"
+    )
+    print(
+        "  → Incertidumbre (desv. estándar entre textos): "
+        f"female={res_usuario['incertidumbre_female']:.3f}, "
+        f"male={res_usuario['incertidumbre_male']:.3f}"
+    )
+    print()
+
     print("=" * 60)
     print("Para usar con tus propios textos:")
     print("  predictor = PredictorGenero()")
     print("  resultado = predictor.predecir_uno('tu texto aquí')")
+    print("  resultado_usuario = predictor.predecir_usuario(lista_textos_usuario)")
+    print("  resultado_csv = predictor.predecir_usuario_desde_csv(author='usuario', path_comentarios='data/all_comments_since_2015.csv')")
     print("=" * 60)
 
 

@@ -111,19 +111,22 @@ def extraer_caracteristicas_sae(
     print("Tokenizando dataset...")
 
     def _tokenize_fn(x: Dict[str, list]):
-        return tokenizer(
+        out = tokenizer(
             x["text"],
             max_length=CONTEXT_LEN,
             truncation=True,
             padding="max_length",
             return_attention_mask=True,
         )
+        # Guardamos la etiqueta ya codificada para no depender de índices internos.
+        out["label"] = [0 if g == "f" else 1 for g in x["gender_clean"]]
+        return out
 
     tokenized = dataset.map(
         _tokenize_fn, batched=True, batch_size=32, num_proc=4, load_from_cache_file=True
     )
 
-    tokenized.set_format(type="torch", columns=["input_ids", "attention_mask"])
+    tokenized.set_format(type="torch", columns=["input_ids", "attention_mask", "label"])
 
     hookpoint = model.get_submodule(sae.cfg.hookpoint)
     captured_activations = None
@@ -157,28 +160,30 @@ def extraer_caracteristicas_sae(
                 # Codificar con la SAE
                 top_acts, top_indices = sae.encode(acts)
 
-                # Agregar a nivel de secuencia (mean pooling sobre tokens)
-                # top_acts shape: (batch, seq_len, k)
-                # Convertimos a representación densa para simplicidad
+                # Agregación eficiente a nivel secuencia sin construir tensor denso 3D.
                 batch_size, seq_len, k = top_acts.shape
 
-                # Crear representación sparse densa
-                dense_acts = torch.zeros(
-                    batch_size, seq_len, sae.cfg.num_latents, device=sae.device
-                )
-                for b in range(batch_size):
-                    for s in range(seq_len):
-                        dense_acts[b, s, top_indices[b, s]] = top_acts[b, s]
+                token_mask = attention_mask.to(sae.device).unsqueeze(-1).to(top_acts.dtype)
+                top_acts_masked = top_acts * token_mask
 
-                # Mean pooling sobre tokens (ignorando padding si es necesario)
-                # Aquí simplemente promediamos sobre la dimensión de secuencia
-                pooled = dense_acts.mean(dim=1)  # (batch, num_latents)
+                pooled = torch.zeros(
+                    batch_size, sae.cfg.num_latents, device=sae.device, dtype=top_acts.dtype
+                )
+                batch_ids = torch.arange(batch_size, device=sae.device).view(-1, 1, 1)
+                batch_ids = batch_ids.expand(-1, seq_len, k)
+
+                pooled.index_put_(
+                    (batch_ids.reshape(-1), top_indices.reshape(-1)),
+                    top_acts_masked.reshape(-1),
+                    accumulate=True,
+                )
+
+                valid_tokens = attention_mask.sum(dim=1).clamp(min=1).to(sae.device).to(top_acts.dtype)
+                pooled = pooled / valid_tokens.unsqueeze(1)
 
                 features_list.append(pooled.cpu().numpy())
 
-                # Extraer labels (gender_clean)
-                genders = [dataset[int(idx)]["gender_clean"] for idx in batch["__index_level_0__"]]
-                labels = np.array([0 if g == "f" else 1 for g in genders])
+                labels = batch["label"].cpu().numpy()
                 labels_list.append(labels)
 
     finally:
