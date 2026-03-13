@@ -16,7 +16,7 @@ import dotenv
 import numpy as np
 import pandas as pd
 import torch
-from datasets import Dataset
+from datasets import Dataset, disable_progress_bar
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
@@ -35,6 +35,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from preprocesamiento import preparar_dataset_para_sae
 
 dotenv.load_dotenv()
+disable_progress_bar()
 
 
 # =====================
@@ -57,8 +58,9 @@ MAX_COMMENTS = None  # None = todos
 # IMPORTANTE: Clasificación BINARIA - Solo usa género 'f' y 'm'
 # Se excluye 'unknown' del entrenamiento y evaluación
 
-# Test split
+# Splits
 TEST_SIZE = 0.2
+EVAL_SIZE = 0.1
 RANDOM_STATE = 42
 
 # Estrategias de agregación de tokens para representar cada texto.
@@ -135,7 +137,7 @@ def extraer_caracteristicas_sae(
         return out
 
     tokenized = dataset.map(
-        _tokenize_fn, batched=True, batch_size=32, num_proc=4, load_from_cache_file=True
+        _tokenize_fn, batched=True, batch_size=512, num_proc=16, load_from_cache_file=True
     )
 
     tokenized.set_format(type="torch", columns=["input_ids", "attention_mask", "label"])
@@ -164,7 +166,12 @@ def extraer_caracteristicas_sae(
 
     try:
         with torch.no_grad():
-            for batch in tqdm(dataloader, desc="Extrayendo features"):
+            for batch in tqdm(
+                dataloader,
+                desc="Extrayendo features",
+                mininterval=3600,
+                maxinterval=3600,
+            ):
                 input_ids = batch["input_ids"].to(model.device)
                 attention_mask = batch["attention_mask"].to(model.device)
 
@@ -247,12 +254,30 @@ def extraer_caracteristicas_sae(
 def entrenar_clasificador(features: np.ndarray, labels: np.ndarray) -> LogisticRegression:
     """Entrena un clasificador de género usando las características de la SAE."""
 
-    print("\nDividiendo en train/test...")
-    X_train, X_test, y_train, y_test = train_test_split(
-        features, labels, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=labels
+    if TEST_SIZE + EVAL_SIZE >= 1.0:
+        raise ValueError("TEST_SIZE + EVAL_SIZE debe ser < 1.0")
+
+    print("\nDividiendo en train/eval/test...")
+    # 1) Separamos test del total.
+    X_train_eval, _X_test, y_train_eval, _y_test = train_test_split(
+        features,
+        labels,
+        test_size=TEST_SIZE,
+        random_state=RANDOM_STATE,
+        stratify=labels,
     )
 
-    print(f"Train: {X_train.shape}, Test: {X_test.shape}")
+    # 2) Separamos eval del bloque restante usando proporción relativa.
+    eval_relative_size = EVAL_SIZE / (1.0 - TEST_SIZE)
+    X_train, X_eval, y_train, y_eval = train_test_split(
+        X_train_eval,
+        y_train_eval,
+        test_size=eval_relative_size,
+        random_state=RANDOM_STATE,
+        stratify=y_train_eval,
+    )
+
+    print(f"Train: {X_train.shape}, Eval: {X_eval.shape}, Test: {_X_test.shape}")
 
     print("\nEntrenando clasificador de género (Logistic Regression)...")
     clf = LogisticRegression(
@@ -260,60 +285,63 @@ def entrenar_clasificador(features: np.ndarray, labels: np.ndarray) -> LogisticR
     )
     clf.fit(X_train, y_train)
 
-    print("\nEvaluando en test set...")
-    y_pred = clf.predict(X_test)
+    def _evaluar_split(nombre_split: str, y_true: np.ndarray, y_pred: np.ndarray) -> None:
+        acc = accuracy_score(y_true, y_pred)
+        precision_macro = precision_score(y_true, y_pred, average="macro", zero_division=0)
+        recall_macro = recall_score(y_true, y_pred, average="macro", zero_division=0)
+        f1_macro = f1_score(y_true, y_pred, average="macro", zero_division=0)
 
-    acc = accuracy_score(y_test, y_pred)
-    precision_macro = precision_score(y_test, y_pred, average="macro", zero_division=0)
-    recall_macro = recall_score(y_test, y_pred, average="macro", zero_division=0)
-    f1_macro = f1_score(y_test, y_pred, average="macro", zero_division=0)
+        precision_weighted = precision_score(
+            y_true, y_pred, average="weighted", zero_division=0
+        )
+        recall_weighted = recall_score(y_true, y_pred, average="weighted", zero_division=0)
+        f1_weighted = f1_score(y_true, y_pred, average="weighted", zero_division=0)
 
-    precision_weighted = precision_score(
-        y_test, y_pred, average="weighted", zero_division=0
-    )
-    recall_weighted = recall_score(
-        y_test, y_pred, average="weighted", zero_division=0
-    )
-    f1 = f1_score(y_test, y_pred, average="weighted")
+        precision_por_clase = precision_score(
+            y_true, y_pred, average=None, labels=[0, 1], zero_division=0
+        )
+        recall_por_clase = recall_score(
+            y_true, y_pred, average=None, labels=[0, 1], zero_division=0
+        )
+        f1_por_clase = f1_score(
+            y_true, y_pred, average=None, labels=[0, 1], zero_division=0
+        )
 
-    precision_por_clase = precision_score(
-        y_test, y_pred, average=None, labels=[0, 1], zero_division=0
-    )
-    recall_por_clase = recall_score(
-        y_test, y_pred, average=None, labels=[0, 1], zero_division=0
-    )
-    f1_por_clase = f1_score(
-        y_test, y_pred, average=None, labels=[0, 1], zero_division=0
-    )
+        print(f"\n=== Evaluación en {nombre_split} ===")
+        print(f"Accuracy: {acc:.4f}")
+        print(
+            "Macro avg: "
+            f"precision={precision_macro:.4f}, recall={recall_macro:.4f}, f1={f1_macro:.4f}"
+        )
+        print(
+            "Weighted avg: "
+            f"precision={precision_weighted:.4f}, recall={recall_weighted:.4f}, f1={f1_weighted:.4f}"
+        )
 
-    print(f"\nAccuracy: {acc:.4f}")
-    print(
-        "Macro avg: "
-        f"precision={precision_macro:.4f}, recall={recall_macro:.4f}, f1={f1_macro:.4f}"
-    )
-    print(
-        "Weighted avg: "
-        f"precision={precision_weighted:.4f}, recall={recall_weighted:.4f}, f1={f1:.4f}"
-    )
+        print("\nMétricas por género:")
+        print(
+            "  female (0): "
+            f"precision={precision_por_clase[0]:.4f}, "
+            f"recall={recall_por_clase[0]:.4f}, "
+            f"f1={f1_por_clase[0]:.4f}"
+        )
+        print(
+            "  male   (1): "
+            f"precision={precision_por_clase[1]:.4f}, "
+            f"recall={recall_por_clase[1]:.4f}, "
+            f"f1={f1_por_clase[1]:.4f}"
+        )
 
-    print("\nMétricas por género:")
-    print(
-        "  female (0): "
-        f"precision={precision_por_clase[0]:.4f}, "
-        f"recall={recall_por_clase[0]:.4f}, "
-        f"f1={f1_por_clase[0]:.4f}"
-    )
-    print(
-        "  male   (1): "
-        f"precision={precision_por_clase[1]:.4f}, "
-        f"recall={recall_por_clase[1]:.4f}, "
-        f"f1={f1_por_clase[1]:.4f}"
-    )
+        print("\nClassification Report:")
+        print(classification_report(y_true, y_pred, target_names=["female", "male"]))
+        print("\nConfusion Matrix:")
+        print(confusion_matrix(y_true, y_pred))
 
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred, target_names=["female", "male"]))
-    print("\nConfusion Matrix:")
-    print(confusion_matrix(y_test, y_pred))
+    print("\nEvaluando en eval set...")
+    y_pred_eval = clf.predict(X_eval)
+    _evaluar_split("eval", y_eval, y_pred_eval)
+
+    print("\nTest set reservado (sin evaluación final en esta corrida).")
 
     return clf
 
