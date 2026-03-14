@@ -7,7 +7,7 @@ Este script:
 3. Entrena un clasificador supervisado de género en modo streaming
 4. Evalúa el rendimiento y guarda el modelo
 """
-
+# SGDClassifier de scikit-learn, con loss log_loss (equivale a regresión logística lineal entrenada de forma incremental con partial_fit):
 import math
 import os
 from pathlib import Path
