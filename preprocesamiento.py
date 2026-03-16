@@ -110,6 +110,53 @@ def normalizar_genero(df_autores: pd.DataFrame) -> pd.DataFrame:
 	return df
 
 
+DEFAULT_AGE_BINS = [14, 20, 30, 40, np.inf]
+DEFAULT_AGE_GROUP_LABELS = ["14_19", "20_29", "30_39", "40_plus"]
+
+
+def normalizar_edad(
+	df_autores: pd.DataFrame,
+	age_bins: Optional[list] = None,
+	age_labels: Optional[list] = None,
+) -> pd.DataFrame:
+	"""Crea columnas limpias de edad y rango de edad a partir de `age`.
+
+	Por defecto usa rangos adaptados a la distribución real del dataset:
+	- 14_19
+	- 20_29
+	- 30_39
+	- 40_plus
+	"""
+
+	if age_bins is None:
+		age_bins = DEFAULT_AGE_BINS
+	if age_labels is None:
+		age_labels = DEFAULT_AGE_GROUP_LABELS
+
+	if len(age_bins) != len(age_labels) + 1:
+		raise ValueError("age_bins debe tener exactamente un elemento más que age_labels.")
+
+	df = df_autores.copy()
+
+	if "age" not in df.columns:
+		raise ValueError("El CSV de autores debe contener una columna 'age' para preparar el dataset de edad.")
+
+	df["age_clean"] = pd.to_numeric(df["age"], errors="coerce")
+	df.loc[df["age_clean"] <= 0, "age_clean"] = pd.NA
+
+	df["age_group"] = pd.cut(
+		df["age_clean"],
+		bins=age_bins,
+		labels=age_labels,
+		right=False,
+		include_lowest=True,
+	)
+	df["age_group"] = df["age_group"].astype("string")
+	df["age_group"] = df["age_group"].fillna("unknown")
+
+	return df
+
+
 def _calcular_entropia_columna(serie: pd.Series) -> float:
 	"""Calcula la entropía de Shannon de una columna en base 2."""
 
@@ -740,6 +787,70 @@ def preparar_dataset_para_sae(
 	print("="*60)
 	
 	return df_comentarios_con_genero, df_autores
+
+
+def preparar_dataset_para_edad(
+	path_comentarios: str,
+	path_autores: str,
+	max_comments: Optional[int] = None,
+	solo_edad_conocida: bool = True,
+	age_bins: Optional[list] = None,
+	age_labels: Optional[list] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+	"""Prepara dataset unificado para clasificación por rangos de edad."""
+
+	if age_bins is None:
+		age_bins = DEFAULT_AGE_BINS
+	if age_labels is None:
+		age_labels = DEFAULT_AGE_GROUP_LABELS
+
+	print("\n" + "=" * 60)
+	print("PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE EDAD")
+	print("=" * 60)
+
+	print("\n1. Cargando comentarios...")
+	df_comentarios = cargar_comentarios(path_comentarios, nrows=max_comments)
+	print(f"   ✓ {len(df_comentarios):,} comentarios cargados")
+
+	print("\n2. Cargando autores...")
+	df_autores_raw = cargar_autores(path_autores)
+	df_autores = normalizar_edad(
+		df_autores_raw,
+		age_bins=age_bins,
+		age_labels=age_labels,
+	)
+	print(f"   ✓ {len(df_autores):,} autores cargados")
+
+	print("\n3. Uniendo comentarios con edad por autor...")
+	df_comentarios_con_edad = df_comentarios.merge(
+		df_autores[["author", "age_clean", "age_group"]],
+		on="author",
+		how="inner",
+	)
+	print(f"   ✓ {len(df_comentarios_con_edad):,} comentarios con info de edad")
+
+	if solo_edad_conocida:
+		antes = len(df_comentarios_con_edad)
+		df_comentarios_con_edad = df_comentarios_con_edad[
+			df_comentarios_con_edad["age_group"].isin(age_labels)
+		].reset_index(drop=True)
+		print("\n4. Filtrando solo edad conocida (rangos válidos)...")
+		print(f"   ✓ {len(df_comentarios_con_edad):,} comentarios con rango de edad válido")
+		print(
+			f"   (Eliminados {antes - len(df_comentarios_con_edad):,} comentarios con edad nula/fuera de rango)"
+		)
+
+	print("\n5. Distribución por rango de edad:")
+	dist = df_comentarios_con_edad["age_group"].value_counts()
+	for age_group, count in dist.items():
+		pct = 100 * count / len(df_comentarios_con_edad)
+		print(f"   {age_group}: {count:,} comentarios ({pct:.1f}%)")
+
+	print("\n" + "=" * 60)
+	print("✓ Dataset de edad preparado y listo para usar")
+	print("=" * 60)
+
+	return df_comentarios_con_edad, df_autores
 
 
 if __name__ == "__main__":
