@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 from pathlib import Path
 from typing import Optional, Dict, Any, Tuple
 from scipy import stats
@@ -45,6 +46,15 @@ def cargar_comentarios(path: str, nrows: Optional[int] = None) -> pd.DataFrame:
 
 	# Nos aseguramos de que el identificador de autor es string y sin espacios raros
 	df["author"] = df["author"].astype(str).str.strip()
+
+	# Limpiamos filas con cuerpo de comentario nulo o vacío.
+	if "body" in df.columns:
+		antes = len(df)
+		df["body"] = df["body"].astype("string").str.strip()
+		df = df[df["body"].notna() & (df["body"] != "")].reset_index(drop=True)
+		eliminadas = antes - len(df)
+		if eliminadas > 0:
+			print(f"Se eliminaron {eliminadas:,} filas de comentarios con 'body' nulo o vacío.")
 
 	return df
 
@@ -98,6 +108,269 @@ def normalizar_genero(df_autores: pd.DataFrame) -> pd.DataFrame:
 	df["gender_clean"] = df["gender_clean"].fillna("unknown")
 
 	return df
+
+
+def _calcular_entropia_columna(serie: pd.Series) -> float:
+	"""Calcula la entropía de Shannon de una columna en base 2."""
+
+	value_probs = serie.astype(str).value_counts(normalize=True, dropna=False)
+	if value_probs.empty:
+		return 0.0
+	return float(-(value_probs * np.log2(value_probs + 1e-12)).sum())
+
+
+def _mutual_info_discretizada(
+	serie_x: pd.Series,
+	serie_y: pd.Series,
+	n_bins: int = 10,
+) -> float:
+	"""Calcula información mutua entre dos variables numéricas discretizando por cuantiles."""
+
+	x = pd.to_numeric(serie_x, errors="coerce")
+	y = pd.to_numeric(serie_y, errors="coerce")
+	mask = x.notna() & y.notna()
+	x = x[mask]
+	y = y[mask]
+
+	if len(x) < 2 or x.nunique() < 2 or y.nunique() < 2:
+		return 0.0
+
+	try:
+		x_disc = pd.qcut(x, q=min(n_bins, x.nunique()), labels=False, duplicates="drop")
+		y_disc = pd.qcut(y, q=min(n_bins, y.nunique()), labels=False, duplicates="drop")
+	except Exception:
+		return 0.0
+
+	cont = pd.crosstab(x_disc, y_disc)
+	if cont.empty:
+		return 0.0
+
+	pxy = cont.to_numpy(dtype=float)
+	pxy = pxy / pxy.sum()
+	px = pxy.sum(axis=1, keepdims=True)
+	py = pxy.sum(axis=0, keepdims=True)
+
+	nz = pxy > 0
+	mi = np.sum(pxy[nz] * np.log2(pxy[nz] / (px @ py)[nz]))
+	return float(max(mi, 0.0))
+
+
+def _matriz_informacion_mutua(df_num: pd.DataFrame, n_bins: int = 10) -> pd.DataFrame:
+	"""Construye una matriz simétrica de información mutua para columnas numéricas."""
+
+	cols = list(df_num.columns)
+	mi_mat = pd.DataFrame(np.zeros((len(cols), len(cols))), index=cols, columns=cols)
+
+	for i, c1 in enumerate(cols):
+		for j in range(i, len(cols)):
+			c2 = cols[j]
+			if i == j:
+				mi_val = _calcular_entropia_columna(pd.to_numeric(df_num[c1], errors="coerce").dropna())
+			else:
+				mi_val = _mutual_info_discretizada(df_num[c1], df_num[c2], n_bins=n_bins)
+			mi_mat.iloc[i, j] = mi_val
+			mi_mat.iloc[j, i] = mi_val
+
+	return mi_mat
+
+
+def _plot_densidades_numericas(
+	df: pd.DataFrame,
+	nombre_dataset: str,
+	output_dir: str,
+	numeric_cols: pd.Index,
+	columnas_excluir: Optional[list] = None,
+) -> Optional[str]:
+	"""Genera funciones de densidad (KDE) para todas las columnas numéricas."""
+
+	if columnas_excluir is None:
+		columnas_excluir = []
+
+	numeric_cols = pd.Index([c for c in numeric_cols if c not in set(columnas_excluir)])
+
+	if len(numeric_cols) == 0:
+		return None
+
+	n_cols = min(3, len(numeric_cols))
+	n_rows = int(np.ceil(len(numeric_cols) / n_cols))
+	fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 4 * n_rows))
+	axes = np.array(axes).reshape(-1)
+
+	for i, col in enumerate(numeric_cols):
+		ax = axes[i]
+		serie = pd.to_numeric(df[col], errors="coerce").dropna()
+
+		# Si hay muy poca variación, usamos histograma para evitar errores de KDE.
+		if len(serie) < 2 or serie.nunique() < 2:
+			sns.histplot(serie, bins=20, kde=False, ax=ax, color="#4C72B0")
+			ax.set_title(f"{col} (sin KDE por baja variación)", fontsize=10)
+		else:
+			sns.kdeplot(serie, fill=True, ax=ax, color="#4C72B0")
+			ax.set_title(f"Densidad de {col}", fontsize=10)
+
+		ax.set_xlabel(col)
+		ax.set_ylabel("Densidad")
+
+	for j in range(len(numeric_cols), len(axes)):
+		axes[j].axis("off")
+
+	plt.tight_layout()
+	path_fig = os.path.join(output_dir, f"densidades_{nombre_dataset}.png")
+	plt.savefig(path_fig, dpi=300, bbox_inches="tight")
+	plt.close()
+	return path_fig
+
+
+def analizar_dataset_general(
+	df: pd.DataFrame,
+	nombre_dataset: str,
+	output_dir: str = "figuras",
+	columnas_excluir_densidad: Optional[list] = None,
+	columnas_excluir_correlacion: Optional[list] = None,
+) -> Dict[str, Any]:
+	"""Analiza calidad y estructura del dataset antes del preprocesamiento específico."""
+
+	os.makedirs(output_dir, exist_ok=True)
+
+	print("\n" + "=" * 60)
+	print(f"ANÁLISIS GENERAL INICIAL - {nombre_dataset.upper()}")
+	print("=" * 60)
+	print(f"Dimensiones: {df.shape[0]:,} filas x {df.shape[1]:,} columnas")
+
+	# 1) Valores nulos por columna
+	nulos_abs = df.isna().sum().sort_values(ascending=False)
+	nulos_pct = (100 * nulos_abs / len(df)).round(3) if len(df) > 0 else nulos_abs.astype(float)
+	nulos_df = pd.DataFrame({"nulos": nulos_abs, "pct_nulos": nulos_pct})
+
+	print("\n[1] Valores nulos por columna")
+	print(nulos_df.to_string())
+
+	# 2) Duplicados
+	dup_filas = int(df.duplicated().sum())
+	dup_pct = (100 * dup_filas / len(df)) if len(df) > 0 else 0.0
+	print("\n[2] Duplicados")
+	print(f"Filas duplicadas exactas: {dup_filas:,} ({dup_pct:.3f}%)")
+
+	# 3) Tipos de datos
+	dtypes_df = pd.DataFrame({
+		"columna": df.columns,
+		"dtype": df.dtypes.astype(str).values,
+		"n_unicos": [df[c].nunique(dropna=True) for c in df.columns],
+	})
+	print("\n[3] Tipos de datos y cardinalidad")
+	print(dtypes_df.to_string(index=False))
+
+	# 4) Entropía por columna
+	entropias = pd.Series({col: _calcular_entropia_columna(df[col]) for col in df.columns}).sort_values(ascending=False)
+	print("\n[4] Entropía por columna (Shannon, base 2)")
+	print(entropias.round(4).to_string())
+	col_max_entropia = entropias.index[0] if len(entropias) > 0 else None
+
+	# 5) Rangos por columna numérica
+	numeric_cols = df.select_dtypes(include=[np.number]).columns
+	rangos_df = pd.DataFrame(columns=["columna", "min", "max", "rango"])
+	col_mayor_rango = None
+	col_menor_rango = None
+
+	if len(numeric_cols) > 0:
+		rangos_df = pd.DataFrame({
+			"columna": numeric_cols,
+			"min": [pd.to_numeric(df[c], errors="coerce").min() for c in numeric_cols],
+			"max": [pd.to_numeric(df[c], errors="coerce").max() for c in numeric_cols],
+		})
+		rangos_df["rango"] = rangos_df["max"] - rangos_df["min"]
+		rangos_df = rangos_df.sort_values("rango", ascending=False).reset_index(drop=True)
+
+		col_mayor_rango = rangos_df.iloc[0]["columna"] if len(rangos_df) > 0 else None
+		col_menor_rango = rangos_df.iloc[-1]["columna"] if len(rangos_df) > 0 else None
+
+		print("\n[5] Rango por columna numérica")
+		print(rangos_df.to_string(index=False))
+		print(f"Mayor rango: {col_mayor_rango}")
+		print(f"Menor rango: {col_menor_rango}")
+	else:
+		print("\n[5] Rango por columna numérica")
+		print("No hay columnas numéricas en este dataset.")
+
+	# 6) Correlaciones entre columnas numéricas
+	correlaciones = pd.DataFrame()
+	info_mutua = pd.DataFrame()
+	path_corr = None
+	path_mi = None
+	numeric_cols_corr = numeric_cols
+	if columnas_excluir_correlacion is not None:
+		numeric_cols_corr = pd.Index([c for c in numeric_cols if c not in set(columnas_excluir_correlacion)])
+
+	if len(numeric_cols_corr) >= 2:
+		correlaciones = df[numeric_cols_corr].corr(numeric_only=True)
+		print("\n[6] Matriz de correlación (Pearson)")
+		print(correlaciones.round(4).to_string())
+
+		fig, ax = plt.subplots(figsize=(1.2 * len(numeric_cols_corr) + 4, 1.0 * len(numeric_cols_corr) + 3))
+		sns.heatmap(correlaciones, annot=True, fmt=".2f", cmap="coolwarm", center=0, ax=ax)
+		ax.set_title(f"Heatmap de correlación - {nombre_dataset}", fontweight="bold")
+		plt.tight_layout()
+		path_corr = os.path.join(output_dir, f"correlacion_{nombre_dataset}.png")
+		plt.savefig(path_corr, dpi=300, bbox_inches="tight")
+		plt.close()
+		print(f"Figura de correlación guardada: {path_corr}")
+	else:
+		print("\n[6] Matriz de correlación")
+		print("Se necesitan al menos 2 columnas numéricas para calcular correlaciones.")
+
+	# 6b) Información mutua entre columnas numéricas
+	if len(numeric_cols_corr) >= 2:
+		info_mutua = _matriz_informacion_mutua(df[numeric_cols_corr], n_bins=10)
+		print("\n[6b] Matriz de información mutua (discretizada)")
+		print(info_mutua.round(4).to_string())
+
+		fig, ax = plt.subplots(figsize=(1.2 * len(numeric_cols_corr) + 4, 1.0 * len(numeric_cols_corr) + 3))
+		sns.heatmap(info_mutua, annot=True, fmt=".2f", cmap="YlOrRd", ax=ax)
+		ax.set_title(f"Heatmap de información mutua - {nombre_dataset}", fontweight="bold")
+		plt.tight_layout()
+		path_mi = os.path.join(output_dir, f"informacion_mutua_{nombre_dataset}.png")
+		plt.savefig(path_mi, dpi=300, bbox_inches="tight")
+		plt.close()
+		print(f"Figura de información mutua guardada: {path_mi}")
+	else:
+		print("\n[6b] Matriz de información mutua")
+		print("Se necesitan al menos 2 columnas numéricas para calcular información mutua.")
+
+	# 7) Densidades de todas las columnas numéricas
+	path_densidades = _plot_densidades_numericas(
+		df,
+		nombre_dataset,
+		output_dir,
+		numeric_cols,
+		columnas_excluir=columnas_excluir_densidad,
+	)
+	print("\n[7] Funciones de densidad")
+	if path_densidades is not None:
+		print(f"Figura de densidades guardada: {path_densidades}")
+	else:
+		print("No hay columnas numéricas para graficar densidades.")
+
+	print("\nResumen rápido")
+	print(f"Columna con más entropía: {col_max_entropia}")
+	if col_mayor_rango is not None and col_menor_rango is not None:
+		print(f"Mayor rango: {col_mayor_rango} | Menor rango: {col_menor_rango}")
+
+	return {
+		"shape": df.shape,
+		"nulos_por_columna": nulos_df,
+		"filas_duplicadas": dup_filas,
+		"tipos_datos": dtypes_df,
+		"entropia_por_columna": entropias,
+		"rangos_numericos": rangos_df,
+		"columna_mas_entropia": col_max_entropia,
+		"columna_mayor_rango": col_mayor_rango,
+		"columna_menor_rango": col_menor_rango,
+		"correlaciones": correlaciones,
+		"informacion_mutua": info_mutua,
+		"figura_correlacion": path_corr,
+		"figura_informacion_mutua": path_mi,
+		"figura_densidades": path_densidades,
+	}
 
 
 def calcular_num_comentarios_por_autor(df_comentarios: pd.DataFrame) -> pd.DataFrame:
@@ -222,7 +495,6 @@ def tests_significacion_genero(df_merged: pd.DataFrame) -> Dict[str, Any]:
 def visualizar_distribucion_genero(df_merged: pd.DataFrame, output_dir: str = "figuras") -> None:
 	"""Crea visualizaciones de la distribución de comentarios por género."""
 	
-	import os
 	os.makedirs(output_dir, exist_ok=True)
 	
 	df = df_merged.copy()
@@ -483,6 +755,43 @@ if __name__ == "__main__":
 	print("\n[PASO 1/3] Cargando datos...")
 	df_comentarios = cargar_comentarios(path_comentarios, nrows=None)
 	df_autores_raw = cargar_autores(path_autores)
+
+	# 1b. Análisis general inicial de calidad/estructura por dataset
+	print("\n[PASO 1b] Análisis general inicial de cada dataset...")
+	analizar_dataset_general(df_comentarios, nombre_dataset="comentarios", output_dir="figuras")
+	columnas_excluir_densidad_autores = [
+		"is_female_proba",
+		"is_female_pred",
+		"is_female_predicted_test",
+		"is_native_english_country",
+		"eneagram_wing",
+		"eneagram_type",
+		"en_comments_percentage",
+		"en_comments",
+		"is_score",
+		"is_description",
+	]
+	analizar_dataset_general(
+		df_autores_raw,
+		nombre_dataset="autores",
+		output_dir="figuras",
+		columnas_excluir_densidad=columnas_excluir_densidad_autores,
+		columnas_excluir_correlacion=[
+			"is_description",
+			"is_score",
+			"is_female_proba",
+			"is_female_pred",
+			"is_female",
+			"predicted_test",
+			"is_female_predicted_test",
+			"is_native_english_country",
+			"enneagram_wing",
+			"enneagram_type",
+			"eneagram_wing",
+			"eneagram_type",
+			"en_comments_percentage",
+		],
+	)
 
 	# 2. Normalizar género en la tabla de autores
 	print("\n[PASO 2/3] Normalizando género...")

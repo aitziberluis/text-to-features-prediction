@@ -125,6 +125,18 @@ def cargar_dataset_genero_df() -> pd.DataFrame:
         .dropna(subset=["author", "text", "gender_clean"])
         .copy()
     )
+
+    # Garantia explicita: solo m/f. dropna sobre gender_clean no elimina 'unknown'
+    # porque normalizar_genero usa fillna('unknown'), nunca NaN.
+    df = df[df["gender_clean"].isin(["m", "f"])].reset_index(drop=True)
+
+    generos_presentes = set(df["gender_clean"].unique())
+    assert generos_presentes <= {"m", "f"}, (
+        f"ERROR: gender_clean contiene valores inesperados: {generos_presentes - {'m', 'f'}}"
+    )
+    print(f"[VERIFICACION] Generos presentes (solo m/f): {df['gender_clean'].value_counts().to_dict()}")
+    print(f"[VERIFICACION] Nulos en gender_clean: {df['gender_clean'].isna().sum()}")
+
     df["author"] = df["author"].astype(str).str.strip()
     df["text"] = df["text"].astype(str)
 

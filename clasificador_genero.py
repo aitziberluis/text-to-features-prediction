@@ -100,7 +100,19 @@ def cargar_dataset_genero() -> Dataset:
         drop=True
     )
 
-    print(f"\nDistribución final: {df_comentarios_con_genero['gender_clean'].value_counts().to_dict()}")
+    # Garantía explícita: solo comentarios con género conocido (m/f), sin NaN en gender_clean.
+    df_comentarios_con_genero = df_comentarios_con_genero.dropna(subset=["gender_clean"])
+    df_comentarios_con_genero = df_comentarios_con_genero[
+        df_comentarios_con_genero["gender_clean"].isin(["m", "f"])
+    ].reset_index(drop=True)
+
+    generos_presentes = set(df_comentarios_con_genero["gender_clean"].unique())
+    assert generos_presentes <= {"m", "f"}, (
+        f"ERROR: gender_clean contiene valores inesperados: {generos_presentes - {'m', 'f'}}"
+    )
+    dist = df_comentarios_con_genero["gender_clean"].value_counts().to_dict()
+    print(f"\n[VERIFICACIÓN] Géneros presentes (solo m/f): {dist}")
+    print(f"[VERIFICACIÓN] Nulos en gender_clean: {df_comentarios_con_genero['gender_clean'].isna().sum()}")
 
     return Dataset.from_pandas(df_comentarios_con_genero[["text", "gender_clean"]])
 
