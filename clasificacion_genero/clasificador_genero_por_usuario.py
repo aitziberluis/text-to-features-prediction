@@ -81,7 +81,7 @@ MIN_FEMALE_RECALL_TARGET = 0.35
 POOLING_MODES_TO_RUN = ["mean"]
 
 # Run configs
-FEMALE_WEIGHT_MULTIPLIER = 2.5
+FEMALE_WEIGHT_MULTIPLIER = 1.2
 RUN_CONFIGS = [
     {
         "name": "sin_balanceo",

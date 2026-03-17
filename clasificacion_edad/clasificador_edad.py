@@ -67,6 +67,17 @@ AGE_GROUPS = DEFAULT_AGE_GROUP_LABELS
 AGE_GROUP_TO_ID = {label: idx for idx, label in enumerate(AGE_GROUPS)}
 ID_TO_AGE_GROUP = {idx: label for label, idx in AGE_GROUP_TO_ID.items()}
 
+RUN_CONFIGS = [
+	{
+		"name": "sin_balanceo",
+		"use_class_weights": False,
+	},
+	{
+		"name": "balanceado",
+		"use_class_weights": True,
+	},
+]
+
 
 def cargar_dataset_edad() -> Dataset:
 	"""Carga comentarios con rango de edad válido."""
@@ -308,6 +319,8 @@ def entrenar_clasificador_streaming(
 	model: AutoModelForCausalLM,
 	tokenizer,
 	pooling_mode: str,
+	run_name: str,
+	use_class_weights: bool,
 ) -> SGDClassifier:
 	labels_all = np.fromiter(
 		(AGE_GROUP_TO_ID[g] for g in dataset["age_group"]),
@@ -326,8 +339,16 @@ def entrenar_clasificador_streaming(
 		f"Test: ({len(test_idx)}, {sae.cfg.num_latents})"
 	)
 
-	class_weights = _calcular_pesos_clase(labels_all[train_idx])
-	print(f"Pesos de clase (train): {class_weights}")
+	if use_class_weights:
+		class_weights = _calcular_pesos_clase(labels_all[train_idx])
+	else:
+		unique_classes = np.unique(labels_all[train_idx])
+		class_weights = {int(c): 1.0 for c in unique_classes}
+
+	print("\nConfiguracion de pesos de clase:")
+	print(f"  - modo: {run_name}")
+	print(f"  - use_class_weights: {use_class_weights}")
+	print(f"  - pesos train: {class_weights}")
 
 	clf = SGDClassifier(
 		loss="log_loss",
@@ -351,7 +372,7 @@ def entrenar_clasificador_streaming(
 			model=model,
 			tokenizer=tokenizer,
 			pooling_mode=pooling_mode,
-			desc=f"Train edad ({pooling_mode})",
+			desc=f"Train edad ({run_name}, {pooling_mode})",
 		):
 			sample_weight = np.array([class_weights[int(y)] for y in y_batch], dtype=np.float32)
 			if first_batch:
@@ -414,27 +435,35 @@ def main() -> None:
 
 	os.makedirs("modelos", exist_ok=True)
 
-	for i, pooling_mode in enumerate(POOLING_MODES_TO_RUN, start=1):
-		print("\n" + "-" * 60)
-		print(f"[RUN {i}/{len(POOLING_MODES_TO_RUN)}] pooling={pooling_mode}")
-		print("-" * 60)
+	total_runs = len(POOLING_MODES_TO_RUN) * len(RUN_CONFIGS)
+	run_idx = 0
+	for pooling_mode in POOLING_MODES_TO_RUN:
+		for run_cfg in RUN_CONFIGS:
+			run_idx += 1
+			run_name = run_cfg["name"]
 
-		clf = entrenar_clasificador_streaming(
-			dataset=dataset,
-			sae=sae,
-			model=model,
-			tokenizer=tokenizer,
-			pooling_mode=pooling_mode,
-		)
+			print("\n" + "-" * 60)
+			print(f"[RUN {run_idx}/{total_runs}] pooling={pooling_mode} | mode={run_name}")
+			print("-" * 60)
 
-		mode_output_path = f"modelos/clasificador_edad_{pooling_mode}.pkl"
-		joblib.dump(clf, mode_output_path)
-		print(f"\nClasificador de edad guardado en: {mode_output_path}")
+			clf = entrenar_clasificador_streaming(
+				dataset=dataset,
+				sae=sae,
+				model=model,
+				tokenizer=tokenizer,
+				pooling_mode=pooling_mode,
+				run_name=run_name,
+				use_class_weights=bool(run_cfg["use_class_weights"]),
+			)
 
-		if i == 1:
-			default_output_path = "modelos/clasificador_edad.pkl"
-			joblib.dump(clf, default_output_path)
-			print(f"Clasificador de edad por defecto actualizado en: {default_output_path}")
+			mode_output_path = f"modelos/clasificador_edad_{run_name}_{pooling_mode}.pkl"
+			joblib.dump(clf, mode_output_path)
+			print(f"\nClasificador de edad guardado en: {mode_output_path}")
+
+			if run_idx == 1:
+				default_output_path = "modelos/clasificador_edad.pkl"
+				joblib.dump(clf, default_output_path)
+				print(f"Clasificador de edad por defecto actualizado en: {default_output_path}")
 
 	print("\n" + "=" * 60)
 	print("Entrenamiento de edad completado")
