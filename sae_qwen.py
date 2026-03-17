@@ -66,9 +66,10 @@ def preparar_modelo_y_datos(dataset: Dataset):
     """Prepara tokenizer, modelo Qwen y tokeniza el dataset."""
 
     print("Cargando tokenizer y modelo Qwen...")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(
         MODEL,
+        trust_remote_code=True,
         device_map={"": DEVICE},
         torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
     )
