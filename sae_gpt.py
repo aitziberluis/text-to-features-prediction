@@ -10,7 +10,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from tiny_sae import Sae, SaeConfig, TrainConfig, train_sae
 from tqdm import tqdm
 
-from preprocesamiento import preparar_dataset_para_sae
+from preprocesamiento import cargar_comentarios
 
 
 dotenv.load_dotenv()
@@ -45,31 +45,25 @@ MAX_COMMENTS = None  # p.ej. 200_000 para un subset
 
 
 def cargar_dataset_genero() -> Dataset:
-	"""Carga comentarios + autores usando la función centralizada de preprocesamiento.
+	"""Carga TODOS los comentarios y prepara un Dataset solo con el texto.
 
-	El Dataset tendrá columnas:
-	- 'text': texto del comentario (columna 'body' renombrada)
-	- 'gender_clean': 'm' o 'f'
+	La SAE es un modelo no supervisado, así que no necesita
+	información de género; se entrena sobre todo el corpus para
+	que luego pueda reutilizarse en tareas de género, edad, etc.
 	"""
 
-	# Usar la función centralizada de preprocesamiento
-	# solo_genero_conocido=True → Filtra SOLO 'f' y 'm', excluye 'unknown'
-	df_comentarios_con_genero, _ = preparar_dataset_para_sae(
-		path_comentarios=PATH_COMENTARIOS,
-		path_autores=PATH_AUTORES,
-		max_comments=MAX_COMMENTS,
-		solo_genero_conocido=True  # ← SOLO 'f' y 'm'
-	)
-	
-	# Renombrar la columna 'body' a 'text' si es necesario
-	if TEXT_COLUMN in df_comentarios_con_genero.columns and TEXT_COLUMN != "text":
-		df_comentarios_con_genero = df_comentarios_con_genero.rename(columns={TEXT_COLUMN: "text"})
-	
+	# Cargar comentarios brutos (limpieza general de author/body)
+	df_comentarios = cargar_comentarios(PATH_COMENTARIOS, nrows=MAX_COMMENTS)
+
+	# Renombrar la columna de texto a 'text' si es necesario
+	if TEXT_COLUMN in df_comentarios.columns and TEXT_COLUMN != "text":
+		df_comentarios = df_comentarios.rename(columns={TEXT_COLUMN: "text"})
+
 	# Limpiar NaNs en la columna de texto
-	df_comentarios_con_genero = df_comentarios_con_genero.dropna(subset=["text"]).reset_index(drop=True)
-	
-	# Crear Dataset de HuggingFace solo con columnas necesarias
-	dataset = Dataset.from_pandas(df_comentarios_con_genero[["text", "gender_clean"]])
+	df_comentarios = df_comentarios.dropna(subset=["text"]).reset_index(drop=True)
+
+	# Crear Dataset de HuggingFace solo con la columna de texto
+	dataset = Dataset.from_pandas(df_comentarios[["text"]])
 
 	return dataset
 
