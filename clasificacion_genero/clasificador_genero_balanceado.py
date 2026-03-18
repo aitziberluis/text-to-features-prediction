@@ -3,7 +3,7 @@ Clasificador de genero usando representaciones de SAE (version balanceada).
 
 Esta version intenta mejorar la deteccion de la clase femenina con:
 1. Entrenamiento incremental con pesos de clase
-2. Multiplicador extra para la clase femenina
+2. Peso fijo suave para la clase femenina (female=1.2, male=1.0)
 3. Ajuste de umbral en eval para optimizar macro-F1 sin colapsar en la clase mayoritaria
 """
 
@@ -154,20 +154,17 @@ def _calcular_pesos_clase(
     y_train: np.ndarray,
     female_multiplier: float = 1.0,
 ) -> Dict[int, float]:
-    """Calcula pesos balanceados por clase con opcion de boost para clase femenina."""
-    n_total = y_train.shape[0]
+    """Devuelve pesos fijos suaves para evitar diferencias grandes entre clases."""
     n_f = int((y_train == 0).sum())
     n_m = int((y_train == 1).sum())
 
     if n_f == 0 or n_m == 0:
         raise ValueError("El split de train debe contener ejemplos de ambas clases.")
 
-    weights = {
-        0: n_total / (2.0 * n_f),
-        1: n_total / (2.0 * n_m),
+    return {
+        0: float(female_multiplier),
+        1: 1.0,
     }
-    weights[0] *= female_multiplier
-    return weights
 
 
 def _pool_features(

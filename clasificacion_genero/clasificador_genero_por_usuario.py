@@ -6,7 +6,7 @@ Idea principal:
 2. Cada autor se representa agregando TODOS sus comentarios en el espacio SAE.
 3. Se entrenan dos variantes:
    - sin_balanceo: sin pesos de clase.
-   - balanceado: pesos inversos por clase + multiplicador extra para female.
+    - balanceado: pesos fijos suaves (female=1.2, male=1.0).
 4. Se ajusta umbral en eval y se reporta resultado final en test.
 """
 
@@ -203,20 +203,17 @@ def _calcular_pesos_clase(
     y_train: np.ndarray,
     female_multiplier: float,
 ) -> Dict[int, float]:
-    """Calcula pesos de clase inversos en train con boost opcional para female."""
-    n_total = y_train.shape[0]
+    """Devuelve pesos fijos suaves para evitar diferencias grandes entre clases."""
     n_f = int((y_train == 0).sum())
     n_m = int((y_train == 1).sum())
 
     if n_f == 0 or n_m == 0:
         raise ValueError("El split de train debe contener ambas clases.")
 
-    weights = {
-        0: n_total / (2.0 * n_f),
-        1: n_total / (2.0 * n_m),
+    return {
+        0: float(female_multiplier),
+        1: 1.0,
     }
-    weights[0] *= female_multiplier
-    return weights
 
 
 def _pool_features(

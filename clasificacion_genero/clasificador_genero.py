@@ -68,6 +68,8 @@ FEATURE_BATCH_SIZE = 16
 TRAIN_EPOCHS = 1
 SGD_ALPHA = 1e-5
 PROGRESS_MIN_INTERVAL = 5
+FEMALE_CLASS_WEIGHT = 1.2
+MALE_CLASS_WEIGHT = 1.0
 
 # Estrategias de agregación de tokens para representar cada texto.
 # - "mean": promedio de activaciones sobre tokens válidos (actual)
@@ -148,8 +150,7 @@ def _dividir_indices_estratificados(labels: np.ndarray) -> Tuple[np.ndarray, np.
 
 
 def _calcular_pesos_clase(y_train: np.ndarray) -> Dict[int, float]:
-    """Calcula pesos balanceados por clase para entrenamiento incremental."""
-    n_total = y_train.shape[0]
+    """Devuelve pesos fijos suaves para evitar diferencias grandes entre clases."""
     n_f = int((y_train == 0).sum())
     n_m = int((y_train == 1).sum())
 
@@ -157,8 +158,8 @@ def _calcular_pesos_clase(y_train: np.ndarray) -> Dict[int, float]:
         raise ValueError("El split de train debe contener ejemplos de ambas clases.")
 
     return {
-        0: n_total / (2.0 * n_f),
-        1: n_total / (2.0 * n_m),
+        0: float(FEMALE_CLASS_WEIGHT),
+        1: float(MALE_CLASS_WEIGHT),
     }
 
 
