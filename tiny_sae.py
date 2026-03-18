@@ -106,6 +106,7 @@ class TrainConfig:
     model_batch_size: int = 8
     save_every_n_tokens: int = 10_000_000
     optimize_every_n_tokens: int = 8192
+    save_repr_every_n_steps: int = 1000
 
 
 def train_sae(
@@ -147,6 +148,10 @@ def train_sae(
 
     handle = hookpoint.register_forward_hook(hook)
 
+    # Directorio donde se guardarán checkpoints y representaciones
+    save_dir = Path("sae-ckpts") / train_cfg.wandb_name
+    save_dir.mkdir(parents=True, exist_ok=True)
+
     try:
         tokens_seen_since_last_step = 0
         tokens_seen_since_last_save = 0
@@ -181,6 +186,27 @@ def train_sae(
             predicted = sae(sae_input)
             error = predicted - sae_output
             loss = (error**2).sum()
+
+            # Guarda representaciones cada cierto número de pasos
+            # - gpt_repr: activaciones originales del modelo (media en tokens)
+            # - sae_repr: salida reconstruida por la SAE (media en tokens)
+            if (
+                train_cfg.save_repr_every_n_steps > 0
+                and step % train_cfg.save_repr_every_n_steps == 0
+            ):
+                with torch.no_grad():
+                    gpt_repr = sae_input.mean(dim=1).detach().cpu()
+                    sae_repr = predicted.mean(dim=1).detach().cpu()
+
+                torch.save(
+                    {
+                        "step": step,
+                        "gpt_repr": gpt_repr,
+                        "sae_repr": sae_repr,
+                    },
+                    save_dir / f"repr_step{step}.pt",
+                )
+
             loss /= ((sae_output - sae_output.mean(dim=1, keepdim=True)) ** 2).sum()
             loss.backward()
 
