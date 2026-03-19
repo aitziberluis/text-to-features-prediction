@@ -34,7 +34,6 @@ OPTIMIZE_EVERY_N_TOKENS = int(os.getenv("SAE_OPTIMIZE_EVERY_N_TOKENS", "8192"))
 
 # Rutas a tus datos
 PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
-PATH_AUTORES = "data/author_profiles.csv"
 
 # Columna de texto en el CSV de comentarios
 TEXT_COLUMN = "body"  # en tu CSV hemos visto que es 'body'
@@ -42,10 +41,6 @@ TEXT_COLUMN = "body"  # en tu CSV hemos visto que es 'body'
 
 # Limitar nº de comentarios para pruebas (None = todos)
 MAX_COMMENTS = None  # p.ej. 200_000 para un subset
-
-# IMPORTANTE: Este experimento usa SOLO género 'f' y 'm'
-# Se excluye 'unknown' porque es una clasificación binaria
-
 
 def configurar_rendimiento_cuda() -> None:
 	"""Activa optimizaciones de matmul en GPUs NVIDIA modernas."""
@@ -112,6 +107,10 @@ def detectar_batch_size_optimo(
 		util = peak / total_mem
 		return util, peak
 
+	# El forward-only subestima ~3x la VRAM real (backward necesita gradientes
+	# + estados del optimizer). Escalamos el target para compensar.
+	fwd_target = target_vram_util / 3.0
+
 	try:
 		lo_ok = 8
 		hi = lo_ok
@@ -123,10 +122,10 @@ def detectar_batch_size_optimo(
 				lo_ok = hi
 				best_util = util
 				print(
-					f"[autotune] batch={hi} | pico VRAM={peak / 1024**3:.2f} GiB "
-					f"({util * 100:.1f}%)"
+					f"[autotune] batch={hi} | pico VRAM(fwd)={peak / 1024**3:.2f} GiB "
+					f"({util * 100:.1f}%) | est. train ~{util * 3 * 100:.0f}%"
 				)
-				if util >= target_vram_util:
+				if util >= fwd_target:
 					return hi
 				hi *= 2
 			except RuntimeError as e:
@@ -145,10 +144,10 @@ def detectar_batch_size_optimo(
 				lo_ok = mid
 				best_util = util
 				print(
-					f"[autotune] batch={mid} | pico VRAM={peak / 1024**3:.2f} GiB "
-					f"({util * 100:.1f}%)"
+					f"[autotune] batch={mid} | pico VRAM(fwd)={peak / 1024**3:.2f} GiB "
+					f"({util * 100:.1f}%) | est. train ~{util * 3 * 100:.0f}%"
 				)
-				if util >= target_vram_util:
+				if util >= fwd_target:
 					return mid
 				left = mid + 1
 			except RuntimeError as e:
@@ -159,7 +158,7 @@ def detectar_batch_size_optimo(
 
 		print(
 			f"[autotune] batch final={lo_ok} "
-			f"(ocupación estimada {best_util * 100:.1f}%)"
+			f"(fwd {best_util * 100:.1f}%, est. train ~{best_util * 3 * 100:.0f}%)"
 		)
 		return max(1, lo_ok)
 	finally:
@@ -172,11 +171,11 @@ def detectar_batch_size_optimo(
 # =====================
 
 
-def cargar_dataset_genero() -> Dataset:
+def cargar_dataset_texto() -> Dataset:
 	"""Carga TODOS los comentarios y prepara un Dataset solo con el texto.
 
 	La SAE es un modelo no supervisado, así que no necesita
-	información de género; se entrena sobre todo el corpus para
+	etiquetas; se entrena sobre todo el corpus de comentarios para
 	que luego pueda reutilizarse en tareas de género, edad, etc.
 	"""
 
@@ -228,17 +227,23 @@ def preparar_modelo_y_datos(dataset: Dataset):
 		)
 		return out
 
-	print("Tokenizando dataset...")
-	tokenized = dataset.map(
-		_tokenize_fn,
-		batched=True,
-		batch_size=TOKENIZE_BATCH_SIZE,
-		num_proc=TOKENIZE_NUM_PROC,
-		load_from_cache_file=True,
-	)
+	# Ruta donde se guarda/carga el dataset tokenizado para no repetir el mapeo
+	cache_path = "data/tokenized_gpt2"
 
-	# Podemos opcionalmente filtrar secuencias que no llenen el contexto completo,
-	# pero como usamos padding a longitud fija, no es necesario.
+	if os.path.isdir(cache_path):
+		print(f"Cargando dataset tokenizado desde {cache_path} ...")
+		tokenized = Dataset.load_from_disk(cache_path)
+	else:
+		print("Tokenizando dataset (primera vez, se guardará en disco)...")
+		tokenized = dataset.map(
+			_tokenize_fn,
+			batched=True,
+			batch_size=TOKENIZE_BATCH_SIZE,
+			num_proc=TOKENIZE_NUM_PROC,
+			load_from_cache_file=True,
+		)
+		tokenized.save_to_disk(cache_path)
+		print(f"Dataset tokenizado guardado en {cache_path}")
 
 	return tokenizer, gpt, tokenized
 
@@ -281,8 +286,8 @@ def entrenar_sae(dataset: Dataset):
 
 	print("Configurando entrenamiento de la SAE...")
 	train_cfg = TrainConfig(
-		wandb_project="tiny-sae-genero",
-		wandb_name="sae-gpt2-genero",
+		wandb_project="tiny-sae-comments",
+		wandb_name="sae-gpt2-comments",
 		save_every_n_tokens=SAVE_EVERY_N_TOKENS,
 		optimize_every_n_tokens=OPTIMIZE_EVERY_N_TOKENS,
 		model_batch_size=batch_size,
@@ -303,7 +308,7 @@ def entrenar_sae(dataset: Dataset):
 	)
 
 	# Guardamos la SAE en disco para usarla luego como extractor de características
-	output_dir = "sae-ckpts/sae-gpt2-genero"
+	output_dir = "sae-ckpts/sae-gpt2-comments"
 	os.makedirs(output_dir, exist_ok=True)
 	print(f"Guardando SAE entrenada en {output_dir} ...")
 	sae.save_to_disk(output_dir)
@@ -312,10 +317,10 @@ def entrenar_sae(dataset: Dataset):
 
 
 if __name__ == "__main__":
-	print("Cargando dataset de comentarios con género...")
-	ds = cargar_dataset_genero()
+	print("Cargando dataset de todos los comentarios...")
+	ds = cargar_dataset_texto()
 
-	print("Tamaño del dataset (comentarios con género m/f):", len(ds))
+	print("Tamaño del dataset (todos los comentarios):", len(ds))
 
 	# Entrena la SAE sobre tus textos
 	entrenar_sae(ds)

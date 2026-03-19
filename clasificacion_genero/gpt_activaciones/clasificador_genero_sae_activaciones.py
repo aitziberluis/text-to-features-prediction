@@ -1,0 +1,693 @@
+"""
+Clasificador de genero usando representaciones SAE sobre GPT-2.
+
+Extrae las activaciones de una capa intermedia de GPT-2, las codifica
+a traves de la SAE entrenada (representacion sparse), las guarda a disco
+para no repetir el forward pass, y entrena clasificadores lineales (SGD)
+en multiples configuraciones:
+
+A nivel de COMENTARIO:
+  - last_token: representacion SAE del ultimo token real del comentario
+  - mean: media de representaciones SAE de todos los tokens reales
+  - Cada uno con y sin balanceo de clase
+
+A nivel de USUARIO:
+  - mean_of_last: media de last_token SAE de todos los comentarios del usuario
+  - mean_of_mean: media de mean SAE de todos los comentarios del usuario
+  - Cada uno con y sin balanceo de clase
+
+Evaluacion solo en eval set (test reservado para uso futuro).
+"""
+
+import json
+import math
+import os
+import sys
+import time
+from pathlib import Path
+from typing import Dict, Optional, Tuple
+
+import dotenv
+import joblib
+import numpy as np
+import pandas as pd
+import torch
+from sklearn.linear_model import SGDClassifier
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
+from sklearn.model_selection import train_test_split
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Importar desde el directorio raiz del proyecto
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from preprocesamiento import preparar_dataset_para_sae
+from tiny_sae import Sae
+
+dotenv.load_dotenv()
+
+# =====================
+# CONFIGURACION
+# =====================
+
+MODEL = "openai-community/gpt2"
+CONTEXT_LEN = 512
+DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+# Ruta a la SAE entrenada sobre todo el corpus
+PATH_SAE = "sae-ckpts/sae-gpt2-comments"
+
+# Rutas de datos
+PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
+PATH_AUTORES = "data/author_profiles.csv"
+TEXT_COLUMN = "body"
+MAX_COMMENTS = None
+
+# Directorio donde se guardan las representaciones SAE extraidas
+ACTIVATIONS_DIR = "data/activaciones_sae_gpt2_genero"
+
+# Splits
+TEST_SIZE = 0.2
+EVAL_SIZE = 0.1
+RANDOM_STATE = 42
+
+# Entrenamiento
+EXTRACT_BATCH_SIZE = 32
+TRAIN_EPOCHS = 1
+SGD_ALPHA = 1e-5
+
+# Balanceo suave
+FEMALE_WEIGHT_BALANCED = 1.1
+MALE_WEIGHT_BALANCED = 0.9
+FEMALE_WEIGHT_DEFAULT = 1.0
+MALE_WEIGHT_DEFAULT = 1.0
+
+# Progreso: imprimir cada hora (3600 s)
+PROGRESS_INTERVAL = 3600
+
+# Configuraciones a correr
+COMMENT_POOLINGS = ["last_token", "mean"]
+USER_POOLINGS = ["mean_of_last", "mean_of_mean"]
+BALANCE_CONFIGS = [
+    {"name": "sin_balanceo", "female_w": FEMALE_WEIGHT_DEFAULT, "male_w": MALE_WEIGHT_DEFAULT},
+    {"name": "balanceado", "female_w": FEMALE_WEIGHT_BALANCED, "male_w": MALE_WEIGHT_BALANCED},
+]
+
+# Output
+OUTPUT_DIR = "modelos/genero_sae_gpt2_activaciones"
+
+
+# =====================
+# CARGA DE DATOS
+# =====================
+
+
+def cargar_datos_genero() -> pd.DataFrame:
+    """Carga comentarios con genero m/f usando preprocesamiento centralizado."""
+    df, _ = preparar_dataset_para_sae(
+        path_comentarios=PATH_COMENTARIOS,
+        path_autores=PATH_AUTORES,
+        max_comments=MAX_COMMENTS,
+        solo_genero_conocido=True,
+    )
+
+    if TEXT_COLUMN in df.columns and TEXT_COLUMN != "text":
+        df = df.rename(columns={TEXT_COLUMN: "text"})
+
+    df = df.dropna(subset=["text", "gender_clean"]).reset_index(drop=True)
+    df = df[df["gender_clean"].isin(["m", "f"])].reset_index(drop=True)
+
+    assert set(df["gender_clean"].unique()) <= {"m", "f"}
+
+    dist = df["gender_clean"].value_counts().to_dict()
+    print(f"Generos presentes: {dist}")
+    return df
+
+
+# =====================
+# EXTRACCION DE REPRESENTACIONES SAE
+# =====================
+
+
+def _pool_sparse_to_dense(
+    top_acts: torch.Tensor,
+    top_indices: torch.Tensor,
+    attention_mask: torch.Tensor,
+    num_latents: int,
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Convierte activaciones sparse SAE (top_acts, top_indices) en vectores
+    densos pooled por last_token y mean de tokens reales.
+
+    Args:
+        top_acts: (batch, seq, k)
+        top_indices: (batch, seq, k)
+        attention_mask: (batch, seq)
+        num_latents: dimension del espacio latente SAE
+
+    Returns:
+        last_token_pooled: (batch, num_latents)
+        mean_pooled: (batch, num_latents)
+    """
+    batch_size, seq_len, k = top_acts.shape
+    device = top_acts.device
+    dtype = top_acts.dtype
+    mask = attention_mask.to(device).float()
+
+    # --- last_token ---
+    lengths = mask.sum(dim=1).clamp(min=1).long() - 1
+    batch_idx = torch.arange(batch_size, device=device)
+
+    last_acts = top_acts[batch_idx, lengths, :]      # (batch, k)
+    last_indices = top_indices[batch_idx, lengths, :] # (batch, k)
+
+    last_pooled = torch.zeros(batch_size, num_latents, device=device, dtype=dtype)
+    last_pooled.scatter_add_(
+        1,
+        last_indices.long(),
+        last_acts,
+    )
+
+    # --- mean (weighted by attention mask) ---
+    # Expandir sparse a dense por token, despues promediar
+    # Para eficiencia, acumulamos directamente con scatter_add
+    mean_pooled = torch.zeros(batch_size, num_latents, device=device, dtype=dtype)
+
+    # Mask per-token: (batch, seq, 1) para anular padding
+    token_mask = mask.unsqueeze(-1)  # (batch, seq, 1)
+    masked_acts = top_acts * token_mask  # (batch, seq, k)
+
+    # Expandir batch dimension para scatter
+    batch_ids = torch.arange(batch_size, device=device).view(-1, 1, 1).expand(-1, seq_len, k)
+
+    # Flatten todo y hacer scatter_add
+    flat_batch = batch_ids.reshape(-1)
+    flat_indices = top_indices.reshape(-1).long()
+    flat_acts = masked_acts.reshape(-1)
+
+    mean_pooled.index_put_(
+        (flat_batch, flat_indices),
+        flat_acts,
+        accumulate=True,
+    )
+
+    valid_tokens = mask.sum(dim=1).clamp(min=1).unsqueeze(1)  # (batch, 1)
+    mean_pooled = mean_pooled / valid_tokens
+
+    return last_pooled, mean_pooled
+
+
+def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
+    """Extrae representaciones SAE de GPT-2 y guarda last_token + mean."""
+
+    n = len(df)
+    print(f"\nExtrayendo representaciones SAE para {n:,} comentarios...")
+    print(f"SAE: {PATH_SAE}")
+
+    # Cargar SAE
+    sae = Sae.load_from_disk(PATH_SAE, device=DEVICE)
+    num_latents = sae.cfg.num_latents
+    hookpoint_name = sae.cfg.hookpoint
+    print(f"SAE cargada: {num_latents} latentes, k={sae.cfg.k}, hookpoint={hookpoint_name}")
+
+    # Cargar modelo GPT-2
+    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL,
+        device_map={"": DEVICE},
+        torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+    )
+    model.eval()
+
+    hookpoint_module = model.get_submodule(hookpoint_name)
+    captured = {}
+
+    def hook(module, inputs, outputs):
+        if isinstance(outputs, tuple):
+            outputs = outputs[0]
+        captured["act"] = outputs.detach()
+
+    handle = hookpoint_module.register_forward_hook(hook)
+
+    total_steps = math.ceil(n / EXTRACT_BATCH_SIZE)
+
+    # Pre-allocate arrays en disco con memmap
+    os.makedirs(ACTIVATIONS_DIR, exist_ok=True)
+    last_token_path = os.path.join(ACTIVATIONS_DIR, "last_token.npy")
+    mean_token_path = os.path.join(ACTIVATIONS_DIR, "mean_token.npy")
+
+    last_token_mmap = np.lib.format.open_memmap(
+        last_token_path, mode="w+", dtype=np.float32, shape=(n, num_latents)
+    )
+    mean_token_mmap = np.lib.format.open_memmap(
+        mean_token_path, mode="w+", dtype=np.float32, shape=(n, num_latents)
+    )
+
+    textos = df["text"].tolist()
+    last_print = time.time()
+
+    try:
+        with torch.no_grad():
+            for step, start in enumerate(range(0, n, EXTRACT_BATCH_SIZE)):
+                end = min(start + EXTRACT_BATCH_SIZE, n)
+                batch_texts = textos[start:end]
+
+                tokens = tokenizer(
+                    batch_texts,
+                    max_length=CONTEXT_LEN,
+                    truncation=True,
+                    padding="max_length",
+                    return_attention_mask=True,
+                    return_tensors="pt",
+                )
+                input_ids = tokens["input_ids"].to(model.device)
+                attention_mask = tokens["attention_mask"].to(model.device)
+
+                model(input_ids=input_ids, attention_mask=attention_mask)
+
+                acts = captured["act"].to(sae.dtype).to(sae.device)
+                top_acts, top_indices = sae.encode(acts)
+
+                last_pooled, mean_pooled = _pool_sparse_to_dense(
+                    top_acts=top_acts,
+                    top_indices=top_indices,
+                    attention_mask=attention_mask,
+                    num_latents=num_latents,
+                )
+
+                last_token_mmap[start:end] = last_pooled.float().cpu().numpy()
+                mean_token_mmap[start:end] = mean_pooled.float().cpu().numpy()
+
+                now = time.time()
+                if now - last_print >= PROGRESS_INTERVAL or step == 0 or step == total_steps - 1:
+                    pct = 100.0 * (step + 1) / total_steps
+                    print(f"  [{pct:5.1f}%] step {step+1}/{total_steps} "
+                          f"({end:,}/{n:,} comentarios)")
+                    last_print = now
+
+    finally:
+        handle.remove()
+
+    # Flush memmap
+    del last_token_mmap, mean_token_mmap
+
+    # Guardar labels y authors
+    labels = np.array([0 if g == "f" else 1 for g in df["gender_clean"]], dtype=np.int8)
+    np.save(os.path.join(ACTIVATIONS_DIR, "labels.npy"), labels)
+
+    if "author" in df.columns:
+        df["author"].to_frame().to_parquet(
+            os.path.join(ACTIVATIONS_DIR, "authors.parquet"), index=False
+        )
+
+    # Guardar metadata
+    meta = {
+        "model": MODEL, "sae_path": PATH_SAE,
+        "hookpoint": hookpoint_name, "context_len": CONTEXT_LEN,
+        "num_latents": num_latents, "sae_k": sae.cfg.k,
+        "n_comments": n,
+        "label_map": {"f": 0, "m": 1},
+    }
+    with open(os.path.join(ACTIVATIONS_DIR, "meta.json"), "w") as f:
+        json.dump(meta, f, indent=2)
+
+    print(f"Representaciones SAE guardadas en {ACTIVATIONS_DIR}/")
+
+
+def cargar_o_extraer_activaciones(
+    df: pd.DataFrame,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
+    """Carga representaciones SAE de disco si existen, sino las extrae y guarda.
+
+    Returns: (last_token, mean_token, labels, authors_array, num_latents)
+    """
+    meta_path = os.path.join(ACTIVATIONS_DIR, "meta.json")
+
+    if os.path.exists(meta_path):
+        with open(meta_path) as f:
+            meta = json.load(f)
+
+        if meta.get("n_comments") == len(df):
+            print(f"Cargando representaciones SAE desde {ACTIVATIONS_DIR}/ ...")
+            last_token = np.load(os.path.join(ACTIVATIONS_DIR, "last_token.npy"), mmap_mode="r")
+            mean_token = np.load(os.path.join(ACTIVATIONS_DIR, "mean_token.npy"), mmap_mode="r")
+            labels = np.load(os.path.join(ACTIVATIONS_DIR, "labels.npy"))
+            num_latents = meta["num_latents"]
+
+            authors = None
+            authors_path = os.path.join(ACTIVATIONS_DIR, "authors.parquet")
+            if os.path.exists(authors_path):
+                authors = pd.read_parquet(authors_path)["author"].to_numpy()
+
+            print(f"  last_token: {last_token.shape}, mean_token: {mean_token.shape}")
+            return last_token, mean_token, labels, authors, num_latents
+        else:
+            print(f"Numero de comentarios cambio ({meta['n_comments']} -> {len(df)}). Re-extrayendo...")
+
+    _extraer_y_guardar_activaciones(df)
+
+    return cargar_o_extraer_activaciones(df)
+
+
+# =====================
+# SPLITS
+# =====================
+
+
+def dividir_comentarios(labels: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Train/eval/test estratificado a nivel de comentario."""
+    indices = np.arange(len(labels))
+    train_eval_idx, test_idx = train_test_split(
+        indices, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=labels,
+    )
+    eval_rel = EVAL_SIZE / (1.0 - TEST_SIZE)
+    train_idx, eval_idx = train_test_split(
+        train_eval_idx, test_size=eval_rel, random_state=RANDOM_STATE,
+        stratify=labels[train_eval_idx],
+    )
+    return train_idx, eval_idx, test_idx
+
+
+def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Train/eval/test estratificado a nivel de usuario."""
+    user_df = df[["author", "gender_clean"]].drop_duplicates("author")
+    authors = user_df["author"].to_numpy()
+    user_labels = np.array([0 if g == "f" else 1 for g in user_df["gender_clean"]], dtype=np.int8)
+
+    train_eval_auth, test_auth = train_test_split(
+        authors, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=user_labels,
+    )
+    mask_te = np.isin(authors, train_eval_auth)
+    user_labels_te = user_labels[mask_te]
+
+    eval_rel = EVAL_SIZE / (1.0 - TEST_SIZE)
+    train_auth, eval_auth = train_test_split(
+        train_eval_auth, test_size=eval_rel, random_state=RANDOM_STATE,
+        stratify=user_labels_te,
+    )
+    return train_auth, eval_auth, test_auth
+
+
+# =====================
+# EVALUACION
+# =====================
+
+
+def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
+    """Imprime y devuelve metricas de evaluacion."""
+    acc = accuracy_score(y_true, y_pred)
+    bal_acc = balanced_accuracy_score(y_true, y_pred)
+    f1_mac = f1_score(y_true, y_pred, average="macro", zero_division=0)
+    f1_w = f1_score(y_true, y_pred, average="weighted", zero_division=0)
+    prec_c = precision_score(y_true, y_pred, average=None, labels=[0, 1], zero_division=0)
+    rec_c = recall_score(y_true, y_pred, average=None, labels=[0, 1], zero_division=0)
+    f1_c = f1_score(y_true, y_pred, average=None, labels=[0, 1], zero_division=0)
+
+    print(f"\n=== {nombre} ===")
+    print(f"Accuracy: {acc:.4f} | Balanced Acc: {bal_acc:.4f} | F1 macro: {f1_mac:.4f} | F1 weighted: {f1_w:.4f}")
+    print(f"  female: prec={prec_c[0]:.4f} rec={rec_c[0]:.4f} f1={f1_c[0]:.4f}")
+    print(f"  male:   prec={prec_c[1]:.4f} rec={rec_c[1]:.4f} f1={f1_c[1]:.4f}")
+    print(classification_report(y_true, y_pred, target_names=["female", "male"], zero_division=0))
+    print("Confusion matrix:")
+    print(confusion_matrix(y_true, y_pred))
+
+    return {
+        "accuracy": float(acc), "balanced_accuracy": float(bal_acc),
+        "f1_macro": float(f1_mac), "f1_weighted": float(f1_w),
+        "precision_female": float(prec_c[0]), "recall_female": float(rec_c[0]), "f1_female": float(f1_c[0]),
+        "precision_male": float(prec_c[1]), "recall_male": float(rec_c[1]), "f1_male": float(f1_c[1]),
+    }
+
+
+# =====================
+# ENTRENAMIENTO NIVEL COMENTARIO
+# =====================
+
+
+def entrenar_comentario(
+    X_train: np.ndarray, y_train: np.ndarray,
+    X_eval: np.ndarray, y_eval: np.ndarray,
+    female_w: float, male_w: float,
+    pooling_name: str, balance_name: str,
+) -> Tuple[SGDClassifier, Dict]:
+    """Entrena SGD incremental a nivel comentario y evalua en eval."""
+    run_name = f"comentario_{pooling_name}_{balance_name}"
+    print(f"\n{'='*60}")
+    print(f"ENTRENANDO: {run_name}")
+    print(f"  Train: {len(y_train):,} | Eval: {len(y_eval):,}")
+    print(f"  Pesos: female={female_w}, male={male_w}")
+    print(f"{'='*60}")
+
+    clf = SGDClassifier(
+        loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+        random_state=RANDOM_STATE, average=True,
+    )
+
+    classes = np.array([0, 1], dtype=np.int64)
+    n = len(y_train)
+    batch_size = 4096
+    total_steps = math.ceil(n / batch_size)
+    last_print = time.time()
+
+    for epoch in range(TRAIN_EPOCHS):
+        perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(n)
+        for step, start in enumerate(range(0, n, batch_size)):
+            idx = perm[start:start + batch_size]
+            xb = np.asarray(X_train[idx])
+            yb = y_train[idx]
+            sw = np.where(yb == 0, female_w, male_w).astype(np.float32)
+
+            if epoch == 0 and step == 0:
+                clf.partial_fit(xb, yb, classes=classes, sample_weight=sw)
+            else:
+                clf.partial_fit(xb, yb, sample_weight=sw)
+
+            now = time.time()
+            if now - last_print >= PROGRESS_INTERVAL or step == total_steps - 1:
+                pct = 100.0 * (step + 1) / total_steps
+                print(f"  [Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
+                last_print = now
+
+    # Eval
+    y_pred = clf.predict(np.asarray(X_eval))
+    metrics = evaluar(f"EVAL {run_name}", y_eval, y_pred)
+
+    return clf, metrics
+
+
+# =====================
+# ENTRENAMIENTO NIVEL USUARIO
+# =====================
+
+
+def _agregar_por_usuario(
+    authors: np.ndarray,
+    features: np.ndarray,
+    labels: np.ndarray,
+    author_set: set,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Agrega features por media de usuario para un subconjunto de autores."""
+    mask = np.isin(authors, list(author_set))
+    sub_authors = authors[mask]
+    sub_features = features[mask]
+    sub_labels = labels[mask]
+
+    df_tmp = pd.DataFrame({"author": sub_authors, "label": sub_labels})
+    df_tmp["row"] = np.arange(len(sub_authors))
+
+    user_feats = []
+    user_labels = []
+
+    for author, group in df_tmp.groupby("author", sort=False):
+        rows = group["row"].to_numpy()
+        user_feat = np.asarray(sub_features[rows]).mean(axis=0)
+        user_feats.append(user_feat)
+        user_labels.append(int(group["label"].iloc[0]))
+
+    return np.array(user_feats, dtype=np.float32), np.array(user_labels, dtype=np.int64)
+
+
+def entrenar_usuario(
+    authors: np.ndarray,
+    features: np.ndarray,
+    labels: np.ndarray,
+    train_auth: np.ndarray, eval_auth: np.ndarray,
+    female_w: float, male_w: float,
+    pooling_name: str, balance_name: str,
+) -> Tuple[SGDClassifier, Dict]:
+    """Entrena SGD a nivel usuario y evalua en eval."""
+    run_name = f"usuario_{pooling_name}_{balance_name}"
+
+    print(f"\nAgregando features por usuario para {run_name}...")
+    X_train, y_train = _agregar_por_usuario(authors, features, labels, set(train_auth))
+    X_eval, y_eval = _agregar_por_usuario(authors, features, labels, set(eval_auth))
+
+    print(f"\n{'='*60}")
+    print(f"ENTRENANDO: {run_name}")
+    print(f"  Train users: {len(y_train):,} | Eval users: {len(y_eval):,}")
+    print(f"  Pesos: female={female_w}, male={male_w}")
+    print(f"{'='*60}")
+
+    clf = SGDClassifier(
+        loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+        random_state=RANDOM_STATE, average=True,
+    )
+
+    classes = np.array([0, 1], dtype=np.int64)
+    sw = np.where(y_train == 0, female_w, male_w).astype(np.float32)
+
+    clf.partial_fit(X_train, y_train, classes=classes, sample_weight=sw)
+
+    for epoch in range(1, TRAIN_EPOCHS):
+        perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(len(y_train))
+        sw_perm = np.where(y_train[perm] == 0, female_w, male_w).astype(np.float32)
+        clf.partial_fit(X_train[perm], y_train[perm], sample_weight=sw_perm)
+
+    y_pred = clf.predict(X_eval)
+    metrics = evaluar(f"EVAL {run_name}", y_eval, y_pred)
+
+    return clf, metrics
+
+
+# =====================
+# MAIN
+# =====================
+
+
+def main():
+    print("=" * 70)
+    print("CLASIFICADOR GENERO - REPRESENTACIONES SAE SOBRE GPT-2")
+    print("=" * 70)
+
+    # Verificar que la SAE existe
+    if not Path(PATH_SAE).exists():
+        raise FileNotFoundError(
+            f"No se encuentra la SAE en {PATH_SAE}. "
+            "Primero ejecuta sae_gpt.py para entrenarla."
+        )
+
+    # 1. Cargar datos
+    df = cargar_datos_genero()
+
+    if "author" not in df.columns:
+        print("AVISO: No hay columna 'author', se omitiran predicciones a nivel usuario.")
+        has_author = False
+    else:
+        df["author"] = df["author"].astype(str).str.strip()
+        has_author = True
+
+    # 2. Extraer / cargar representaciones SAE
+    last_token, mean_token, labels, authors, num_latents = cargar_o_extraer_activaciones(df)
+    print(f"\nRepresentaciones SAE: num_latents={num_latents}, comentarios={len(labels):,}")
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    all_results = {}
+
+    # ==============================
+    # A) NIVEL COMENTARIO
+    # ==============================
+    print("\n" + "#" * 70)
+    print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
+    print("#" * 70)
+
+    train_idx, eval_idx, test_idx = dividir_comentarios(labels)
+    y_train_c = labels[train_idx]
+    y_eval_c = labels[eval_idx]
+
+    print(f"\nSplit comentarios: train={len(train_idx):,} eval={len(eval_idx):,} test={len(test_idx):,}")
+    print(f"  Train dist: f={int((y_train_c==0).sum()):,} m={int((y_train_c==1).sum()):,}")
+    print(f"  Eval  dist: f={int((y_eval_c==0).sum()):,} m={int((y_eval_c==1).sum()):,}")
+
+    comment_features = {
+        "last_token": (last_token, train_idx, eval_idx),
+        "mean": (mean_token, train_idx, eval_idx),
+    }
+
+    for pooling_name in COMMENT_POOLINGS:
+        feats, tr_idx, ev_idx = comment_features[pooling_name]
+        X_tr = feats[tr_idx]
+        X_ev = feats[ev_idx]
+
+        for bal_cfg in BALANCE_CONFIGS:
+            clf, metrics = entrenar_comentario(
+                X_train=X_tr, y_train=y_train_c,
+                X_eval=X_ev, y_eval=y_eval_c,
+                female_w=bal_cfg["female_w"], male_w=bal_cfg["male_w"],
+                pooling_name=pooling_name, balance_name=bal_cfg["name"],
+            )
+
+            run_key = f"comentario_{pooling_name}_{bal_cfg['name']}"
+            all_results[run_key] = metrics
+
+            model_path = os.path.join(OUTPUT_DIR, f"{run_key}.pkl")
+            joblib.dump(clf, model_path)
+            print(f"  -> Modelo guardado: {model_path}")
+
+    # ==============================
+    # B) NIVEL USUARIO
+    # ==============================
+    if has_author and authors is not None:
+        print("\n" + "#" * 70)
+        print("# B) CLASIFICACION A NIVEL DE USUARIO")
+        print("#" * 70)
+
+        train_auth, eval_auth, test_auth = dividir_usuarios(df)
+        print(f"\nSplit usuarios: train={len(train_auth):,} eval={len(eval_auth):,} test={len(test_auth):,}")
+
+        user_features = {
+            "mean_of_last": last_token,
+            "mean_of_mean": mean_token,
+        }
+
+        for pooling_name in USER_POOLINGS:
+            feats = user_features[pooling_name]
+            for bal_cfg in BALANCE_CONFIGS:
+                clf, metrics = entrenar_usuario(
+                    authors=authors,
+                    features=feats,
+                    labels=labels,
+                    train_auth=train_auth, eval_auth=eval_auth,
+                    female_w=bal_cfg["female_w"], male_w=bal_cfg["male_w"],
+                    pooling_name=pooling_name, balance_name=bal_cfg["name"],
+                )
+
+                run_key = f"usuario_{pooling_name}_{bal_cfg['name']}"
+                all_results[run_key] = metrics
+
+                model_path = os.path.join(OUTPUT_DIR, f"{run_key}.pkl")
+                joblib.dump(clf, model_path)
+                print(f"  -> Modelo guardado: {model_path}")
+
+    # ==============================
+    # RESUMEN FINAL
+    # ==============================
+    print("\n\n" + "=" * 70)
+    print("RESUMEN DE RESULTADOS (EVAL)")
+    print("=" * 70)
+    print(f"{'Config':<45} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {'F1_f':>6} {'F1_m':>6}")
+    print("-" * 80)
+    for key, m in all_results.items():
+        print(f"{key:<45} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
+              f"{m['f1_macro']:.4f} {m['f1_female']:.4f} {m['f1_male']:.4f}")
+
+    # Guardar resumen JSON
+    summary_path = os.path.join(OUTPUT_DIR, "resultados_resumen.json")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump(all_results, f, ensure_ascii=False, indent=2)
+    print(f"\nResumen guardado en: {summary_path}")
+
+    print("\n" + "=" * 70)
+    print("COMPLETADO - Test reservado para uso futuro")
+    print("=" * 70)
+
+
+if __name__ == "__main__":
+    main()

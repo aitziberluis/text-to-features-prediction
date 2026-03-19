@@ -107,6 +107,10 @@ def detectar_batch_size_optimo(
         util = peak / total_mem
         return util, peak
 
+    # El forward-only subestima ~3x la VRAM real (backward necesita gradientes
+    # + estados del optimizer). Escalamos el target para compensar.
+    fwd_target = target_vram_util / 3.0
+
     try:
         lo_ok = 8
         hi = lo_ok
@@ -118,10 +122,10 @@ def detectar_batch_size_optimo(
                 lo_ok = hi
                 best_util = util
                 print(
-                    f"[autotune] batch={hi} | pico VRAM={peak / 1024**3:.2f} GiB "
-                    f"({util * 100:.1f}%)"
+                    f"[autotune] batch={hi} | pico VRAM(fwd)={peak / 1024**3:.2f} GiB "
+                    f"({util * 100:.1f}%) | est. train ~{util * 3 * 100:.0f}%"
                 )
-                if util >= target_vram_util:
+                if util >= fwd_target:
                     return hi
                 hi *= 2
             except RuntimeError as e:
@@ -140,10 +144,10 @@ def detectar_batch_size_optimo(
                 lo_ok = mid
                 best_util = util
                 print(
-                    f"[autotune] batch={mid} | pico VRAM={peak / 1024**3:.2f} GiB "
-                    f"({util * 100:.1f}%)"
+                    f"[autotune] batch={mid} | pico VRAM(fwd)={peak / 1024**3:.2f} GiB "
+                    f"({util * 100:.1f}%) | est. train ~{util * 3 * 100:.0f}%"
                 )
-                if util >= target_vram_util:
+                if util >= fwd_target:
                     return mid
                 left = mid + 1
             except RuntimeError as e:
@@ -154,7 +158,7 @@ def detectar_batch_size_optimo(
 
         print(
             f"[autotune] batch final={lo_ok} "
-            f"(ocupación estimada {best_util * 100:.1f}%)"
+            f"(fwd {best_util * 100:.1f}%, est. train ~{best_util * 3 * 100:.0f}%)"
         )
         return max(1, lo_ok)
     finally:
@@ -229,14 +233,23 @@ def preparar_modelo_y_datos(dataset: Dataset):
         )
         return out
 
-    print("Tokenizando dataset...")
-    tokenized = dataset.map(
-        _tokenize_fn,
-        batched=True,
-        batch_size=TOKENIZE_BATCH_SIZE,
-        num_proc=TOKENIZE_NUM_PROC,
-        load_from_cache_file=True,
-    )
+    # Ruta donde se guarda/carga el dataset tokenizado para no repetir el mapeo
+    cache_path = "data/tokenized_qwen"
+
+    if os.path.isdir(cache_path):
+        print(f"Cargando dataset tokenizado desde {cache_path} ...")
+        tokenized = Dataset.load_from_disk(cache_path)
+    else:
+        print("Tokenizando dataset (primera vez, se guardará en disco)...")
+        tokenized = dataset.map(
+            _tokenize_fn,
+            batched=True,
+            batch_size=TOKENIZE_BATCH_SIZE,
+            num_proc=TOKENIZE_NUM_PROC,
+            load_from_cache_file=True,
+        )
+        tokenized.save_to_disk(cache_path)
+        print(f"Dataset tokenizado guardado en {cache_path}")
 
     return tokenizer, model, tokenized
 
