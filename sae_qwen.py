@@ -294,15 +294,20 @@ def entrenar_sae(dataset: Dataset):
     )
     print(f"Batch size usado para entrenamiento SAE: {batch_size}")
 
+    # Checkpoint cada 20% del dataset
+    total_tokens = len(tokenized) * CONTEXT_LEN
+    save_every = max(1, total_tokens // 5)
+    print(f"Total tokens: {total_tokens:,} | checkpoint cada 20% = {save_every:,} tokens")
+
     print("Configurando entrenamiento de la SAE...")
     train_cfg = TrainConfig(
         wandb_project="tiny-sae-qwen",
         wandb_name="sae-qwen3.5-2b",
-        save_every_n_tokens=10_000_000,
+        save_every_n_tokens=save_every,
         optimize_every_n_tokens=8192,
         model_batch_size=batch_size,
         mask_first_n_tokens=1,
-        save_repr_every_n_steps=SAVE_REPR_EVERY_N_STEPS,
+        save_repr_every_n_steps=0,            # desactivar guardado de representaciones
     )
 
     print("Iniciando entrenamiento de la SAE (Qwen)...")

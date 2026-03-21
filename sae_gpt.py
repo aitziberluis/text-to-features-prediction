@@ -284,11 +284,16 @@ def entrenar_sae(dataset: Dataset):
 	)
 	print(f"Batch size usado para entrenamiento SAE: {batch_size}")
 
+	# Checkpoint cada 20% del dataset
+	total_tokens = len(tokenized) * CONTEXT_LEN
+	save_every = max(1, total_tokens // 5)
+	print(f"Total tokens: {total_tokens:,} | checkpoint cada 20% = {save_every:,} tokens")
+
 	print("Configurando entrenamiento de la SAE...")
 	train_cfg = TrainConfig(
 		wandb_project="tiny-sae-comments",
 		wandb_name="sae-gpt2-comments",
-		save_every_n_tokens=SAVE_EVERY_N_TOKENS,
+		save_every_n_tokens=save_every,
 		optimize_every_n_tokens=OPTIMIZE_EVERY_N_TOKENS,
 		model_batch_size=batch_size,
 		mask_first_n_tokens=1,

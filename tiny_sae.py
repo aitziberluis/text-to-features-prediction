@@ -155,7 +155,7 @@ def train_sae(
     try:
         tokens_seen_since_last_step = 0
         tokens_seen_since_last_save = 0
-        bar = tqdm(token_iterator)
+        bar = tqdm(token_iterator, mininterval=86400, maxinterval=86400)
         batch = []
         for step, tokens in enumerate(bar):
 
