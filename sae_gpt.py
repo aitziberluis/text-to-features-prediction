@@ -32,6 +32,11 @@ SAVE_REPR_EVERY_N_STEPS = int(os.getenv("SAE_SAVE_REPR_EVERY_N_STEPS", "1000"))
 SAVE_EVERY_N_TOKENS = int(os.getenv("SAE_SAVE_EVERY_N_TOKENS", "10000000"))
 OPTIMIZE_EVERY_N_TOKENS = int(os.getenv("SAE_OPTIMIZE_EVERY_N_TOKENS", "8192"))
 
+# Directorio para checkpoints (en /hdd para no ocupar /home)
+CHECKPOINT_DIR = os.getenv(
+	"SAE_CHECKPOINT_DIR", "/hdd/aitziber.l/TFM/sae-ckpts/sae-gpt2-comments"
+)
+
 # Rutas a tus datos
 PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
 
@@ -289,6 +294,21 @@ def entrenar_sae(dataset: Dataset):
 	save_every = max(1, total_tokens // 5)
 	print(f"Total tokens: {total_tokens:,} | checkpoint cada 20% = {save_every:,} tokens")
 
+	# Validar que el directorio de checkpoints es escribible
+	os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+	_test_file = os.path.join(CHECKPOINT_DIR, ".write_test")
+	try:
+		with open(_test_file, "w") as f:
+			f.write("ok")
+		os.remove(_test_file)
+	except OSError as e:
+		raise RuntimeError(
+			f"No se puede escribir en {CHECKPOINT_DIR}. "
+			"Pide al admin: sudo mkdir -p /hdd/aitziber.l && "
+			"sudo chown aitziber.l:aitziber.l /hdd/aitziber.l"
+		) from e
+	print(f"Checkpoints se guardar\u00e1n en: {CHECKPOINT_DIR}")
+
 	print("Configurando entrenamiento de la SAE...")
 	train_cfg = TrainConfig(
 		wandb_project="tiny-sae-comments",
@@ -298,6 +318,7 @@ def entrenar_sae(dataset: Dataset):
 		model_batch_size=batch_size,
 		mask_first_n_tokens=1,
 		save_repr_every_n_steps=SAVE_REPR_EVERY_N_STEPS,
+		checkpoint_dir=CHECKPOINT_DIR,
 	)
 
 	print(f"Representaciones SAE/GPT guardadas cada {SAVE_REPR_EVERY_N_STEPS} steps")
@@ -313,9 +334,9 @@ def entrenar_sae(dataset: Dataset):
 	)
 
 	# Guardamos la SAE en disco para usarla luego como extractor de características
-	output_dir = "sae-ckpts/sae-gpt2-comments"
+	output_dir = CHECKPOINT_DIR
 	os.makedirs(output_dir, exist_ok=True)
-	print(f"Guardando SAE entrenada en {output_dir} ...")
+	print(f"Guardando SAE final en {output_dir} ...")
 	sae.save_to_disk(output_dir)
 
 	print("Entrenamiento de SAE finalizado.")

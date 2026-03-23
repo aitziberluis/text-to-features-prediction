@@ -107,6 +107,7 @@ class TrainConfig:
     save_every_n_tokens: int = 10_000_000
     optimize_every_n_tokens: int = 8192
     save_repr_every_n_steps: int = 1000
+    checkpoint_dir: str = ""  # si vacío, usa sae-ckpts/{wandb_name}
 
 
 def train_sae(
@@ -149,7 +150,10 @@ def train_sae(
     handle = hookpoint.register_forward_hook(hook)
 
     # Directorio donde se guardarán checkpoints y representaciones
-    save_dir = Path("sae-ckpts") / train_cfg.wandb_name
+    if train_cfg.checkpoint_dir:
+        save_dir = Path(train_cfg.checkpoint_dir)
+    else:
+        save_dir = Path("sae-ckpts") / train_cfg.wandb_name
     save_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -219,7 +223,14 @@ def train_sae(
                     wandb.log({"fvu": loss.item()}, step=step)
 
             if tokens_seen_since_last_save >= train_cfg.save_every_n_tokens:
-                sae.save_to_disk(f"sae-ckpts/{train_cfg.wandb_name}")
+                # Borrar checkpoint anterior antes de guardar el nuevo
+                ckpt_safetensors = save_dir / "sae.safetensors"
+                ckpt_cfg = save_dir / "cfg.json"
+                if ckpt_safetensors.exists():
+                    ckpt_safetensors.unlink()
+                if ckpt_cfg.exists():
+                    ckpt_cfg.unlink()
+                sae.save_to_disk(save_dir)
                 tokens_seen_since_last_save = 0
 
             bar.set_postfix(loss=loss.item())

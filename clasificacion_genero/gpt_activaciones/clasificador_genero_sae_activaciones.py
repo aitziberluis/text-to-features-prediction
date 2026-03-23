@@ -28,7 +28,6 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import dotenv
-import joblib
 import numpy as np
 import pandas as pd
 import torch
@@ -98,9 +97,6 @@ BALANCE_CONFIGS = [
     {"name": "sin_balanceo", "female_w": FEMALE_WEIGHT_DEFAULT, "male_w": MALE_WEIGHT_DEFAULT},
     {"name": "balanceado", "female_w": FEMALE_WEIGHT_BALANCED, "male_w": MALE_WEIGHT_BALANCED},
 ]
-
-# Output
-OUTPUT_DIR = "modelos/genero_sae_gpt2_activaciones"
 
 
 # =====================
