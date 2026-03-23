@@ -202,8 +202,8 @@ def _pool_sparse_to_dense(
     return last_pooled, mean_pooled
 
 
-def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
-    """Extrae representaciones SAE de GPT-2 y guarda last_token + mean."""
+def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
+    """Extrae representaciones SAE de GPT-2 en memoria (sin guardar a disco)."""
 
     n = len(df)
     print(f"\nExtrayendo representaciones SAE para {n:,} comentarios...")
@@ -239,17 +239,9 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
 
     total_steps = math.ceil(n / EXTRACT_BATCH_SIZE)
 
-    # Pre-allocate arrays en disco con memmap
-    os.makedirs(ACTIVATIONS_DIR, exist_ok=True)
-    last_token_path = os.path.join(ACTIVATIONS_DIR, "last_token.npy")
-    mean_token_path = os.path.join(ACTIVATIONS_DIR, "mean_token.npy")
-
-    last_token_mmap = np.lib.format.open_memmap(
-        last_token_path, mode="w+", dtype=np.float32, shape=(n, num_latents)
-    )
-    mean_token_mmap = np.lib.format.open_memmap(
-        mean_token_path, mode="w+", dtype=np.float32, shape=(n, num_latents)
-    )
+    # Pre-allocate arrays en memoria
+    last_token_arr = np.zeros((n, num_latents), dtype=np.float32)
+    mean_token_arr = np.zeros((n, num_latents), dtype=np.float32)
 
     textos = df["text"].tolist()
     last_print = time.time()
@@ -283,8 +275,8 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
                     num_latents=num_latents,
                 )
 
-                last_token_mmap[start:end] = last_pooled.float().cpu().numpy()
-                mean_token_mmap[start:end] = mean_pooled.float().cpu().numpy()
+                last_token_arr[start:end] = last_pooled.float().cpu().numpy()
+                mean_token_arr[start:end] = mean_pooled.float().cpu().numpy()
 
                 now = time.time()
                 if now - last_print >= PROGRESS_INTERVAL or step == 0 or step == total_steps - 1:
@@ -296,65 +288,21 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     finally:
         handle.remove()
 
-    # Flush memmap
-    del last_token_mmap, mean_token_mmap
-
-    # Guardar labels y authors
     labels = np.array([0 if g == "f" else 1 for g in df["gender_clean"]], dtype=np.int8)
-    np.save(os.path.join(ACTIVATIONS_DIR, "labels.npy"), labels)
+    authors = df["author"].to_numpy() if "author" in df.columns else None
 
-    if "author" in df.columns:
-        df["author"].to_frame().to_parquet(
-            os.path.join(ACTIVATIONS_DIR, "authors.parquet"), index=False
-        )
-
-    # Guardar metadata
-    meta = {
-        "model": MODEL, "sae_path": PATH_SAE,
-        "hookpoint": hookpoint_name, "context_len": CONTEXT_LEN,
-        "num_latents": num_latents, "sae_k": sae.cfg.k,
-        "n_comments": n,
-        "label_map": {"f": 0, "m": 1},
-    }
-    with open(os.path.join(ACTIVATIONS_DIR, "meta.json"), "w") as f:
-        json.dump(meta, f, indent=2)
-
-    print(f"Representaciones SAE guardadas en {ACTIVATIONS_DIR}/")
+    print(f"Representaciones SAE extraidas en memoria (sin guardar a disco).")
+    return last_token_arr, mean_token_arr, labels, authors, num_latents
 
 
-def cargar_o_extraer_activaciones(
+def extraer_activaciones(
     df: pd.DataFrame,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
-    """Carga representaciones SAE de disco si existen, sino las extrae y guarda.
+    """Extrae representaciones SAE en memoria (no guarda nada a disco).
 
     Returns: (last_token, mean_token, labels, authors_array, num_latents)
     """
-    meta_path = os.path.join(ACTIVATIONS_DIR, "meta.json")
-
-    if os.path.exists(meta_path):
-        with open(meta_path) as f:
-            meta = json.load(f)
-
-        if meta.get("n_comments") == len(df):
-            print(f"Cargando representaciones SAE desde {ACTIVATIONS_DIR}/ ...")
-            last_token = np.load(os.path.join(ACTIVATIONS_DIR, "last_token.npy"), mmap_mode="r")
-            mean_token = np.load(os.path.join(ACTIVATIONS_DIR, "mean_token.npy"), mmap_mode="r")
-            labels = np.load(os.path.join(ACTIVATIONS_DIR, "labels.npy"))
-            num_latents = meta["num_latents"]
-
-            authors = None
-            authors_path = os.path.join(ACTIVATIONS_DIR, "authors.parquet")
-            if os.path.exists(authors_path):
-                authors = pd.read_parquet(authors_path)["author"].to_numpy()
-
-            print(f"  last_token: {last_token.shape}, mean_token: {mean_token.shape}")
-            return last_token, mean_token, labels, authors, num_latents
-        else:
-            print(f"Numero de comentarios cambio ({meta['n_comments']} -> {len(df)}). Re-extrayendo...")
-
-    _extraer_y_guardar_activaciones(df)
-
-    return cargar_o_extraer_activaciones(df)
+    return _extraer_activaciones(df)
 
 
 # =====================
@@ -584,11 +532,10 @@ def main():
         df["author"] = df["author"].astype(str).str.strip()
         has_author = True
 
-    # 2. Extraer / cargar representaciones SAE
-    last_token, mean_token, labels, authors, num_latents = cargar_o_extraer_activaciones(df)
+    # 2. Extraer representaciones SAE (solo en memoria, sin guardar a disco)
+    last_token, mean_token, labels, authors, num_latents = extraer_activaciones(df)
     print(f"\nRepresentaciones SAE: num_latents={num_latents}, comentarios={len(labels):,}")
 
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
     all_results = {}
 
     # ==============================
@@ -627,10 +574,6 @@ def main():
             run_key = f"comentario_{pooling_name}_{bal_cfg['name']}"
             all_results[run_key] = metrics
 
-            model_path = os.path.join(OUTPUT_DIR, f"{run_key}.pkl")
-            joblib.dump(clf, model_path)
-            print(f"  -> Modelo guardado: {model_path}")
-
     # ==============================
     # B) NIVEL USUARIO
     # ==============================
@@ -662,10 +605,6 @@ def main():
                 run_key = f"usuario_{pooling_name}_{bal_cfg['name']}"
                 all_results[run_key] = metrics
 
-                model_path = os.path.join(OUTPUT_DIR, f"{run_key}.pkl")
-                joblib.dump(clf, model_path)
-                print(f"  -> Modelo guardado: {model_path}")
-
     # ==============================
     # RESUMEN FINAL
     # ==============================
@@ -678,11 +617,7 @@ def main():
         print(f"{key:<45} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
               f"{m['f1_macro']:.4f} {m['f1_female']:.4f} {m['f1_male']:.4f}")
 
-    # Guardar resumen JSON
-    summary_path = os.path.join(OUTPUT_DIR, "resultados_resumen.json")
-    with open(summary_path, "w", encoding="utf-8") as f:
-        json.dump(all_results, f, ensure_ascii=False, indent=2)
-    print(f"\nResumen guardado en: {summary_path}")
+    # (No se guarda resumen a disco para ahorrar almacenamiento)
 
     print("\n" + "=" * 70)
     print("COMPLETADO - Test reservado para uso futuro")
