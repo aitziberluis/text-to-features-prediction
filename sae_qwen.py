@@ -33,9 +33,8 @@ SAVE_REPR_EVERY_N_STEPS = int(os.getenv("SAE_SAVE_REPR_EVERY_N_STEPS", "1000"))
 USE_FLASH_ATTN = os.getenv("SAE_FLASH_ATTN", "1") == "1"
 
 # Directorio para checkpoints (en /hdd para no ocupar /home)
-CHECKPOINT_DIR = os.getenv(
-    "SAE_CHECKPOINT_DIR", "/hdd/aitziber.l/TFM/sae-ckpts/sae-qwen3.5-2b"
-)
+# Por defecto se usa directamente la carpeta /hdd/aitziber.l que has creado.
+CHECKPOINT_DIR = os.getenv("SAE_CHECKPOINT_DIR", "/hdd/aitziber.l")
 
 # Rutas a tus datos
 PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
