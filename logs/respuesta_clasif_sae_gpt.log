@@ -1,3 +1,4 @@
+nohup: ignoring input
 ======================================================================
 CLASIFICADOR GENERO - REPRESENTACIONES SAE SOBRE GPT-2
 ======================================================================
@@ -32,9 +33,7 @@ Generos presentes: {'m': 4920137, 'f': 2459522}
 Extrayendo representaciones SAE para 7,379,659 comentarios...
 SAE: sae-ckpts/sae-gpt2-comments
 SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
-`torch_dtype` is deprecated! Use `dtype` instead!
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  18%|█▊        | 26/148 [00:00<00:00, 256.52it/s]Loading weights:  80%|███████▉  | 118/148 [00:00<00:00, 638.75it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 501.35it/s]
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  41%|████      | 60/148 [00:00<00:00, 599.21it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 762.90it/s]
   [  0.0%] step 1/230615 (32/7,379,659 comentarios)
-  [ 10.6%] step 24420/230615 (781,440/7,379,659 comentarios)
-  [ 15.8%] step 36342/230615 (1,162,944/7,379,659 comentarios)

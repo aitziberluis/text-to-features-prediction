@@ -1,5 +1,6 @@
 from dataclasses import dataclass, asdict
 import json
+import time
 from pathlib import Path
 from typing import Iterable
 from torch.optim import Adam
@@ -7,7 +8,6 @@ import torch
 from safetensors.torch import load_model, save_model
 from torch import Tensor, nn
 from transformers import PreTrainedModel
-from tqdm import tqdm
 import wandb
 import einops
 
@@ -159,9 +159,11 @@ def train_sae(
     try:
         tokens_seen_since_last_step = 0
         tokens_seen_since_last_save = 0
-        bar = tqdm(token_iterator, mininterval=86400, maxinterval=86400)
+        total_examples = len(token_iterator) if hasattr(token_iterator, '__len__') else None
+        last_log_time = time.time()
+        last_loss = None
         batch = []
-        for step, tokens in enumerate(bar):
+        for step, tokens in enumerate(token_iterator):
 
             if len(batch) < train_cfg.model_batch_size:
                 batch.append(torch.tensor(tokens["input_ids"]))
@@ -233,7 +235,13 @@ def train_sae(
                 sae.save_to_disk(save_dir)
                 tokens_seen_since_last_save = 0
 
-            bar.set_postfix(loss=loss.item())
+            last_loss = loss.item()
+            now = time.time()
+            if now - last_log_time >= 3600:  # cada hora
+                elapsed_h = (now - last_log_time) / 3600
+                pct = f"{step / total_examples * 100:.1f}%" if total_examples else "?"
+                print(f"[SAE] step={step} | progreso={pct} | loss={last_loss:.4f} | +{elapsed_h:.1f}h")
+                last_log_time = now
             batch = []
     finally:
         handle.remove()

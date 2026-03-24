@@ -68,8 +68,8 @@ PATH_AUTORES = "data/author_profiles.csv"
 TEXT_COLUMN = "body"
 MAX_COMMENTS = None
 
-# Directorio donde se guardan las representaciones SAE extraidas
-ACTIVATIONS_DIR = "data/activaciones_sae_gpt2_genero"
+# Directorio donde se guardan las representaciones SAE extraidas (HDD)
+ACTIVATIONS_DIR = "/hdd/aitziber.l/activaciones_sae_gpt2_genero"
 
 # Splits
 TEST_SIZE = 0.2
@@ -235,9 +235,16 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
 
     total_steps = math.ceil(n / EXTRACT_BATCH_SIZE)
 
-    # Pre-allocate arrays en memoria
-    last_token_arr = np.zeros((n, num_latents), dtype=np.float32)
-    mean_token_arr = np.zeros((n, num_latents), dtype=np.float32)
+    # Pre-allocate arrays en disco con memmap en float16 (~225 GB por array)
+    os.makedirs(ACTIVATIONS_DIR, exist_ok=True)
+    last_token_arr = np.memmap(
+        os.path.join(ACTIVATIONS_DIR, "last_token.mmap"),
+        dtype=np.float16, mode="w+", shape=(n, num_latents),
+    )
+    mean_token_arr = np.memmap(
+        os.path.join(ACTIVATIONS_DIR, "mean_token.mmap"),
+        dtype=np.float16, mode="w+", shape=(n, num_latents),
+    )
 
     textos = df["text"].tolist()
     last_print = time.time()
@@ -271,8 +278,8 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
                     num_latents=num_latents,
                 )
 
-                last_token_arr[start:end] = last_pooled.float().cpu().numpy()
-                mean_token_arr[start:end] = mean_pooled.float().cpu().numpy()
+                last_token_arr[start:end] = last_pooled.half().cpu().numpy()
+                mean_token_arr[start:end] = mean_pooled.half().cpu().numpy()
 
                 now = time.time()
                 if now - last_print >= PROGRESS_INTERVAL or step == 0 or step == total_steps - 1:
@@ -284,20 +291,60 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
     finally:
         handle.remove()
 
+    # Flush memmaps a disco
+    last_token_arr.flush()
+    mean_token_arr.flush()
+
     labels = np.array([0 if g == "f" else 1 for g in df["gender_clean"]], dtype=np.int8)
     authors = df["author"].to_numpy() if "author" in df.columns else None
 
-    print(f"Representaciones SAE extraidas en memoria (sin guardar a disco).")
+    # Guardar metadata, labels y authors para cache
+    meta = {"n": n, "num_latents": num_latents}
+    with open(os.path.join(ACTIVATIONS_DIR, "meta.json"), "w") as f:
+        json.dump(meta, f)
+    np.save(os.path.join(ACTIVATIONS_DIR, "labels.npy"), labels)
+    if authors is not None:
+        np.save(os.path.join(ACTIVATIONS_DIR, "authors.npy"), authors)
+
+    print(f"Representaciones SAE extraidas y guardadas en {ACTIVATIONS_DIR}.")
     return last_token_arr, mean_token_arr, labels, authors, num_latents
 
 
 def extraer_activaciones(
     df: pd.DataFrame,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
-    """Extrae representaciones SAE en memoria (no guarda nada a disco).
+    """Extrae representaciones SAE con cache en disco (memmap).
+
+    Si los archivos memmap ya existen, los carga directamente sin
+    repetir la extraccion.
 
     Returns: (last_token, mean_token, labels, authors_array, num_latents)
     """
+    meta_path = os.path.join(ACTIVATIONS_DIR, "meta.json")
+    if os.path.exists(meta_path):
+        print(f"\nCargando representaciones SAE desde cache: {ACTIVATIONS_DIR}")
+        with open(meta_path) as f:
+            meta = json.load(f)
+        n, num_latents = meta["n"], meta["num_latents"]
+
+        if n != len(df):
+            print(f"  AVISO: cache tiene {n} filas pero df tiene {len(df)}. Re-extrayendo...")
+            return _extraer_activaciones(df)
+
+        last_token = np.memmap(
+            os.path.join(ACTIVATIONS_DIR, "last_token.mmap"),
+            dtype=np.float16, mode="r", shape=(n, num_latents),
+        )
+        mean_token = np.memmap(
+            os.path.join(ACTIVATIONS_DIR, "mean_token.mmap"),
+            dtype=np.float16, mode="r", shape=(n, num_latents),
+        )
+        labels = np.load(os.path.join(ACTIVATIONS_DIR, "labels.npy"))
+        authors_path = os.path.join(ACTIVATIONS_DIR, "authors.npy")
+        authors = np.load(authors_path, allow_pickle=True) if os.path.exists(authors_path) else None
+        print(f"  Cache cargada: {n:,} comentarios, {num_latents} latentes")
+        return last_token, mean_token, labels, authors, num_latents
+
     return _extraer_activaciones(df)
 
 
@@ -377,12 +424,15 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
 
 
 def entrenar_comentario(
-    X_train: np.ndarray, y_train: np.ndarray,
-    X_eval: np.ndarray, y_eval: np.ndarray,
+    feats: np.ndarray, train_idx: np.ndarray, eval_idx: np.ndarray,
+    y_train: np.ndarray, y_eval: np.ndarray,
     female_w: float, male_w: float,
     pooling_name: str, balance_name: str,
 ) -> Tuple[SGDClassifier, Dict]:
-    """Entrena SGD incremental a nivel comentario y evalua en eval."""
+    """Entrena SGD incremental a nivel comentario y evalua en eval.
+
+    feats puede ser un np.memmap; se accede por lotes para evitar OOM.
+    """
     run_name = f"comentario_{pooling_name}_{balance_name}"
     print(f"\n{'='*60}")
     print(f"ENTRENANDO: {run_name}")
@@ -404,9 +454,9 @@ def entrenar_comentario(
     for epoch in range(TRAIN_EPOCHS):
         perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(n)
         for step, start in enumerate(range(0, n, batch_size)):
-            idx = perm[start:start + batch_size]
-            xb = np.asarray(X_train[idx])
-            yb = y_train[idx]
+            batch_perm = perm[start:start + batch_size]
+            xb = np.asarray(feats[train_idx[batch_perm]], dtype=np.float32)
+            yb = y_train[batch_perm]
             sw = np.where(yb == 0, female_w, male_w).astype(np.float32)
 
             if epoch == 0 and step == 0:
@@ -420,8 +470,13 @@ def entrenar_comentario(
                 print(f"  [Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
                 last_print = now
 
-    # Eval
-    y_pred = clf.predict(np.asarray(X_eval))
+    # Eval (en lotes para evitar OOM con memmaps grandes)
+    y_pred_parts = []
+    for ev_start in range(0, len(y_eval), batch_size):
+        ev_end = min(ev_start + batch_size, len(y_eval))
+        xb = np.asarray(feats[eval_idx[ev_start:ev_end]], dtype=np.float32)
+        y_pred_parts.append(clf.predict(xb))
+    y_pred = np.concatenate(y_pred_parts)
     metrics = evaluar(f"EVAL {run_name}", y_eval, y_pred)
 
     return clf, metrics
@@ -438,25 +493,48 @@ def _agregar_por_usuario(
     labels: np.ndarray,
     author_set: set,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Agrega features por media de usuario para un subconjunto de autores."""
-    mask = np.isin(authors, list(author_set))
-    sub_authors = authors[mask]
-    sub_features = features[mask]
-    sub_labels = labels[mask]
+    """Agrega features por media de usuario para un subconjunto de autores.
 
-    df_tmp = pd.DataFrame({"author": sub_authors, "label": sub_labels})
-    df_tmp["row"] = np.arange(len(sub_authors))
+    Escanea features (puede ser memmap) por chunks secuenciales para evitar OOM.
+    """
+    num_latents = features.shape[1]
 
-    user_feats = []
-    user_labels = []
+    auth_list = sorted(author_set)
+    auth_to_idx = {a: i for i, a in enumerate(auth_list)}
+    n_users = len(auth_list)
 
-    for author, group in df_tmp.groupby("author", sort=False):
-        rows = group["row"].to_numpy()
-        user_feat = np.asarray(sub_features[rows]).mean(axis=0)
-        user_feats.append(user_feat)
-        user_labels.append(int(group["label"].iloc[0]))
+    user_sums = np.zeros((n_users, num_latents), dtype=np.float64)
+    user_counts = np.zeros(n_users, dtype=np.int64)
+    user_labels = np.full(n_users, -1, dtype=np.int64)
 
-    return np.array(user_feats, dtype=np.float32), np.array(user_labels, dtype=np.int64)
+    # Mapear cada fila a su indice de usuario (-1 si no esta en author_set)
+    row_to_user = np.full(len(authors), -1, dtype=np.int64)
+    for i, auth in enumerate(authors):
+        if auth in auth_to_idx:
+            uidx = auth_to_idx[auth]
+            row_to_user[i] = uidx
+            if user_labels[uidx] == -1:
+                user_labels[uidx] = labels[i]
+
+    # Escaneo secuencial por chunks
+    chunk_size = 8192
+    n = len(authors)
+    for start in range(0, n, chunk_size):
+        end = min(start + chunk_size, n)
+        chunk_user_ids = row_to_user[start:end]
+
+        valid_mask = chunk_user_ids >= 0
+        if not valid_mask.any():
+            continue
+
+        chunk_feats = np.asarray(features[start:end])
+        np.add.at(user_sums, chunk_user_ids[valid_mask], chunk_feats[valid_mask].astype(np.float64))
+        np.add.at(user_counts, chunk_user_ids[valid_mask], 1)
+
+    valid = user_counts > 0
+    user_sums[valid] /= user_counts[valid, np.newaxis]
+
+    return user_sums[valid].astype(np.float32), user_labels[valid]
 
 
 def entrenar_usuario(
@@ -528,7 +606,7 @@ def main():
         df["author"] = df["author"].astype(str).str.strip()
         has_author = True
 
-    # 2. Extraer representaciones SAE (solo en memoria, sin guardar a disco)
+    # 2. Extraer representaciones SAE (memmap en disco)
     last_token, mean_token, labels, authors, num_latents = extraer_activaciones(df)
     print(f"\nRepresentaciones SAE: num_latents={num_latents}, comentarios={len(labels):,}")
 
@@ -556,13 +634,11 @@ def main():
 
     for pooling_name in COMMENT_POOLINGS:
         feats, tr_idx, ev_idx = comment_features[pooling_name]
-        X_tr = feats[tr_idx]
-        X_ev = feats[ev_idx]
 
         for bal_cfg in BALANCE_CONFIGS:
             clf, metrics = entrenar_comentario(
-                X_train=X_tr, y_train=y_train_c,
-                X_eval=X_ev, y_eval=y_eval_c,
+                feats=feats, train_idx=tr_idx, eval_idx=ev_idx,
+                y_train=y_train_c, y_eval=y_eval_c,
                 female_w=bal_cfg["female_w"], male_w=bal_cfg["male_w"],
                 pooling_name=pooling_name, balance_name=bal_cfg["name"],
             )
