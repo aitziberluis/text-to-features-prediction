@@ -101,11 +101,8 @@ BALANCE_CONFIGS = [
 OUTPUT_DIR = "modelos/genero_gpt_activaciones"
 
 
-# =====================
+
 # CARGA DE DATOS
-# =====================
-
-
 def cargar_datos_genero() -> pd.DataFrame:
     """Carga comentarios con genero m/f usando preprocesamiento centralizado."""
     df, _ = preparar_dataset_para_sae(
@@ -128,10 +125,7 @@ def cargar_datos_genero() -> pd.DataFrame:
     return df
 
 
-# =====================
 # EXTRACCION DE ACTIVACIONES
-# =====================
-
 
 def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     """Extrae activaciones de GPT-2 y guarda last_token + mean por comentario."""

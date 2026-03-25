@@ -8,3 +8,10 @@ PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
 ============================================================
 
 1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con género por autor...
