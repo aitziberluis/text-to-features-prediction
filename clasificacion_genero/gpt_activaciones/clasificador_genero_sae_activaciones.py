@@ -72,9 +72,10 @@ MAX_COMMENTS = None
 ACTIVATIONS_DIR = "/hdd/aitziber.l/activaciones_sae_gpt2_genero"
 
 # Splits
-TEST_SIZE = 0.2
-EVAL_SIZE = 0.1
+TEST_SIZE = 0.15
+EVAL_SIZE = 0.15
 RANDOM_STATE = 42
+SPLITS_DIR = "data/splits_genero_70_15_15"
 
 # Entrenamiento
 EXTRACT_BATCH_SIZE = 32
@@ -354,7 +355,23 @@ def extraer_activaciones(
 
 
 def dividir_comentarios(labels: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Train/eval/test estratificado a nivel de comentario."""
+    """Train/eval/test estratificado a nivel comentario con cache compartido."""
+    os.makedirs(SPLITS_DIR, exist_ok=True)
+    split_path = os.path.join(SPLITS_DIR, "split_comentarios.npz")
+
+    if os.path.exists(split_path):
+        data = np.load(split_path)
+        train_idx = data["train_idx"]
+        eval_idx = data["eval_idx"]
+        test_idx = data["test_idx"]
+
+        all_idx = np.concatenate([train_idx, eval_idx, test_idx])
+        if len(np.unique(all_idx)) == len(labels) and all_idx.min() >= 0 and all_idx.max() < len(labels):
+            print(f"Cargando split de comentarios compartido desde {split_path}")
+            return train_idx, eval_idx, test_idx
+
+        print("Split de comentarios en cache invalido para este dataset. Regenerando...")
+
     indices = np.arange(len(labels))
     train_eval_idx, test_idx = train_test_split(
         indices, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=labels,
@@ -364,14 +381,33 @@ def dividir_comentarios(labels: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.
         train_eval_idx, test_size=eval_rel, random_state=RANDOM_STATE,
         stratify=labels[train_eval_idx],
     )
+
+    np.savez(split_path, train_idx=train_idx, eval_idx=eval_idx, test_idx=test_idx)
+    print(f"Split de comentarios guardado en {split_path}")
     return train_idx, eval_idx, test_idx
 
 
 def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Train/eval/test estratificado a nivel de usuario."""
+    """Train/eval/test estratificado a nivel usuario con cache compartido."""
+    os.makedirs(SPLITS_DIR, exist_ok=True)
+    split_path = os.path.join(SPLITS_DIR, "split_usuarios.npz")
+
     user_df = df[["author", "gender_clean"]].drop_duplicates("author")
     authors = user_df["author"].to_numpy()
     user_labels = np.array([0 if g == "f" else 1 for g in user_df["gender_clean"]], dtype=np.int8)
+
+    if os.path.exists(split_path):
+        data = np.load(split_path, allow_pickle=True)
+        train_auth = data["train_auth"]
+        eval_auth = data["eval_auth"]
+        test_auth = data["test_auth"]
+
+        cache_auth = np.concatenate([train_auth, eval_auth, test_auth])
+        if len(np.unique(cache_auth)) == len(authors) and np.isin(cache_auth, authors).all():
+            print(f"Cargando split de usuarios compartido desde {split_path}")
+            return train_auth, eval_auth, test_auth
+
+        print("Split de usuarios en cache invalido para este dataset. Regenerando...")
 
     train_eval_auth, test_auth = train_test_split(
         authors, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=user_labels,
@@ -384,6 +420,9 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         train_eval_auth, test_size=eval_rel, random_state=RANDOM_STATE,
         stratify=user_labels_te,
     )
+
+    np.savez(split_path, train_auth=train_auth, eval_auth=eval_auth, test_auth=test_auth)
+    print(f"Split de usuarios guardado en {split_path}")
     return train_auth, eval_auth, test_auth
 
 
