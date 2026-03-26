@@ -15,3 +15,281 @@ Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
    ✓ 10,295 autores cargados
 
 3. Uniendo comentarios con género por autor...
+   ✓ 17,639,863 comentarios con info de género
+
+4. Filtrando solo género conocido (m/f)...
+   ✓ 7,379,659 comentarios con género m/f
+   (Eliminados 10,260,204 con género unknown)
+
+5. Distribución por género:
+   m: 4,920,137 comentarios (66.7%)
+   f: 2,459,522 comentarios (33.3%)
+
+============================================================
+✓ Dataset preparado y listo para usar
+============================================================
+Generos presentes: {'m': 4920137, 'f': 2459522}
+
+Extrayendo activaciones de GPT-2 para 7,379,659 comentarios...
+Hookpoint: transformer.h.8, batch_size: 32
+`torch_dtype` is deprecated! Use `dtype` instead!
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  66%|██████▌   | 97/148 [00:00<00:00, 969.67it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 801.03it/s]
+  [  0.0%] step 1/230615 (32/7,379,659 comentarios)
+  [  9.6%] step 22146/230615 (708,672/7,379,659 comentarios)
+  [ 19.2%] step 44380/230615 (1,420,160/7,379,659 comentarios)
+  [ 28.9%] step 66662/230615 (2,133,184/7,379,659 comentarios)
+  [ 38.5%] step 88859/230615 (2,843,488/7,379,659 comentarios)
+  [ 48.2%] step 111065/230615 (3,554,080/7,379,659 comentarios)
+  [ 57.8%] step 133346/230615 (4,267,072/7,379,659 comentarios)
+  [ 67.5%] step 155666/230615 (4,981,312/7,379,659 comentarios)
+  [ 77.1%] step 177913/230615 (5,693,216/7,379,659 comentarios)
+  [ 86.8%] step 200206/230615 (6,406,592/7,379,659 comentarios)
+  [ 96.3%] step 221979/230615 (7,103,328/7,379,659 comentarios)
+  [100.0%] step 230615/230615 (7,379,659/7,379,659 comentarios)
+Activaciones guardadas en data/activaciones_gpt2_genero/
+Cargando activaciones desde data/activaciones_gpt2_genero/ ...
+  last_token: (7379659, 768), mean_token: (7379659, 768)
+
+Activaciones: hidden_size=768, comentarios=7,379,659
+
+######################################################################
+# A) CLASIFICACION A NIVEL DE COMENTARIO
+######################################################################
+Split de comentarios guardado en data/splits_genero_70_15_15/split_comentarios.npz
+
+Split comentarios: train=5,165,761 eval=1,106,949 test=1,106,949
+  Train dist: f=1,721,666 m=3,444,095
+  Eval  dist: f=368,928 m=738,021
+
+============================================================
+ENTRENANDO: comentario_last_token_sin_balanceo
+  Train: 5,165,761 | Eval: 1,106,949
+  Pesos: female=1.0, male=1.0
+============================================================
+  [Epoch 1] 100.0% (1262/1262)
+
+=== EVAL comentario_last_token_sin_balanceo ===
+Accuracy: 0.6995 | Balanced Acc: 0.5736 | F1 macro: 0.5557 | F1 weighted: 0.6400
+  female: prec=0.6673 rec=0.1960 f1=0.3030
+  male:   prec=0.7030 rec=0.9512 f1=0.8084
+              precision    recall  f1-score   support
+
+      female       0.67      0.20      0.30    368928
+        male       0.70      0.95      0.81    738021
+
+    accuracy                           0.70   1106949
+   macro avg       0.69      0.57      0.56   1106949
+weighted avg       0.69      0.70      0.64   1106949
+
+Confusion matrix:
+[[ 72304 296624]
+ [ 36052 701969]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_last_token_sin_balanceo.pkl
+
+============================================================
+ENTRENANDO: comentario_last_token_balanceado
+  Train: 5,165,761 | Eval: 1,106,949
+  Pesos: female=1.1, male=0.9
+============================================================
+  [Epoch 1] 100.0% (1262/1262)
+
+=== EVAL comentario_last_token_balanceado ===
+Accuracy: 0.7090 | Balanced Acc: 0.6165 | F1 macro: 0.6204 | F1 weighted: 0.6816
+  female: prec=0.6151 rec=0.3390 f1=0.4371
+  male:   prec=0.7301 rec=0.8939 f1=0.8038
+              precision    recall  f1-score   support
+
+      female       0.62      0.34      0.44    368928
+        male       0.73      0.89      0.80    738021
+
+    accuracy                           0.71   1106949
+   macro avg       0.67      0.62      0.62   1106949
+weighted avg       0.69      0.71      0.68   1106949
+
+Confusion matrix:
+[[125062 243866]
+ [ 78268 659753]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_last_token_balanceado.pkl
+
+============================================================
+ENTRENANDO: comentario_mean_sin_balanceo
+  Train: 5,165,761 | Eval: 1,106,949
+  Pesos: female=1.0, male=1.0
+============================================================
+  [Epoch 1] 100.0% (1262/1262)
+
+=== EVAL comentario_mean_sin_balanceo ===
+Accuracy: 0.7129 | Balanced Acc: 0.5961 | F1 macro: 0.5890 | F1 weighted: 0.6642
+  female: prec=0.6964 rec=0.2458 f1=0.3633
+  male:   prec=0.7151 rec=0.9464 f1=0.8147
+              precision    recall  f1-score   support
+
+      female       0.70      0.25      0.36    368928
+        male       0.72      0.95      0.81    738021
+
+    accuracy                           0.71   1106949
+   macro avg       0.71      0.60      0.59   1106949
+weighted avg       0.71      0.71      0.66   1106949
+
+Confusion matrix:
+[[ 90674 278254]
+ [ 39538 698483]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_mean_sin_balanceo.pkl
+
+============================================================
+ENTRENANDO: comentario_mean_balanceado
+  Train: 5,165,761 | Eval: 1,106,949
+  Pesos: female=1.1, male=0.9
+============================================================
+  [Epoch 1] 100.0% (1262/1262)
+
+=== EVAL comentario_mean_balanceado ===
+Accuracy: 0.7174 | Balanced Acc: 0.6324 | F1 macro: 0.6391 | F1 weighted: 0.6952
+  female: prec=0.6262 rec=0.3774 f1=0.4710
+  male:   prec=0.7404 rec=0.8874 f1=0.8072
+              precision    recall  f1-score   support
+
+      female       0.63      0.38      0.47    368928
+        male       0.74      0.89      0.81    738021
+
+    accuracy                           0.72   1106949
+   macro avg       0.68      0.63      0.64   1106949
+weighted avg       0.70      0.72      0.70   1106949
+
+Confusion matrix:
+[[139251 229677]
+ [ 83129 654892]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_mean_balanceado.pkl
+
+######################################################################
+# B) CLASIFICACION A NIVEL DE USUARIO
+######################################################################
+Split de usuarios guardado en data/splits_genero_70_15_15/split_usuarios.npz
+
+Split usuarios: train=2,158 eval=463 test=463
+
+Agregando features por usuario para usuario_mean_of_last_sin_balanceo...
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_sin_balanceo
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_last_sin_balanceo ===
+Accuracy: 0.7711 | Balanced Acc: 0.7591 | F1 macro: 0.7619 | F1 weighted: 0.7664
+  female: prec=0.8160 rec=0.6364 f1=0.7151
+  male:   prec=0.7467 rec=0.8819 f1=0.8087
+              precision    recall  f1-score   support
+
+      female       0.82      0.64      0.72       209
+        male       0.75      0.88      0.81       254
+
+    accuracy                           0.77       463
+   macro avg       0.78      0.76      0.76       463
+weighted avg       0.78      0.77      0.77       463
+
+Confusion matrix:
+[[133  76]
+ [ 30 224]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_last_sin_balanceo.pkl
+
+Agregando features por usuario para usuario_mean_of_last_balanceado...
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_balanceado
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.1, male=0.9
+============================================================
+
+=== EVAL usuario_mean_of_last_balanceado ===
+Accuracy: 0.7624 | Balanced Acc: 0.7635 | F1 macro: 0.7615 | F1 weighted: 0.7629
+  female: prec=0.7200 rec=0.7751 f1=0.7465
+  male:   prec=0.8025 rec=0.7520 f1=0.7764
+              precision    recall  f1-score   support
+
+      female       0.72      0.78      0.75       209
+        male       0.80      0.75      0.78       254
+
+    accuracy                           0.76       463
+   macro avg       0.76      0.76      0.76       463
+weighted avg       0.77      0.76      0.76       463
+
+Confusion matrix:
+[[162  47]
+ [ 63 191]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_last_balanceado.pkl
+
+Agregando features por usuario para usuario_mean_of_mean_sin_balanceo...
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_sin_balanceo
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_mean_sin_balanceo ===
+Accuracy: 0.6393 | Balanced Acc: 0.6208 | F1 macro: 0.6152 | F1 weighted: 0.6245
+  female: prec=0.6522 rec=0.4306 f1=0.5187
+  male:   prec=0.6338 rec=0.8110 f1=0.7116
+              precision    recall  f1-score   support
+
+      female       0.65      0.43      0.52       209
+        male       0.63      0.81      0.71       254
+
+    accuracy                           0.64       463
+   macro avg       0.64      0.62      0.62       463
+weighted avg       0.64      0.64      0.62       463
+
+Confusion matrix:
+[[ 90 119]
+ [ 48 206]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_mean_sin_balanceo.pkl
+
+Agregando features por usuario para usuario_mean_of_mean_balanceado...
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_balanceado
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.1, male=0.9
+============================================================
+
+=== EVAL usuario_mean_of_mean_balanceado ===
+Accuracy: 0.6004 | Balanced Acc: 0.6095 | F1 macro: 0.6000 | F1 weighted: 0.5986
+  female: prec=0.5444 rec=0.7033 f1=0.6138
+  male:   prec=0.6788 rec=0.5157 f1=0.5861
+              precision    recall  f1-score   support
+
+      female       0.54      0.70      0.61       209
+        male       0.68      0.52      0.59       254
+
+    accuracy                           0.60       463
+   macro avg       0.61      0.61      0.60       463
+weighted avg       0.62      0.60      0.60       463
+
+Confusion matrix:
+[[147  62]
+ [123 131]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_mean_balanceado.pkl
+
+
+======================================================================
+RESUMEN DE RESULTADOS (EVAL)
+======================================================================
+Config                                           Acc  BalAcc  F1mac   F1_f   F1_m
+--------------------------------------------------------------------------------
+comentario_last_token_sin_balanceo            0.6995 0.57357 0.5557 0.3030 0.8084
+comentario_last_token_balanceado              0.7090 0.61647 0.6204 0.4371 0.8038
+comentario_mean_sin_balanceo                  0.7129 0.59610 0.5890 0.3633 0.8147
+comentario_mean_balanceado                    0.7174 0.63240 0.6391 0.4710 0.8072
+usuario_mean_of_last_sin_balanceo             0.7711 0.75913 0.7619 0.7151 0.8087
+usuario_mean_of_last_balanceado               0.7624 0.76354 0.7615 0.7465 0.7764
+usuario_mean_of_mean_sin_balanceo             0.6393 0.62082 0.6152 0.5187 0.7116
+usuario_mean_of_mean_balanceado               0.6004 0.60955 0.6000 0.6138 0.5861
+
+Resumen guardado en: modelos/genero_gpt_activaciones/resultados_resumen.json
+
+======================================================================
+COMPLETADO - Test reservado para uso futuro
+======================================================================

@@ -1,18 +1,0 @@
-nohup: ignoring input
-`torch_dtype` is deprecated! Use `dtype` instead!
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
-Cargando dataset de comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-Tamaño del dataset (comentarios): 17639864
-Cargando tokenizer y modelo Qwen...
-FlashAttention no disponible (FlashAttention2 has been toggled on, but it cannot be used due to the following error: the package for FlashAttention2 doesn't seem to be installed.). Reintentando sin flash_attention_2...
-Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights:   0%|          | 1/320 [00:00<03:06,  1.71it/s]Loading weights:   4%|▍         | 14/320 [00:00<00:11, 25.73it/s]Loading weights:   9%|▉         | 28/320 [00:00<00:05, 49.19it/s]Loading weights:  14%|█▍        | 45/320 [00:00<00:03, 76.44it/s]Loading weights:  19%|█▉        | 61/320 [00:01<00:02, 95.29it/s]Loading weights:  23%|██▎       | 75/320 [00:01<00:02, 106.32it/s]Loading weights:  28%|██▊       | 89/320 [00:01<00:02, 109.37it/s]Loading weights:  32%|███▏      | 102/320 [00:01<00:02, 104.59it/s]Loading weights:  37%|███▋      | 119/320 [00:01<00:01, 119.32it/s]Loading weights:  42%|████▏     | 133/320 [00:01<00:01, 120.04it/s]Loading weights:  46%|████▌     | 147/320 [00:01<00:01, 123.43it/s]Loading weights:  50%|█████     | 160/320 [00:01<00:01, 121.91it/s]Loading weights:  54%|█████▍    | 173/320 [00:01<00:01, 119.29it/s]Loading weights:  58%|█████▊    | 187/320 [00:02<00:01, 123.87it/s]Loading weights:  63%|██████▎   | 201/320 [00:02<00:00, 126.85it/s]Loading weights:  69%|██████▉   | 220/320 [00:02<00:00, 141.63it/s]Loading weights:  73%|███████▎  | 235/320 [00:02<00:00, 136.60it/s]Loading weights:  78%|███████▊  | 250/320 [00:02<00:00, 139.75it/s]Loading weights:  83%|████████▎ | 265/320 [00:02<00:00, 123.03it/s]Loading weights:  90%|████████▉ | 287/320 [00:02<00:00, 145.11it/s]Loading weights:  95%|█████████▍| 303/320 [00:02<00:00, 145.41it/s]Loading weights:  99%|█████████▉| 318/320 [00:02<00:00, 131.36it/s]Loading weights: 100%|██████████| 320/320 [00:02<00:00, 107.04it/s]
-wandb: Currently logged in as: aitziber-luis (aitziber-luis-universidad-de-deusto) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
-wandb: setting up run 8fbojfun
-wandb: Tracking run with wandb version 0.23.0
-wandb: Run data is saved locally in /home/aitziber.l/TFM/wandb/run-20260323_160531-8fbojfun
-wandb: Run `wandb offline` to turn off syncing.
-wandb: Syncing run sae-qwen3.5-2b
-wandb: ⭐️ View project at https://wandb.ai/aitziber-luis-universidad-de-deusto/tiny-sae-qwen
-wandb: 🚀 View run at https://wandb.ai/aitziber-luis-universidad-de-deusto/tiny-sae-qwen/runs/8fbojfun
