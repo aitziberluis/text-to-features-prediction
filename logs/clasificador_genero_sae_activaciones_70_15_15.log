@@ -75,3 +75,27 @@ ENTRENANDO: comentario_last_token_balanceado
   Train: 5,165,761 | Eval: 1,106,949
   Pesos: female=1.1, male=0.9
 ============================================================
+  [Epoch 1] 100.0% (1262/1262)
+
+=== EVAL comentario_last_token_balanceado ===
+Accuracy: 0.7087 | Balanced Acc: 0.6227 | F1 macro: 0.6281 | F1 weighted: 0.6858
+  female: prec=0.6045 rec=0.3645 f1=0.4548
+  male:   prec=0.7349 rec=0.8808 f1=0.8013
+              precision    recall  f1-score   support
+
+      female       0.60      0.36      0.45    368928
+        male       0.73      0.88      0.80    738021
+
+    accuracy                           0.71   1106949
+   macro avg       0.67      0.62      0.63   1106949
+weighted avg       0.69      0.71      0.69   1106949
+
+Confusion matrix:
+[[134490 234438]
+ [ 87974 650047]]
+
+============================================================
+ENTRENANDO: comentario_mean_sin_balanceo
+  Train: 5,165,761 | Eval: 1,106,949
+  Pesos: female=1.0, male=1.0
+============================================================
