@@ -28,3 +28,528 @@ Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
 ============================================================
 ✓ Dataset preparado y listo para usar
 ============================================================
+Generos presentes: {'m': 4920137, 'f': 2459522}
+Cargando activaciones desde data/activaciones_gpt2_genero/ ...
+  last_token: (7379659, 768), mean_token: (7379659, 768)
+
+Activaciones: hidden_size=768, comentarios=7,379,659
+
+######################################################################
+# A) CLASIFICACION A NIVEL DE COMENTARIO
+######################################################################
+Cargando split de comentarios (por usuario) desde data/splits_genero_70_15_15/split_comentarios_por_usuario.npz
+
+Split comentarios: train=5,264,573 eval=1,116,308 test=998,778
+  Train dist: f=1,751,645 m=3,512,928
+  Eval  dist: f=394,212 m=722,096
+
+  Ajustando StandardScaler para last_token...
+
+============================================================
+ENTRENANDO: comentario_last_token_sin_balanceo
+  Train: 5,264,573 | Eval: 1,116,308
+  Pesos: female=1.0, male=1.0
+============================================================
+  [Epoch 1] 100.0% (1286/1286)
+
+=== EVAL comentario_last_token_sin_balanceo ===
+Accuracy: 0.6878 | Balanced Acc: 0.6304 | F1 macro: 0.6349 | F1 weighted: 0.6757
+  female: prec=0.5768 rec=0.4350 f1=0.4960
+  male:   prec=0.7281 rec=0.8257 f1=0.7738
+              precision    recall  f1-score   support
+
+      female       0.58      0.44      0.50    394212
+        male       0.73      0.83      0.77    722096
+
+    accuracy                           0.69   1116308
+   macro avg       0.65      0.63      0.63   1116308
+weighted avg       0.67      0.69      0.68   1116308
+
+Confusion matrix:
+[[171499 222713]
+ [125847 596249]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_last_token_sin_balanceo.pkl
+
+============================================================
+ENTRENANDO: comentario_last_token_balanceado
+  Train: 5,264,573 | Eval: 1,116,308
+  Pesos: female=1.1, male=0.9
+============================================================
+  [Epoch 1] 100.0% (1286/1286)
+
+=== EVAL comentario_last_token_balanceado ===
+Accuracy: 0.6767 | Balanced Acc: 0.6380 | F1 macro: 0.6400 | F1 weighted: 0.6738
+  female: prec=0.5456 rec=0.5060 f1=0.5250
+  male:   prec=0.7406 rec=0.7699 f1=0.7550
+              precision    recall  f1-score   support
+
+      female       0.55      0.51      0.53    394212
+        male       0.74      0.77      0.75    722096
+
+    accuracy                           0.68   1116308
+   macro avg       0.64      0.64      0.64   1116308
+weighted avg       0.67      0.68      0.67   1116308
+
+Confusion matrix:
+[[199470 194742]
+ [166150 555946]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_last_token_balanceado.pkl
+
+  Submuestreando 5,264,573 -> 500,000 para resampling...
+
+  Aplicando SMOTE sobre 500,000 muestras...
+    Antes: f=166,361 m=333,639
+    Despues: f=333,639 m=333,639
+
+============================================================
+ENTRENANDO: comentario_last_token_SMOTE
+  Train: 667,278 | Eval: 1,116,308
+  Pesos: female=1.0, male=1.0
+============================================================
+  [Epoch 1] 100.0% (163/163)
+
+=== EVAL comentario_last_token_SMOTE ===
+Accuracy: 0.6248 | Balanced Acc: 0.6374 | F1 macro: 0.6168 | F1 weighted: 0.6331
+  female: prec=0.4781 rec=0.6800 f1=0.5614
+  male:   prec=0.7730 rec=0.5947 f1=0.6722
+              precision    recall  f1-score   support
+
+      female       0.48      0.68      0.56    394212
+        male       0.77      0.59      0.67    722096
+
+    accuracy                           0.62   1116308
+   macro avg       0.63      0.64      0.62   1116308
+weighted avg       0.67      0.62      0.63   1116308
+
+Confusion matrix:
+[[268071 126141]
+ [292647 429449]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_last_token_SMOTE.pkl
+
+  Aplicando ADASYN sobre 500,000 muestras...
+    Antes: f=166,361 m=333,639
+    Despues: f=318,231 m=333,639
+
+============================================================
+ENTRENANDO: comentario_last_token_ADASYN
+  Train: 651,870 | Eval: 1,116,308
+  Pesos: female=1.0, male=1.0
+============================================================
+  [Epoch 1] 100.0% (160/160)
+
+=== EVAL comentario_last_token_ADASYN ===
+Accuracy: 0.6297 | Balanced Acc: 0.6382 | F1 macro: 0.6202 | F1 weighted: 0.6379
+  female: prec=0.4825 rec=0.6672 f1=0.5600
+  male:   prec=0.7703 rec=0.6093 f1=0.6804
+              precision    recall  f1-score   support
+
+      female       0.48      0.67      0.56    394212
+        male       0.77      0.61      0.68    722096
+
+    accuracy                           0.63   1116308
+   macro avg       0.63      0.64      0.62   1116308
+weighted avg       0.67      0.63      0.64   1116308
+
+Confusion matrix:
+[[263014 131198]
+ [282125 439971]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_last_token_ADASYN.pkl
+
+  Ajustando StandardScaler para mean...
+
+============================================================
+ENTRENANDO: comentario_mean_sin_balanceo
+  Train: 5,264,573 | Eval: 1,116,308
+  Pesos: female=1.0, male=1.0
+============================================================
+  [Epoch 1] 100.0% (1286/1286)
+
+=== EVAL comentario_mean_sin_balanceo ===
+Accuracy: 0.6953 | Balanced Acc: 0.6426 | F1 macro: 0.6475 | F1 weighted: 0.6856
+  female: prec=0.5870 rec=0.4631 f1=0.5177
+  male:   prec=0.7372 rec=0.8221 f1=0.7773
+              precision    recall  f1-score   support
+
+      female       0.59      0.46      0.52    394212
+        male       0.74      0.82      0.78    722096
+
+    accuracy                           0.70   1116308
+   macro avg       0.66      0.64      0.65   1116308
+weighted avg       0.68      0.70      0.69   1116308
+
+Confusion matrix:
+[[182547 211665]
+ [128447 593649]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_mean_sin_balanceo.pkl
+
+============================================================
+ENTRENANDO: comentario_mean_balanceado
+  Train: 5,264,573 | Eval: 1,116,308
+  Pesos: female=1.1, male=0.9
+============================================================
+  [Epoch 1] 100.0% (1286/1286)
+
+=== EVAL comentario_mean_balanceado ===
+Accuracy: 0.6844 | Balanced Acc: 0.6490 | F1 macro: 0.6506 | F1 weighted: 0.6825
+  female: prec=0.5560 rec=0.5283 f1=0.5418
+  male:   prec=0.7493 rec=0.7697 f1=0.7594
+              precision    recall  f1-score   support
+
+      female       0.56      0.53      0.54    394212
+        male       0.75      0.77      0.76    722096
+
+    accuracy                           0.68   1116308
+   macro avg       0.65      0.65      0.65   1116308
+weighted avg       0.68      0.68      0.68   1116308
+
+Confusion matrix:
+[[208253 185959]
+ [166296 555800]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_mean_balanceado.pkl
+
+  Submuestreando 5,264,573 -> 500,000 para resampling...
+
+  Aplicando SMOTE sobre 500,000 muestras...
+    Antes: f=166,361 m=333,639
+    Despues: f=333,639 m=333,639
+
+============================================================
+ENTRENANDO: comentario_mean_SMOTE
+  Train: 667,278 | Eval: 1,116,308
+  Pesos: female=1.0, male=1.0
+============================================================
+  [Epoch 1] 100.0% (163/163)
+
+=== EVAL comentario_mean_SMOTE ===
+Accuracy: 0.6424 | Balanced Acc: 0.6476 | F1 macro: 0.6314 | F1 weighted: 0.6501
+  female: prec=0.4953 rec=0.6655 f1=0.5679
+  male:   prec=0.7752 rec=0.6298 f1=0.6950
+              precision    recall  f1-score   support
+
+      female       0.50      0.67      0.57    394212
+        male       0.78      0.63      0.69    722096
+
+    accuracy                           0.64   1116308
+   macro avg       0.64      0.65      0.63   1116308
+weighted avg       0.68      0.64      0.65   1116308
+
+Confusion matrix:
+[[262336 131876]
+ [267317 454779]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_mean_SMOTE.pkl
+
+  Aplicando ADASYN sobre 500,000 muestras...
+    Antes: f=166,361 m=333,639
+    Despues: f=332,260 m=333,639
+
+============================================================
+ENTRENANDO: comentario_mean_ADASYN
+  Train: 665,899 | Eval: 1,116,308
+  Pesos: female=1.0, male=1.0
+============================================================
+  [Epoch 1] 100.0% (163/163)
+
+=== EVAL comentario_mean_ADASYN ===
+Accuracy: 0.6323 | Balanced Acc: 0.6443 | F1 macro: 0.6240 | F1 weighted: 0.6404
+  female: prec=0.4854 rec=0.6851 f1=0.5682
+  male:   prec=0.7783 rec=0.6034 f1=0.6798
+              precision    recall  f1-score   support
+
+      female       0.49      0.69      0.57    394212
+        male       0.78      0.60      0.68    722096
+
+    accuracy                           0.63   1116308
+   macro avg       0.63      0.64      0.62   1116308
+weighted avg       0.67      0.63      0.64   1116308
+
+Confusion matrix:
+[[270091 124121]
+ [286387 435709]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/comentario_mean_ADASYN.pkl
+
+######################################################################
+# B) CLASIFICACION A NIVEL DE USUARIO
+######################################################################
+Cargando split de usuarios compartido desde data/splits_genero_70_15_15/split_usuarios.npz
+
+Split usuarios: train=2,158 eval=463 test=463
+
+  Agregando features por usuario para mean_of_last...
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_sin_balanceo
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_last_sin_balanceo ===
+Accuracy: 0.8661 | Balanced Acc: 0.8648 | F1 macro: 0.8648 | F1 weighted: 0.8661
+  female: prec=0.8517 rec=0.8517 f1=0.8517
+  male:   prec=0.8780 rec=0.8780 f1=0.8780
+              precision    recall  f1-score   support
+
+      female       0.85      0.85      0.85       209
+        male       0.88      0.88      0.88       254
+
+    accuracy                           0.87       463
+   macro avg       0.86      0.86      0.86       463
+weighted avg       0.87      0.87      0.87       463
+
+Confusion matrix:
+[[178  31]
+ [ 31 223]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_last_sin_balanceo.pkl
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_balanceado
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.1, male=0.9
+============================================================
+
+=== EVAL usuario_mean_of_last_balanceado ===
+Accuracy: 0.8618 | Balanced Acc: 0.8600 | F1 macro: 0.8603 | F1 weighted: 0.8617
+  female: prec=0.8502 rec=0.8421 f1=0.8462
+  male:   prec=0.8711 rec=0.8780 f1=0.8745
+              precision    recall  f1-score   support
+
+      female       0.85      0.84      0.85       209
+        male       0.87      0.88      0.87       254
+
+    accuracy                           0.86       463
+   macro avg       0.86      0.86      0.86       463
+weighted avg       0.86      0.86      0.86       463
+
+Confusion matrix:
+[[176  33]
+ [ 31 223]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_last_balanceado.pkl
+
+  Usuarios train: f=922 m=1,236
+
+  Aplicando SMOTE a nivel usuario (2,158 usuarios)...
+    Despues: f=1,236 m=1,236
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_SMOTE
+============================================================
+
+=== EVAL usuario_mean_of_last_SMOTE ===
+Accuracy: 0.8704 | Balanced Acc: 0.8738 | F1 macro: 0.8701 | F1 weighted: 0.8707
+  female: prec=0.8225 rec=0.9091 f1=0.8636
+  male:   prec=0.9181 rec=0.8386 f1=0.8765
+              precision    recall  f1-score   support
+
+      female       0.82      0.91      0.86       209
+        male       0.92      0.84      0.88       254
+
+    accuracy                           0.87       463
+   macro avg       0.87      0.87      0.87       463
+weighted avg       0.87      0.87      0.87       463
+
+Confusion matrix:
+[[190  19]
+ [ 41 213]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_last_SMOTE.pkl
+
+  Aplicando ADASYN a nivel usuario (2,158 usuarios)...
+    Despues: f=1,176 m=1,236
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_ADASYN
+============================================================
+
+=== EVAL usuario_mean_of_last_ADASYN ===
+Accuracy: 0.8704 | Balanced Acc: 0.8734 | F1 macro: 0.8700 | F1 weighted: 0.8707
+  female: prec=0.8253 rec=0.9043 f1=0.8630
+  male:   prec=0.9145 rec=0.8425 f1=0.8770
+              precision    recall  f1-score   support
+
+      female       0.83      0.90      0.86       209
+        male       0.91      0.84      0.88       254
+
+    accuracy                           0.87       463
+   macro avg       0.87      0.87      0.87       463
+weighted avg       0.87      0.87      0.87       463
+
+Confusion matrix:
+[[189  20]
+ [ 40 214]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_last_ADASYN.pkl
+
+  Agregando features por usuario para mean_of_mean...
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_sin_balanceo
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_mean_sin_balanceo ===
+Accuracy: 0.8920 | Balanced Acc: 0.8914 | F1 macro: 0.8911 | F1 weighted: 0.8921
+  female: prec=0.8768 rec=0.8852 f1=0.8810
+  male:   prec=0.9048 rec=0.8976 f1=0.9012
+              precision    recall  f1-score   support
+
+      female       0.88      0.89      0.88       209
+        male       0.90      0.90      0.90       254
+
+    accuracy                           0.89       463
+   macro avg       0.89      0.89      0.89       463
+weighted avg       0.89      0.89      0.89       463
+
+Confusion matrix:
+[[185  24]
+ [ 26 228]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_mean_sin_balanceo.pkl
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_balanceado
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.1, male=0.9
+============================================================
+
+=== EVAL usuario_mean_of_mean_balanceado ===
+Accuracy: 0.8834 | Balanced Acc: 0.8844 | F1 macro: 0.8827 | F1 weighted: 0.8836
+  female: prec=0.8539 rec=0.8947 f1=0.8738
+  male:   prec=0.9098 rec=0.8740 f1=0.8916
+              precision    recall  f1-score   support
+
+      female       0.85      0.89      0.87       209
+        male       0.91      0.87      0.89       254
+
+    accuracy                           0.88       463
+   macro avg       0.88      0.88      0.88       463
+weighted avg       0.88      0.88      0.88       463
+
+Confusion matrix:
+[[187  22]
+ [ 32 222]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_mean_balanceado.pkl
+
+  Usuarios train: f=922 m=1,236
+
+  Aplicando SMOTE a nivel usuario (2,158 usuarios)...
+    Despues: f=1,236 m=1,236
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_SMOTE
+============================================================
+
+=== EVAL usuario_mean_of_mean_SMOTE ===
+Accuracy: 0.8812 | Balanced Acc: 0.8820 | F1 macro: 0.8805 | F1 weighted: 0.8814
+  female: prec=0.8532 rec=0.8900 f1=0.8712
+  male:   prec=0.9061 rec=0.8740 f1=0.8898
+              precision    recall  f1-score   support
+
+      female       0.85      0.89      0.87       209
+        male       0.91      0.87      0.89       254
+
+    accuracy                           0.88       463
+   macro avg       0.88      0.88      0.88       463
+weighted avg       0.88      0.88      0.88       463
+
+Confusion matrix:
+[[186  23]
+ [ 32 222]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_mean_SMOTE.pkl
+
+  Aplicando ADASYN a nivel usuario (2,158 usuarios)...
+    Despues: f=1,137 m=1,236
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_ADASYN
+============================================================
+
+=== EVAL usuario_mean_of_mean_ADASYN ===
+Accuracy: 0.8639 | Balanced Acc: 0.8658 | F1 macro: 0.8634 | F1 weighted: 0.8642
+  female: prec=0.8259 rec=0.8852 f1=0.8545
+  male:   prec=0.8996 rec=0.8465 f1=0.8722
+              precision    recall  f1-score   support
+
+      female       0.83      0.89      0.85       209
+        male       0.90      0.85      0.87       254
+
+    accuracy                           0.86       463
+   macro avg       0.86      0.87      0.86       463
+weighted avg       0.87      0.86      0.86       463
+
+Confusion matrix:
+[[185  24]
+ [ 39 215]]
+  -> Modelo guardado: modelos/genero_gpt_activaciones/usuario_mean_of_mean_ADASYN.pkl
+
+
+======================================================================
+RESUMEN DE RESULTADOS (EVAL)
+======================================================================
+Config                                                Acc  BalAcc  F1mac   F1_f   F1_m
+-------------------------------------------------------------------------------------
+comentario_last_token_sin_balanceo                 0.6878 0.63038 0.6349 0.4960 0.7738
+comentario_last_token_balanceado                   0.6767 0.63795 0.6400 0.5250 0.7550
+comentario_last_token_SMOTE                        0.6248 0.63737 0.6168 0.5614 0.6722
+comentario_last_token_ADASYN                       0.6297 0.63824 0.6202 0.5600 0.6804
+comentario_mean_sin_balanceo                       0.6953 0.64259 0.6475 0.5177 0.7773
+comentario_mean_balanceado                         0.6844 0.64899 0.6506 0.5418 0.7594
+comentario_mean_SMOTE                              0.6424 0.64764 0.6314 0.5679 0.6950
+comentario_mean_ADASYN                             0.6323 0.64427 0.6240 0.5682 0.6798
+usuario_mean_of_last_sin_balanceo                  0.8661 0.86481 0.8648 0.8517 0.8780
+usuario_mean_of_last_balanceado                    0.8618 0.86003 0.8603 0.8462 0.8745
+usuario_mean_of_last_SMOTE                         0.8704 0.87384 0.8701 0.8636 0.8765
+usuario_mean_of_last_ADASYN                        0.8704 0.87341 0.8700 0.8630 0.8770
+usuario_mean_of_mean_sin_balanceo                  0.8920 0.89140 0.8911 0.8810 0.9012
+usuario_mean_of_mean_balanceado                    0.8834 0.88438 0.8827 0.8738 0.8916
+usuario_mean_of_mean_SMOTE                         0.8812 0.88198 0.8805 0.8712 0.8898
+usuario_mean_of_mean_ADASYN                        0.8639 0.86581 0.8634 0.8545 0.8722
+
+Resumen guardado en: modelos/genero_gpt_activaciones/resultados_resumen.json
+
+======================================================================
+COMPLETADO - Test reservado para uso futuro
+======================================================================
+=== GPT GENERO TERMINADO ===
+======================================================================
+CLASIFICADOR GENERO - REPRESENTACIONES SAE SOBRE GPT-2
+======================================================================
+
+============================================================
+PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con género por autor...
+   ✓ 17,639,863 comentarios con info de género
+
+4. Filtrando solo género conocido (m/f)...
+   ✓ 7,379,659 comentarios con género m/f
+   (Eliminados 10,260,204 con género unknown)
+
+5. Distribución por género:
+   m: 4,920,137 comentarios (66.7%)
+   f: 2,459,522 comentarios (33.3%)
+
+============================================================
+✓ Dataset preparado y listo para usar
+============================================================
+Generos presentes: {'m': 4920137, 'f': 2459522}
+
+Cargando representaciones SAE desde cache: /hdd/aitziber.l/activaciones_sae_gpt2_genero
+  Cache cargada: 7,379,659 comentarios, 16384 latentes
+
+Representaciones SAE: num_latents=16384, comentarios=7,379,659
+
+######################################################################
+# A) CLASIFICACION A NIVEL DE COMENTARIO
+######################################################################
+Cargando split de comentarios (por usuario) desde data/splits_genero_70_15_15/split_comentarios_por_usuario.npz
+
+Split comentarios: train=5,264,573 eval=1,116,308 test=998,778
+  Train dist: f=1,751,645 m=3,512,928
+  Eval  dist: f=394,212 m=722,096
+
+  Ajustando StandardScaler para last_token (incremental)...
