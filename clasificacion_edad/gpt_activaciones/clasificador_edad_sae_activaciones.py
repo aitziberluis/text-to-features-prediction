@@ -75,9 +75,12 @@ AGE_GROUPS = ["14_19", "20_29", "30_39", "40_plus"]
 LABEL_MAP = {g: i for i, g in enumerate(AGE_GROUPS)}
 NUM_CLASSES = len(AGE_GROUPS)
 
+# Directorio compartido para los indices de split (comun a GPT y SAE)
+SPLITS_DIR = "data/splits_edad"
+
 # Splits
-TEST_SIZE = 0.2
-EVAL_SIZE = 0.1
+TEST_SIZE = 0.15
+EVAL_SIZE = 0.15
 RANDOM_STATE = 42
 
 # Entrenamiento
@@ -92,8 +95,9 @@ PROGRESS_INTERVAL = 3600
 COMMENT_POOLINGS = ["last_token", "mean"]
 USER_POOLINGS = ["mean_of_last", "mean_of_mean"]
 BALANCE_CONFIGS = [
-    {"name": "sin_balanceo", "use_class_weights": False},
-    {"name": "balanceado", "use_class_weights": True},
+    {"name": "sin_balanceo", "use_class_weights": False, "manual": False},
+    {"name": "balanceado", "use_class_weights": True, "manual": False},
+    {"name": "balanceo_manual", "use_class_weights": True, "manual": True},
 ]
 
 
@@ -111,6 +115,22 @@ def calcular_pesos_clase(y: np.ndarray) -> np.ndarray:
     total = counts.sum()
     weights = np.where(counts > 0, total / (NUM_CLASSES * counts), 1.0)
     return weights.astype(np.float32)
+
+
+def calcular_pesos_clase_manual(y: np.ndarray) -> np.ndarray:
+    """Asigna pesos manuales segun ranking de frecuencia de clase.
+
+    Clase menos frecuente -> 1.3, siguiente -> 1.1, siguiente -> 0.95,
+    mas frecuente -> 0.85.
+    """
+    PESOS_POR_RANGO = [1.3, 1.1, 0.95, 0.85]  # de menos a mas frecuente
+    counts = np.bincount(y, minlength=NUM_CLASSES)
+    # Orden de clases de menos a mas frecuente
+    rank_order = np.argsort(counts)  # indices ordenados por count ascendente
+    weights = np.zeros(NUM_CLASSES, dtype=np.float32)
+    for rank, class_idx in enumerate(rank_order):
+        weights[class_idx] = PESOS_POR_RANGO[rank]
+    return weights
 
 
 def sample_weights_from_class_weights(y: np.ndarray, class_weights: Optional[np.ndarray]) -> np.ndarray:
@@ -325,22 +345,83 @@ def extraer_activaciones(
 # =====================
 
 
-def dividir_comentarios(labels: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Train/eval/test estratificado a nivel de comentario."""
-    indices = np.arange(len(labels))
-    train_eval_idx, test_idx = train_test_split(
-        indices, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=labels,
-    )
-    eval_rel = EVAL_SIZE / (1.0 - TEST_SIZE)
-    train_idx, eval_idx = train_test_split(
-        train_eval_idx, test_size=eval_rel, random_state=RANDOM_STATE,
-        stratify=labels[train_eval_idx],
-    )
+def dividir_comentarios(
+    labels: np.ndarray, df: pd.DataFrame, authors: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Train/eval/test a nivel comentario basado en split de usuarios.
+
+    Todos los comentarios de un mismo usuario van al mismo split para
+    evitar data leakage entre train/eval/test.
+    """
+    os.makedirs(SPLITS_DIR, exist_ok=True)
+    split_path = os.path.join(SPLITS_DIR, "split_comentarios_por_usuario.npz")
+
+    if os.path.exists(split_path):
+        data = np.load(split_path)
+        train_idx = data["train_idx"]
+        eval_idx = data["eval_idx"]
+        test_idx = data["test_idx"]
+
+        all_idx = np.concatenate([train_idx, eval_idx, test_idx])
+        if len(np.unique(all_idx)) == len(labels) and all_idx.min() >= 0 and all_idx.max() < len(labels):
+            print(f"Cargando split de comentarios (por usuario) desde {split_path}")
+            return train_idx, eval_idx, test_idx
+
+        print("Split de comentarios en cache invalido para este dataset. Regenerando...")
+
+    # Obtener split de usuarios
+    train_auth, eval_auth, test_auth = dividir_usuarios(df)
+    train_auth_set = set(train_auth)
+    eval_auth_set = set(eval_auth)
+    test_auth_set = set(test_auth)
+
+    # Asignar cada comentario al split de su usuario
+    train_idx = []
+    eval_idx = []
+    test_idx = []
+    for i, auth in enumerate(authors):
+        if auth in train_auth_set:
+            train_idx.append(i)
+        elif auth in eval_auth_set:
+            eval_idx.append(i)
+        elif auth in test_auth_set:
+            test_idx.append(i)
+
+    train_idx = np.array(train_idx, dtype=np.int64)
+    eval_idx = np.array(eval_idx, dtype=np.int64)
+    test_idx = np.array(test_idx, dtype=np.int64)
+
+    np.savez(split_path, train_idx=train_idx, eval_idx=eval_idx, test_idx=test_idx)
+    print(f"Split de comentarios (por usuario) guardado en {split_path}")
+    print(f"  Sin leakage: cada usuario aparece en un unico split.")
     return train_idx, eval_idx, test_idx
 
 
 def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Train/eval/test estratificado a nivel de usuario."""
+    """Train/eval/test estratificado a nivel de usuario.
+
+    Carga los autores de cada split desde SPLITS_DIR si existen.
+    Si no existen, los genera y guarda.
+    """
+    os.makedirs(SPLITS_DIR, exist_ok=True)
+    paths = {
+        s: os.path.join(SPLITS_DIR, f"usuario_{s}_auth.npy")
+        for s in ("train", "eval", "test")
+    }
+
+    # Intentar cargar splits existentes
+    if all(os.path.exists(p) for p in paths.values()):
+        train_auth = np.load(paths["train"], allow_pickle=True)
+        eval_auth = np.load(paths["eval"], allow_pickle=True)
+        test_auth = np.load(paths["test"], allow_pickle=True)
+
+        user_df = df[["author", "age_group"]].drop_duplicates("author")
+        total_saved = len(train_auth) + len(eval_auth) + len(test_auth)
+        if total_saved == len(user_df):
+            print(f"Splits de usuarios cargados desde {SPLITS_DIR}/")
+            return train_auth, eval_auth, test_auth
+        print(f"Num usuarios cambio ({total_saved} -> {len(user_df)}). Regenerando...")
+
     user_df = df[["author", "age_group"]].drop_duplicates("author")
     authors = user_df["author"].to_numpy()
     user_labels = np.array([LABEL_MAP[g] for g in user_df["age_group"]], dtype=np.int8)
@@ -356,6 +437,13 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         train_eval_auth, test_size=eval_rel, random_state=RANDOM_STATE,
         stratify=user_labels_te,
     )
+
+    # Guardar a disco
+    np.save(paths["train"], train_auth)
+    np.save(paths["eval"], eval_auth)
+    np.save(paths["test"], test_auth)
+    print(f"Splits de usuarios guardados en {SPLITS_DIR}/")
+
     return train_auth, eval_auth, test_auth
 
 
@@ -579,7 +667,7 @@ def main():
     print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
     print("#" * 70)
 
-    train_idx, eval_idx, test_idx = dividir_comentarios(labels)
+    train_idx, eval_idx, test_idx = dividir_comentarios(labels, df, authors)
     y_train_c = labels[train_idx]
     y_eval_c = labels[eval_idx]
 
@@ -591,6 +679,7 @@ def main():
 
     # Pre-calcular pesos de clase sobre el train set
     train_class_weights = calcular_pesos_clase(y_train_c)
+    train_class_weights_manual = calcular_pesos_clase_manual(y_train_c)
 
     comment_features = {
         "last_token": (last_token, train_idx, eval_idx),
@@ -603,7 +692,12 @@ def main():
         X_ev = feats[ev_idx]
 
         for bal_cfg in BALANCE_CONFIGS:
-            cw = train_class_weights if bal_cfg["use_class_weights"] else None
+            if not bal_cfg["use_class_weights"]:
+                cw = None
+            elif bal_cfg["manual"]:
+                cw = train_class_weights_manual
+            else:
+                cw = train_class_weights
 
             clf, metrics = entrenar_comentario(
                 X_train=X_tr, y_train=y_train_c,
@@ -634,7 +728,12 @@ def main():
         for pooling_name in USER_POOLINGS:
             feats = user_features[pooling_name]
             for bal_cfg in BALANCE_CONFIGS:
-                cw = train_class_weights if bal_cfg["use_class_weights"] else None
+                if not bal_cfg["use_class_weights"]:
+                    cw = None
+                elif bal_cfg["manual"]:
+                    cw = train_class_weights_manual
+                else:
+                    cw = train_class_weights
 
                 clf, metrics = entrenar_usuario(
                     authors=authors,

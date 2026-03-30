@@ -279,10 +279,16 @@ def cargar_o_extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndar
 # =====================
 
 
-def dividir_comentarios(labels: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Train/eval/test estratificado a nivel comentario con cache compartido."""
+def dividir_comentarios(
+    labels: np.ndarray, df: pd.DataFrame, authors: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Train/eval/test a nivel comentario basado en split de usuarios.
+
+    Todos los comentarios de un mismo usuario van al mismo split para
+    evitar data leakage entre train/eval/test.
+    """
     os.makedirs(SPLITS_DIR, exist_ok=True)
-    split_path = os.path.join(SPLITS_DIR, "split_comentarios.npz")
+    split_path = os.path.join(SPLITS_DIR, "split_comentarios_por_usuario.npz")
 
     if os.path.exists(split_path):
         data = np.load(split_path)
@@ -292,23 +298,36 @@ def dividir_comentarios(labels: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.
 
         all_idx = np.concatenate([train_idx, eval_idx, test_idx])
         if len(np.unique(all_idx)) == len(labels) and all_idx.min() >= 0 and all_idx.max() < len(labels):
-            print(f"Cargando split de comentarios compartido desde {split_path}")
+            print(f"Cargando split de comentarios (por usuario) desde {split_path}")
             return train_idx, eval_idx, test_idx
 
         print("Split de comentarios en cache invalido para este dataset. Regenerando...")
 
-    indices = np.arange(len(labels))
-    train_eval_idx, test_idx = train_test_split(
-        indices, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=labels,
-    )
-    eval_rel = EVAL_SIZE / (1.0 - TEST_SIZE)
-    train_idx, eval_idx = train_test_split(
-        train_eval_idx, test_size=eval_rel, random_state=RANDOM_STATE,
-        stratify=labels[train_eval_idx],
-    )
+    # Obtener split de usuarios
+    train_auth, eval_auth, test_auth = dividir_usuarios(df)
+    train_auth_set = set(train_auth)
+    eval_auth_set = set(eval_auth)
+    test_auth_set = set(test_auth)
+
+    # Asignar cada comentario al split de su usuario
+    train_idx = []
+    eval_idx = []
+    test_idx = []
+    for i, auth in enumerate(authors):
+        if auth in train_auth_set:
+            train_idx.append(i)
+        elif auth in eval_auth_set:
+            eval_idx.append(i)
+        elif auth in test_auth_set:
+            test_idx.append(i)
+
+    train_idx = np.array(train_idx, dtype=np.int64)
+    eval_idx = np.array(eval_idx, dtype=np.int64)
+    test_idx = np.array(test_idx, dtype=np.int64)
 
     np.savez(split_path, train_idx=train_idx, eval_idx=eval_idx, test_idx=test_idx)
-    print(f"Split de comentarios guardado en {split_path}")
+    print(f"Split de comentarios (por usuario) guardado en {split_path}")
+    print(f"  Sin leakage: cada usuario aparece en un unico split.")
     return train_idx, eval_idx, test_idx
 
 
@@ -551,7 +570,7 @@ def main():
     print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
     print("#" * 70)
 
-    train_idx, eval_idx, test_idx = dividir_comentarios(labels)
+    train_idx, eval_idx, test_idx = dividir_comentarios(labels, df, authors)
     y_train_c = labels[train_idx]
     y_eval_c = labels[eval_idx]
 

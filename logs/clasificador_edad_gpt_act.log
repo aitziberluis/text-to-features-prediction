@@ -1,3 +1,5 @@
+DE ESTA HAY QUE AJUSTAR LOS PESOS DE CLASES CUANDO SE HACE BALANCEADO Y QUE GUARDE TRAIN Y ASI COMO EN EL DE LA EDAD 
+
 nohup: ignoring input
 `torch_dtype` is deprecated! Use `dtype` instead!
 ======================================================================
@@ -35,7 +37,11 @@ Rangos de edad presentes: {'20_29': 2811112, '30_39': 1422075, '14_19': 877575, 
 
 Extrayendo activaciones de GPT-2 para 5,538,809 comentarios...
 Hookpoint: transformer.h.8, batch_size: 32
-Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  32%|███▏      | 48/148 [00:00<00:00, 463.42it/s]Loading weights:  89%|████████▉ | 132/148 [00:00<00:00, 649.61it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 498.36it/s]
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights:  32%|███▏      | 48/148 [00:00<00:00, 463.42it/s]
+Loading weights:  89%|████████▉ | 132/148 [00:00<00:00, 649.61it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 498.36it/s]
   [  0.0%] step 1/173088 (32/5,538,809 comentarios)
   [  5.8%] step 9983/173088 (319,456/5,538,809 comentarios)
   [ 11.5%] step 19853/173088 (635,296/5,538,809 comentarios)

@@ -99,3 +99,140 @@ ENTRENANDO: comentario_mean_sin_balanceo
   Train: 5,165,761 | Eval: 1,106,949
   Pesos: female=1.0, male=1.0
 ============================================================
+  [Epoch 1]   7.1% (89/1262)
+  [Epoch 1]  14.2% (179/1262)
+  [Epoch 1]  22.3% (282/1262)
+  [Epoch 1]  31.1% (392/1262)
+  [Epoch 1]  40.8% (515/1262)
+  [Epoch 1]  51.3% (647/1262)
+  [Epoch 1]  62.2% (785/1262)
+  [Epoch 1]  71.6% (904/1262)
+  [Epoch 1]  82.7% (1044/1262)
+  [Epoch 1]  96.9% (1223/1262)
+  [Epoch 1] 100.0% (1262/1262)
+
+=== EVAL comentario_mean_sin_balanceo ===
+Accuracy: 0.7126 | Balanced Acc: 0.5870 | F1 macro: 0.5725 | F1 weighted: 0.6541
+  female: prec=0.7438 rec=0.2102 f1=0.3277
+  male:   prec=0.7094 rec=0.9638 f1=0.8173
+              precision    recall  f1-score   support
+
+      female       0.74      0.21      0.33    368928
+        male       0.71      0.96      0.82    738021
+
+    accuracy                           0.71   1106949
+   macro avg       0.73      0.59      0.57   1106949
+weighted avg       0.72      0.71      0.65   1106949
+
+Confusion matrix:
+[[ 77537 291391]
+ [ 26702 711319]]
+
+============================================================
+ENTRENANDO: comentario_mean_balanceado
+  Train: 5,165,761 | Eval: 1,106,949
+  Pesos: female=1.1, male=0.9
+============================================================
+  [Epoch 1]  41.2% (520/1262)
+  [Epoch 1] 100.0% (1262/1262)
+
+=== EVAL comentario_mean_balanceado ===
+Accuracy: 0.7219 | Balanced Acc: 0.6263 | F1 macro: 0.6313 | F1 weighted: 0.6923
+  female: prec=0.6610 rec=0.3396 f1=0.4487
+  male:   prec=0.7344 rec=0.9130 f1=0.8140
+              precision    recall  f1-score   support
+
+      female       0.66      0.34      0.45    368928
+        male       0.73      0.91      0.81    738021
+
+    accuracy                           0.72   1106949
+   macro avg       0.70      0.63      0.63   1106949
+weighted avg       0.71      0.72      0.69   1106949
+
+Confusion matrix:
+[[125277 243651]
+ [ 64236 673785]]
+
+######################################################################
+# B) CLASIFICACION A NIVEL DE USUARIO
+######################################################################
+Cargando split de usuarios compartido desde data/splits_genero_70_15_15/split_usuarios.npz
+
+Split usuarios: train=2,158 eval=463 test=463
+
+Agregando features por usuario para usuario_mean_of_last_sin_balanceo...
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_sin_balanceo
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_last_sin_balanceo ===
+Accuracy: 0.7214 | Balanced Acc: 0.7003 | F1 macro: 0.6967 | F1 weighted: 0.7051
+  female: prec=0.8279 rec=0.4833 f1=0.6103
+  male:   prec=0.6833 rec=0.9173 f1=0.7832
+              precision    recall  f1-score   support
+
+      female       0.83      0.48      0.61       209
+        male       0.68      0.92      0.78       254
+
+    accuracy                           0.72       463
+   macro avg       0.76      0.70      0.70       463
+weighted avg       0.75      0.72      0.71       463
+
+Confusion matrix:
+[[101 108]
+ [ 21 233]]
+
+Agregando features por usuario para usuario_mean_of_last_balanceado...
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_balanceado
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.1, male=0.9
+============================================================
+
+=== EVAL usuario_mean_of_last_balanceado ===
+Accuracy: 0.7300 | Balanced Acc: 0.7289 | F1 macro: 0.7282 | F1 weighted: 0.7304
+  female: prec=0.6944 rec=0.7177 f1=0.7059
+  male:   prec=0.7611 rec=0.7402 f1=0.7505
+              precision    recall  f1-score   support
+
+      female       0.69      0.72      0.71       209
+        male       0.76      0.74      0.75       254
+
+    accuracy                           0.73       463
+   macro avg       0.73      0.73      0.73       463
+weighted avg       0.73      0.73      0.73       463
+
+Confusion matrix:
+[[150  59]
+ [ 66 188]]
+
+Agregando features por usuario para usuario_mean_of_mean_sin_balanceo...
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_sin_balanceo
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_mean_sin_balanceo ===
+Accuracy: 0.6112 | Balanced Acc: 0.5931 | F1 macro: 0.5866 | F1 weighted: 0.5964
+  female: prec=0.6028 rec=0.4067 f1=0.4857
+  male:   prec=0.6149 rec=0.7795 f1=0.6875
+              precision    recall  f1-score   support
+
+      female       0.60      0.41      0.49       209
+        male       0.61      0.78      0.69       254
+
+    accuracy                           0.61       463
+   macro avg       0.61      0.59      0.59       463
+weighted avg       0.61      0.61      0.60       463
+
+Confusion matrix:
+[[ 85 124]
+ [ 56 198]]
+
+Agregando features por usuario para usuario_mean_of_mean_balanceado...
