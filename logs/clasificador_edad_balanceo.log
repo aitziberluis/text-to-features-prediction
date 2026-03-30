@@ -1,0 +1,373 @@
+nohup: ignoring input
+======================================================================
+CLASIFICADOR EDAD - TECNICAS DE BALANCEO PRE-ENTRENAMIENTO
+======================================================================
+Cargando activaciones de data/activaciones_gpt2_edad/ ...
+  last_token: (5538809, 768), mean_token: (5538809, 768)
+
+Distribucion (5,538,809 comentarios):
+  14_19: 877,575 (15.8%)
+  20_29: 2,811,112 (50.8%)
+  30_39: 1,422,075 (25.7%)
+  40_plus: 428,047 (7.7%)
+
+Split: train=3,896,989 eval=939,461 test=702,359
+
+######################################################################
+# COMENTARIO - pooling: last_token
+######################################################################
+
+Fitting StandardScaler (last_token)...
+
+────────────────────────────────────────────────────────────
+RESAMPLING: sin_balanceo (pooling=last_token)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+============================================================
+SGD: comentario_last_token_sin_balanceo_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_last_token_sin_balanceo_sgd ===
+Accuracy: 0.2571 | Balanced Acc: 0.3088 | F1 macro: 0.2403 | F1 weighted: 0.2255
+     14_19: prec=0.2345 rec=0.4066 f1=0.2975
+     20_29: prec=0.4891 rec=0.0613 f1=0.1089
+     30_39: prec=0.3063 rec=0.4132 f1=0.3518
+   40_plus: prec=0.1421 rec=0.3543 f1=0.2029
+              precision    recall  f1-score   support
+
+       14_19       0.23      0.41      0.30    168786
+       20_29       0.49      0.06      0.11    399466
+       30_39       0.31      0.41      0.35    287228
+     40_plus       0.14      0.35      0.20     83981
+
+    accuracy                           0.26    939461
+   macro avg       0.29      0.31      0.24    939461
+weighted avg       0.36      0.26      0.23    939461
+
+Confusion matrix:
+[[ 68623   7762  63658  28743]
+ [130034  24479 161985  82968]
+ [ 84854  15786 118685  67903]
+ [  9067   2026  43135  29753]]
+
+============================================================
+MLP: comentario_last_token_sin_balanceo_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2577 train_acc=0.4052
+  Epoch 8/8: loss=1.1577 train_acc=0.4688
+
+=== EVAL comentario_last_token_sin_balanceo_mlp ===
+Accuracy: 0.3064 | Balanced Acc: 0.3248 | F1 macro: 0.2910 | F1 weighted: 0.3125
+     14_19: prec=0.2539 rec=0.4653 f1=0.3285
+     20_29: prec=0.4738 rec=0.2541 f1=0.3308
+     30_39: prec=0.3380 rec=0.2911 f1=0.3128
+   40_plus: prec=0.1438 rec=0.2887 f1=0.1920
+              precision    recall  f1-score   support
+
+       14_19       0.25      0.47      0.33    168786
+       20_29       0.47      0.25      0.33    399466
+       30_39       0.34      0.29      0.31    287228
+     40_plus       0.14      0.29      0.19     83981
+
+    accuracy                           0.31    939461
+   macro avg       0.30      0.32      0.29    939461
+weighted avg       0.36      0.31      0.31    939461
+
+Confusion matrix:
+[[ 78531  34062  34825  21368]
+ [142855 101505  91940  63166]
+ [ 76688  67136  83611  59793]
+ [ 11226  11535  36972  24248]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: random_oversample (pooling=last_token)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando random_oversample...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [125000, 125000, 125000, 125000] (total: 500,000)
+    Tiempo: 1.3s
+
+============================================================
+SGD: comentario_last_token_random_oversample_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_last_token_random_oversample_sgd ===
+Accuracy: 0.2571 | Balanced Acc: 0.3088 | F1 macro: 0.2403 | F1 weighted: 0.2255
+     14_19: prec=0.2345 rec=0.4066 f1=0.2975
+     20_29: prec=0.4891 rec=0.0613 f1=0.1089
+     30_39: prec=0.3063 rec=0.4132 f1=0.3518
+   40_plus: prec=0.1421 rec=0.3543 f1=0.2029
+              precision    recall  f1-score   support
+
+       14_19       0.23      0.41      0.30    168786
+       20_29       0.49      0.06      0.11    399466
+       30_39       0.31      0.41      0.35    287228
+     40_plus       0.14      0.35      0.20     83981
+
+    accuracy                           0.26    939461
+   macro avg       0.29      0.31      0.24    939461
+weighted avg       0.36      0.26      0.23    939461
+
+Confusion matrix:
+[[ 68623   7762  63658  28743]
+ [130034  24479 161985  82968]
+ [ 84854  15786 118685  67903]
+ [  9067   2026  43135  29753]]
+
+============================================================
+MLP: comentario_last_token_random_oversample_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2519 train_acc=0.4070
+  Epoch 8/8: loss=1.1561 train_acc=0.4695
+
+=== EVAL comentario_last_token_random_oversample_mlp ===
+Accuracy: 0.3057 | Balanced Acc: 0.3247 | F1 macro: 0.2906 | F1 weighted: 0.3117
+     14_19: prec=0.2545 rec=0.4632 f1=0.3285
+     20_29: prec=0.4753 rec=0.2501 f1=0.3278
+     30_39: prec=0.3365 rec=0.2950 f1=0.3144
+   40_plus: prec=0.1433 rec=0.2904 f1=0.1919
+              precision    recall  f1-score   support
+
+       14_19       0.25      0.46      0.33    168786
+       20_29       0.48      0.25      0.33    399466
+       30_39       0.34      0.30      0.31    287228
+     40_plus       0.14      0.29      0.19     83981
+
+    accuracy                           0.31    939461
+   macro avg       0.30      0.32      0.29    939461
+weighted avg       0.36      0.31      0.31    939461
+
+Confusion matrix:
+[[ 78187  33323  35860  21416]
+ [141802  99923  93979  63762]
+ [ 76201  65659  84738  60630]
+ [ 10996  11340  37261  24384]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: random_undersample (pooling=last_token)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando random_undersample...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [125000, 125000, 125000, 125000] (total: 500,000)
+    Tiempo: 0.6s
+
+============================================================
+SGD: comentario_last_token_random_undersample_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_last_token_random_undersample_sgd ===
+Accuracy: 0.2610 | Balanced Acc: 0.3100 | F1 macro: 0.2460 | F1 weighted: 0.2350
+     14_19: prec=0.2370 rec=0.4012 f1=0.2980
+     20_29: prec=0.4806 rec=0.0766 f1=0.1321
+     30_39: prec=0.3069 rec=0.4077 f1=0.3502
+   40_plus: prec=0.1429 rec=0.3547 f1=0.2037
+              precision    recall  f1-score   support
+
+       14_19       0.24      0.40      0.30    168786
+       20_29       0.48      0.08      0.13    399466
+       30_39       0.31      0.41      0.35    287228
+     40_plus       0.14      0.35      0.20     83981
+
+    accuracy                           0.26    939461
+   macro avg       0.29      0.31      0.25    939461
+weighted avg       0.35      0.26      0.23    939461
+
+Confusion matrix:
+[[ 67714   9738  62617  28717]
+ [127346  30588 159144  82388]
+ [ 81882  20657 117102  67587]
+ [  8773   2660  42756  29792]]
+
+============================================================
+MLP: comentario_last_token_random_undersample_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2538 train_acc=0.4066
+  Epoch 8/8: loss=1.1570 train_acc=0.4688
+
+=== EVAL comentario_last_token_random_undersample_mlp ===
+Accuracy: 0.3072 | Balanced Acc: 0.3234 | F1 macro: 0.2913 | F1 weighted: 0.3140
+     14_19: prec=0.2523 rec=0.4531 f1=0.3241
+     20_29: prec=0.4709 rec=0.2624 f1=0.3370
+     30_39: prec=0.3376 rec=0.2889 f1=0.3113
+   40_plus: prec=0.1447 rec=0.2893 f1=0.1929
+              precision    recall  f1-score   support
+
+       14_19       0.25      0.45      0.32    168786
+       20_29       0.47      0.26      0.34    399466
+       30_39       0.34      0.29      0.31    287228
+     40_plus       0.14      0.29      0.19     83981
+
+    accuracy                           0.31    939461
+   macro avg       0.30      0.32      0.29    939461
+weighted avg       0.36      0.31      0.31    939461
+
+Confusion matrix:
+[[ 76473  36667  34812  20834]
+ [140146 104817  91627  62876]
+ [ 75840  68454  82980  59954]
+ [ 10644  12653  36387  24297]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: smote (pooling=last_token)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando smote...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [125000, 125000, 125000, 125000] (total: 500,000)
+    Tiempo: 1.3s
+
+============================================================
+SGD: comentario_last_token_smote_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_last_token_smote_sgd ===
+Accuracy: 0.2571 | Balanced Acc: 0.3088 | F1 macro: 0.2403 | F1 weighted: 0.2255
+     14_19: prec=0.2345 rec=0.4066 f1=0.2975
+     20_29: prec=0.4891 rec=0.0613 f1=0.1089
+     30_39: prec=0.3063 rec=0.4132 f1=0.3518
+   40_plus: prec=0.1421 rec=0.3543 f1=0.2029
+              precision    recall  f1-score   support
+
+       14_19       0.23      0.41      0.30    168786
+       20_29       0.49      0.06      0.11    399466
+       30_39       0.31      0.41      0.35    287228
+     40_plus       0.14      0.35      0.20     83981
+
+    accuracy                           0.26    939461
+   macro avg       0.29      0.31      0.24    939461
+weighted avg       0.36      0.26      0.23    939461
+
+Confusion matrix:
+[[ 68623   7762  63658  28743]
+ [130034  24479 161985  82968]
+ [ 84854  15786 118685  67903]
+ [  9067   2026  43135  29753]]
+
+============================================================
+MLP: comentario_last_token_smote_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2521 train_acc=0.4072
+  Epoch 8/8: loss=1.1574 train_acc=0.4694
+
+=== EVAL comentario_last_token_smote_mlp ===
+Accuracy: 0.3119 | Balanced Acc: 0.3261 | F1 macro: 0.2951 | F1 weighted: 0.3191
+     14_19: prec=0.2562 rec=0.4525 f1=0.3271
+     20_29: prec=0.4692 rec=0.2737 f1=0.3457
+     30_39: prec=0.3443 rec=0.2890 f1=0.3142
+   40_plus: prec=0.1452 rec=0.2891 f1=0.1933
+              precision    recall  f1-score   support
+
+       14_19       0.26      0.45      0.33    168786
+       20_29       0.47      0.27      0.35    399466
+       30_39       0.34      0.29      0.31    287228
+     40_plus       0.15      0.29      0.19     83981
+
+    accuracy                           0.31    939461
+   macro avg       0.30      0.33      0.30    939461
+weighted avg       0.36      0.31      0.32    939461
+
+Confusion matrix:
+[[ 76377  38228  33266  20915]
+ [138490 109316  88907  62753]
+ [ 72854  72046  82999  59329]
+ [ 10449  13387  35864  24281]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: adasyn (pooling=last_token)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando adasyn...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [125000, 125000, 125000, 125000] (total: 500,000)
+    Tiempo: 1.4s
+
+============================================================
+SGD: comentario_last_token_adasyn_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_last_token_adasyn_sgd ===
+Accuracy: 0.2571 | Balanced Acc: 0.3088 | F1 macro: 0.2403 | F1 weighted: 0.2255
+     14_19: prec=0.2345 rec=0.4066 f1=0.2975
+     20_29: prec=0.4891 rec=0.0613 f1=0.1089
+     30_39: prec=0.3063 rec=0.4132 f1=0.3518
+   40_plus: prec=0.1421 rec=0.3543 f1=0.2029
+              precision    recall  f1-score   support
+
+       14_19       0.23      0.41      0.30    168786
+       20_29       0.49      0.06      0.11    399466
+       30_39       0.31      0.41      0.35    287228
+     40_plus       0.14      0.35      0.20     83981
+
+    accuracy                           0.26    939461
+   macro avg       0.29      0.31      0.24    939461
+weighted avg       0.36      0.26      0.23    939461
+
+Confusion matrix:
+[[ 68623   7762  63658  28743]
+ [130034  24479 161985  82968]
+ [ 84854  15786 118685  67903]
+ [  9067   2026  43135  29753]]
+
+============================================================
+MLP: comentario_last_token_adasyn_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2531 train_acc=0.4065
+  Epoch 8/8: loss=1.1575 train_acc=0.4683
+
+=== EVAL comentario_last_token_adasyn_mlp ===
+Accuracy: 0.3085 | Balanced Acc: 0.3263 | F1 macro: 0.2927 | F1 weighted: 0.3146
+     14_19: prec=0.2539 rec=0.4680 f1=0.3292
+     20_29: prec=0.4765 rec=0.2564 f1=0.3334
+     30_39: prec=0.3408 rec=0.2933 f1=0.3153
+   40_plus: prec=0.1453 rec=0.2875 f1=0.1930
+              precision    recall  f1-score   support
+
+       14_19       0.25      0.47      0.33    168786
+       20_29       0.48      0.26      0.33    399466
+       30_39       0.34      0.29      0.32    287228
+     40_plus       0.15      0.29      0.19     83981
+
+    accuracy                           0.31    939461
+   macro avg       0.30      0.33      0.29    939461
+weighted avg       0.37      0.31      0.31    939461
+
+Confusion matrix:
+[[ 78991  34192  34581  21022]
+ [143184 102429  91805  62048]
+ [ 77344  66683  84251  58950]
+ [ 11576  11650  36612  24143]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: smote_tomek (pooling=last_token)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando smote_tomek...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
