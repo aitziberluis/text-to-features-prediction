@@ -298,7 +298,7 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
                 input_ids = tokens["input_ids"].to(model.device)
                 attention_mask = tokens["attention_mask"].to(model.device)
 
-                model(input_ids=input_ids, attention_mask=attention_mask)
+                model.transformer(input_ids=input_ids, attention_mask=attention_mask)
 
                 acts = captured["act"].to(sae.dtype).to(sae.device)
                 top_acts, top_indices = sae.encode(acts)

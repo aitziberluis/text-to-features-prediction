@@ -1,0 +1,265 @@
+nohup: ignoring input
+======================================================================
+CLASIFICADOR EDAD MEJORADO - ACTIVACIONES GPT-2
+======================================================================
+Cargando activaciones de data/activaciones_gpt2_edad/ ...
+  last_token: (5538809, 768), mean_token: (5538809, 768)
+  labels: (5538809,), hidden_size: 768
+
+Distribucion de clases (5,538,809 comentarios):
+  14_19: 877,575 (15.8%)
+  20_29: 2,811,112 (50.8%)
+  30_39: 1,422,075 (25.7%)
+  40_plus: 428,047 (7.7%)
+Split cargado: train=3,896,989 eval=939,461 test=702,359
+
+Split comentarios:
+  14_19: train=612,830 eval=168,786
+  20_29: train=2,027,081 eval=399,466
+  30_39: train=957,717 eval=287,228
+  40_plus: train=299,361 eval=83,981
+
+Pesos de clase (automaticos): 14_19=1.590, 20_29=0.481, 30_39=1.017, 40_plus=3.254
+
+######################################################################
+# COMENTARIO - pooling: last_token
+######################################################################
+
+Fitting StandardScaler en train (last_token)...
+  Scaler fit: 100.0% (3,896,989/3,896,989)
+Transformando train...
+Transformando eval...
+
+============================================================
+ENTRENANDO SGD NORMALIZADO: comentario_last_token_sgd_norm_sin_balanceo
+  Train: 3,896,989 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 952/952
+
+=== EVAL comentario_last_token_sgd_norm_sin_balanceo ===
+Accuracy: 0.4142 | Balanced Acc: 0.2606 | F1 macro: 0.2011 | F1 weighted: 0.2923
+     14_19: prec=0.2990 rec=0.0542 f1=0.0918
+     20_29: prec=0.4274 rec=0.9130 f1=0.5822
+     30_39: prec=0.2956 rec=0.0441 f1=0.0768
+   40_plus: prec=0.2055 rec=0.0308 f1=0.0536
+              precision    recall  f1-score   support
+
+       14_19       0.30      0.05      0.09    168786
+       20_29       0.43      0.91      0.58    399466
+       30_39       0.30      0.04      0.08    287228
+     40_plus       0.21      0.03      0.05     83981
+
+    accuracy                           0.41    939461
+   macro avg       0.31      0.26      0.20    939461
+weighted avg       0.34      0.41      0.29    939461
+
+Confusion matrix:
+[[  9155 153019   5438   1174]
+ [ 14872 364732  15257   4605]
+ [  5970 264357  12673   4228]
+ [   618  71277   9498   2588]]
+
+============================================================
+ENTRENANDO SGD NORMALIZADO: comentario_last_token_sgd_norm_balanceado
+  Train: 3,896,989 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 952/952
+
+=== EVAL comentario_last_token_sgd_norm_balanceado ===
+Accuracy: 0.2695 | Balanced Acc: 0.3079 | F1 macro: 0.2523 | F1 weighted: 0.2459
+     14_19: prec=0.2388 rec=0.3920 f1=0.2968
+     20_29: prec=0.4779 rec=0.0914 f1=0.1534
+     30_39: prec=0.3058 rec=0.4311 f1=0.3578
+   40_plus: prec=0.1471 rec=0.3173 f1=0.2010
+              precision    recall  f1-score   support
+
+       14_19       0.24      0.39      0.30    168786
+       20_29       0.48      0.09      0.15    399466
+       30_39       0.31      0.43      0.36    287228
+     40_plus       0.15      0.32      0.20     83981
+
+    accuracy                           0.27    939461
+   macro avg       0.29      0.31      0.25    939461
+weighted avg       0.35      0.27      0.25    939461
+
+Confusion matrix:
+[[ 66166  11623  66995  24002]
+ [123674  36510 168331  70951]
+ [ 78711  25184 123822  59511]
+ [  8475   3079  45780  26647]]
+
+============================================================
+ENTRENANDO MLP: comentario_last_token_mlp_ce_sin_balanceo
+  Train: 3,896,989 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3
+  LR: 0.001 | Epochs: 8 | Loss: ce
+============================================================
+  Epoch 1/8: loss=1.0668 train_acc=0.5477 lr=0.000962
+  Epoch 8/8: loss=1.0001 train_acc=0.5774 lr=0.000000
+
+=== EVAL comentario_last_token_mlp_ce_sin_balanceo ===
+Accuracy: 0.4275 | Balanced Acc: 0.2687 | F1 macro: 0.2150 | F1 weighted: 0.3155
+     14_19: prec=0.3340 rec=0.0367 f1=0.0662
+     20_29: prec=0.4388 rec=0.9135 f1=0.5928
+     30_39: prec=0.3656 rec=0.0984 f1=0.1551
+   40_plus: prec=0.1839 rec=0.0262 f1=0.0458
+              precision    recall  f1-score   support
+
+       14_19       0.33      0.04      0.07    168786
+       20_29       0.44      0.91      0.59    399466
+       30_39       0.37      0.10      0.16    287228
+     40_plus       0.18      0.03      0.05     83981
+
+    accuracy                           0.43    939461
+   macro avg       0.33      0.27      0.21    939461
+weighted avg       0.37      0.43      0.32    939461
+
+Confusion matrix:
+[[  6202 153663   6730   2191]
+ [  8438 364913  22548   3567]
+ [  3752 251217  28266   3993]
+ [   179  61835  19770   2197]]
+
+============================================================
+ENTRENANDO MLP: comentario_last_token_mlp_ce_balanceado
+  Train: 3,896,989 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3
+  LR: 0.001 | Epochs: 8 | Loss: ce
+  Pesos de clase: 14_19=1.590, 20_29=0.481, 30_39=1.017, 40_plus=3.254
+============================================================
+  Epoch 1/8: loss=1.2058 train_acc=0.3701 lr=0.000962
+  Epoch 8/8: loss=1.1248 train_acc=0.4183 lr=0.000000
+
+=== EVAL comentario_last_token_mlp_ce_balanceado ===
+Accuracy: 0.3204 | Balanced Acc: 0.3284 | F1 macro: 0.3010 | F1 weighted: 0.3281
+     14_19: prec=0.2601 rec=0.4484 f1=0.3292
+     20_29: prec=0.4739 rec=0.2886 f1=0.3587
+     30_39: prec=0.3494 rec=0.3034 f1=0.3248
+   40_plus: prec=0.1472 rec=0.2731 f1=0.1913
+              precision    recall  f1-score   support
+
+       14_19       0.26      0.45      0.33    168786
+       20_29       0.47      0.29      0.36    399466
+       30_39       0.35      0.30      0.32    287228
+     40_plus       0.15      0.27      0.19     83981
+
+    accuracy                           0.32    939461
+   macro avg       0.31      0.33      0.30    939461
+weighted avg       0.37      0.32      0.33    939461
+
+Confusion matrix:
+[[ 75677  39506  33895  19708]
+ [134722 115277  91209  58258]
+ [ 70986  74209  87153  54880]
+ [  9590  14244  37214  22933]]
+
+============================================================
+ENTRENANDO MLP: comentario_last_token_mlp_focal_g1
+  Train: 3,896,989 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3
+  LR: 0.001 | Epochs: 8 | Loss: focal
+  Focal gamma: 1.0
+  Pesos de clase: 14_19=1.590, 20_29=0.481, 30_39=1.017, 40_plus=3.254
+============================================================
+  Epoch 1/8: loss=0.8778 train_acc=0.3699 lr=0.000962
+  Epoch 8/8: loss=0.8105 train_acc=0.4091 lr=0.000000
+
+=== EVAL comentario_last_token_mlp_focal_g1 ===
+Accuracy: 0.3151 | Balanced Acc: 0.3293 | F1 macro: 0.2976 | F1 weighted: 0.3214
+     14_19: prec=0.2572 rec=0.4716 f1=0.3328
+     20_29: prec=0.4810 rec=0.2649 f1=0.3416
+     30_39: prec=0.3475 rec=0.3042 f1=0.3244
+   40_plus: prec=0.1464 rec=0.2764 f1=0.1914
+              precision    recall  f1-score   support
+
+       14_19       0.26      0.47      0.33    168786
+       20_29       0.48      0.26      0.34    399466
+       30_39       0.35      0.30      0.32    287228
+     40_plus       0.15      0.28      0.19     83981
+
+    accuracy                           0.32    939461
+   macro avg       0.31      0.33      0.30    939461
+weighted avg       0.37      0.32      0.32    939461
+
+Confusion matrix:
+[[ 79597  34581  34440  20168]
+ [142217 105802  92110  59337]
+ [ 77045  66976  87380  55827]
+ [ 10646  12622  37500  23213]]
+
+============================================================
+ENTRENANDO MLP: comentario_last_token_mlp_focal_g2
+  Train: 3,896,989 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3
+  LR: 0.001 | Epochs: 8 | Loss: focal
+  Focal gamma: 2.0
+  Pesos de clase: 14_19=1.590, 20_29=0.481, 30_39=1.017, 40_plus=3.254
+============================================================
+  Epoch 1/8: loss=0.6486 train_acc=0.3661 lr=0.000962
+  Epoch 8/8: loss=0.5945 train_acc=0.4004 lr=0.000000
+
+=== EVAL comentario_last_token_mlp_focal_g2 ===
+Accuracy: 0.3094 | Balanced Acc: 0.3304 | F1 macro: 0.2940 | F1 weighted: 0.3141
+     14_19: prec=0.2544 rec=0.4856 f1=0.3338
+     20_29: prec=0.4871 rec=0.2407 f1=0.3222
+     30_39: prec=0.3473 rec=0.3077 f1=0.3263
+   40_plus: prec=0.1461 rec=0.2877 f1=0.1938
+              precision    recall  f1-score   support
+
+       14_19       0.25      0.49      0.33    168786
+       20_29       0.49      0.24      0.32    399466
+       30_39       0.35      0.31      0.33    287228
+     40_plus       0.15      0.29      0.19     83981
+
+    accuracy                           0.31    939461
+   macro avg       0.31      0.33      0.29    939461
+weighted avg       0.37      0.31      0.31    939461
+
+Confusion matrix:
+[[ 81958  30443  35258  21127]
+ [147987  96151  93256  62072]
+ [ 80784  60050  88383  58011]
+ [ 11485  10757  37581  24158]]
+
+######################################################################
+# COMENTARIO - pooling: mean
+######################################################################
+
+Fitting StandardScaler en train (mean)...
+  Scaler fit: 100.0% (3,896,989/3,896,989)
+Transformando train...
+Transformando eval...
+
+============================================================
+ENTRENANDO SGD NORMALIZADO: comentario_mean_sgd_norm_sin_balanceo
+  Train: 3,896,989 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 952/952
+
+=== EVAL comentario_mean_sgd_norm_sin_balanceo ===
+Accuracy: 0.4179 | Balanced Acc: 0.2642 | F1 macro: 0.2093 | F1 weighted: 0.3020
+     14_19: prec=0.3432 rec=0.0620 f1=0.1051
+     20_29: prec=0.4289 rec=0.9075 f1=0.5825
+     30_39: prec=0.3308 rec=0.0604 f1=0.1021
+   40_plus: prec=0.2025 rec=0.0270 f1=0.0477
+              precision    recall  f1-score   support
+
+       14_19       0.34      0.06      0.11    168786
+       20_29       0.43      0.91      0.58    399466
+       30_39       0.33      0.06      0.10    287228
+     40_plus       0.20      0.03      0.05     83981
+
+    accuracy                           0.42    939461
+   macro avg       0.33      0.26      0.21    939461
+weighted avg       0.36      0.42      0.30    939461
+
+Confusion matrix:
+[[ 10472 151579   5551   1184]
+ [ 14436 362523  18584   3923]
+ [  4788 261268  17345   3827]
+ [   820  69939  10954   2268]]
+
+============================================================
+ENTRENANDO SGD NORMALIZADO: comentario_mean_sgd_norm_balanceado
+  Train: 3,896,989 | Eval: 939,461 | Epocas: 5
+============================================================
