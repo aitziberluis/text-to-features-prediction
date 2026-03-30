@@ -31,7 +31,9 @@ import dotenv
 import numpy as np
 import pandas as pd
 import torch
+from imblearn.over_sampling import SMOTE, ADASYN
 from sklearn.linear_model import SGDClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -97,6 +99,15 @@ USER_POOLINGS = ["mean_of_last", "mean_of_mean"]
 BALANCE_CONFIGS = [
     {"name": "sin_balanceo", "female_w": FEMALE_WEIGHT_DEFAULT, "male_w": MALE_WEIGHT_DEFAULT},
     {"name": "balanceado", "female_w": FEMALE_WEIGHT_BALANCED, "male_w": MALE_WEIGHT_BALANCED},
+]
+
+# Resampling: submuestra maxima para SMOTE/ADASYN (RAM limitada, 16384 dims)
+MAX_RESAMPLE_TRAIN = 50_000
+
+# Tecnicas de resampling a probar
+RESAMPLE_CONFIGS = [
+    {"name": "SMOTE", "cls": SMOTE, "kwargs": {"random_state": RANDOM_STATE}},
+    {"name": "ADASYN", "cls": ADASYN, "kwargs": {"random_state": RANDOM_STATE}},
 ]
 
 
@@ -486,10 +497,12 @@ def entrenar_comentario(
     y_train: np.ndarray, y_eval: np.ndarray,
     female_w: float, male_w: float,
     pooling_name: str, balance_name: str,
+    scaler: StandardScaler = None,
 ) -> Tuple[SGDClassifier, Dict]:
     """Entrena SGD incremental a nivel comentario y evalua en eval.
 
     feats puede ser un np.memmap; se accede por lotes para evitar OOM.
+    Si se proporciona scaler, normaliza cada batch con el.
     """
     run_name = f"comentario_{pooling_name}_{balance_name}"
     print(f"\n{'='*60}")
@@ -514,6 +527,8 @@ def entrenar_comentario(
         for step, start in enumerate(range(0, n, batch_size)):
             batch_perm = perm[start:start + batch_size]
             xb = np.asarray(feats[train_idx[batch_perm]], dtype=np.float32)
+            if scaler is not None:
+                xb = scaler.transform(xb)
             yb = y_train[batch_perm]
             sw = np.where(yb == 0, female_w, male_w).astype(np.float32)
 
@@ -533,6 +548,8 @@ def entrenar_comentario(
     for ev_start in range(0, len(y_eval), batch_size):
         ev_end = min(ev_start + batch_size, len(y_eval))
         xb = np.asarray(feats[eval_idx[ev_start:ev_end]], dtype=np.float32)
+        if scaler is not None:
+            xb = scaler.transform(xb)
         y_pred_parts.append(clf.predict(xb))
     y_pred = np.concatenate(y_pred_parts)
     metrics = evaluar(f"EVAL {run_name}", y_eval, y_pred)
@@ -693,16 +710,118 @@ def main():
     for pooling_name in COMMENT_POOLINGS:
         feats, tr_idx, ev_idx = comment_features[pooling_name]
 
+        # Fit StandardScaler incrementalmente sobre train (memmap grande)
+        print(f"\n  Ajustando StandardScaler para {pooling_name} (incremental)...")
+        scaler = StandardScaler()
+        scaler_batch = 8192
+        n_tr = len(tr_idx)
+        for sc_start in range(0, n_tr, scaler_batch):
+            sc_end = min(sc_start + scaler_batch, n_tr)
+            chunk = np.asarray(feats[tr_idx[sc_start:sc_end]], dtype=np.float32)
+            scaler.partial_fit(chunk)
+        print(f"    Scaler ajustado sobre {n_tr:,} muestras")
+
+        # --- Configuraciones con pesos de clase (sin resampling) ---
         for bal_cfg in BALANCE_CONFIGS:
             clf, metrics = entrenar_comentario(
                 feats=feats, train_idx=tr_idx, eval_idx=ev_idx,
                 y_train=y_train_c, y_eval=y_eval_c,
                 female_w=bal_cfg["female_w"], male_w=bal_cfg["male_w"],
                 pooling_name=pooling_name, balance_name=bal_cfg["name"],
+                scaler=scaler,
             )
 
             run_key = f"comentario_{pooling_name}_{bal_cfg['name']}"
             all_results[run_key] = metrics
+
+        # --- Configuraciones con resampling (SMOTE, ADASYN) ---
+        n_tr = len(y_train_c)
+        if n_tr > MAX_RESAMPLE_TRAIN:
+            print(f"\n  Submuestreando {n_tr:,} -> {MAX_RESAMPLE_TRAIN:,} para resampling...")
+            rng = np.random.RandomState(RANDOM_STATE)
+            n_f = int((y_train_c == 0).sum())
+            n_m = int((y_train_c == 1).sum())
+            ratio = n_f / (n_f + n_m)
+            n_f_sub = min(int(MAX_RESAMPLE_TRAIN * ratio), n_f)
+            n_m_sub = min(MAX_RESAMPLE_TRAIN - n_f_sub, n_m)
+            sub_idx_f = rng.choice(np.where(y_train_c == 0)[0], size=n_f_sub, replace=False)
+            sub_idx_m = rng.choice(np.where(y_train_c == 1)[0], size=n_m_sub, replace=False)
+            sub_idx = np.concatenate([sub_idx_f, sub_idx_m])
+            print(f"  Materializando {len(sub_idx):,} filas x {feats.shape[1]} dims...")
+            X_tr_sub = np.asarray(feats[tr_idx[sub_idx]], dtype=np.float32)
+            y_tr_sub = y_train_c[sub_idx]
+        else:
+            print(f"\n  Materializando {n_tr:,} filas x {feats.shape[1]} dims para resampling...")
+            X_tr_sub = np.asarray(feats[tr_idx], dtype=np.float32)
+            y_tr_sub = y_train_c
+
+        # Normalizar antes de resampling
+        X_tr_sub = scaler.transform(X_tr_sub)
+
+        for resample_cfg in RESAMPLE_CONFIGS:
+            resample_name = resample_cfg["name"]
+            print(f"\n  Aplicando {resample_name} sobre {len(y_tr_sub):,} muestras...")
+            print(f"    Antes: f={int((y_tr_sub==0).sum()):,} m={int((y_tr_sub==1).sum()):,}")
+
+            try:
+                sampler = resample_cfg["cls"](**resample_cfg["kwargs"])
+                X_resampled, y_resampled = sampler.fit_resample(X_tr_sub, y_tr_sub)
+                print(f"    Despues: f={int((y_resampled==0).sum()):,} m={int((y_resampled==1).sum()):,}")
+            except Exception as e:
+                print(f"    ERROR en {resample_name}: {e}")
+                continue
+
+            # Entrenar SGD en datos remuestreados (ya en RAM)
+            run_name = f"comentario_{pooling_name}_{resample_name}"
+            print(f"\n{'='*60}")
+            print(f"ENTRENANDO: {run_name}")
+            print(f"  Train: {len(y_resampled):,} | Eval: {len(y_eval_c):,}")
+            print(f"{'='*60}")
+
+            clf = SGDClassifier(
+                loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+                random_state=RANDOM_STATE, average=True,
+            )
+            classes = np.array([0, 1], dtype=np.int64)
+            n_res = len(y_resampled)
+            batch_size = 4096
+            total_steps = math.ceil(n_res / batch_size)
+            last_print = time.time()
+
+            for epoch in range(TRAIN_EPOCHS):
+                perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(n_res)
+                for step, start_r in enumerate(range(0, n_res, batch_size)):
+                    idx = perm[start_r:start_r + batch_size]
+                    xb = X_resampled[idx]
+                    yb = y_resampled[idx]
+
+                    if epoch == 0 and step == 0:
+                        clf.partial_fit(xb, yb, classes=classes)
+                    else:
+                        clf.partial_fit(xb, yb)
+
+                    now = time.time()
+                    if now - last_print >= PROGRESS_INTERVAL or step == total_steps - 1:
+                        pct = 100.0 * (step + 1) / total_steps
+                        print(f"  [Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
+                        last_print = now
+
+            # Eval en batches (memmap, normalizar)
+            y_pred_parts = []
+            eval_bs = 4096
+            for ev_start in range(0, len(y_eval_c), eval_bs):
+                ev_end = min(ev_start + eval_bs, len(y_eval_c))
+                xb = np.asarray(feats[ev_idx[ev_start:ev_end]], dtype=np.float32)
+                xb = scaler.transform(xb)
+                y_pred_parts.append(clf.predict(xb))
+            y_pred = np.concatenate(y_pred_parts)
+
+            metrics = evaluar(f"EVAL {run_name}", y_eval_c, y_pred)
+            all_results[run_name] = metrics
+
+        # Liberar RAM de submuestra
+        del X_tr_sub, y_tr_sub
+        import gc; gc.collect()
 
     # ==============================
     # B) NIVEL USUARIO
@@ -722,18 +841,84 @@ def main():
 
         for pooling_name in USER_POOLINGS:
             feats = user_features[pooling_name]
-            for bal_cfg in BALANCE_CONFIGS:
-                clf, metrics = entrenar_usuario(
-                    authors=authors,
-                    features=feats,
-                    labels=labels,
-                    train_auth=train_auth, eval_auth=eval_auth,
-                    female_w=bal_cfg["female_w"], male_w=bal_cfg["male_w"],
-                    pooling_name=pooling_name, balance_name=bal_cfg["name"],
-                )
 
-                run_key = f"usuario_{pooling_name}_{bal_cfg['name']}"
-                all_results[run_key] = metrics
+            # Pre-agregar features por usuario (una sola vez por pooling)
+            print(f"\n  Agregando features por usuario para {pooling_name}...")
+            X_u_train, y_u_train = _agregar_por_usuario(authors, feats, labels, set(train_auth))
+            X_u_eval, y_u_eval = _agregar_por_usuario(authors, feats, labels, set(eval_auth))
+
+            print(f"  Usuarios train: {len(y_u_train):,} (f={int((y_u_train==0).sum()):,} m={int((y_u_train==1).sum()):,})")
+            print(f"  Usuarios eval:  {len(y_u_eval):,}")
+
+            # Fit scaler en train de usuarios
+            u_scaler = StandardScaler()
+            u_scaler.fit(X_u_train)
+
+            # --- Configuraciones con pesos de clase ---
+            for bal_cfg in BALANCE_CONFIGS:
+                X_tr_n = u_scaler.transform(X_u_train)
+                X_ev_n = u_scaler.transform(X_u_eval)
+
+                run_name = f"usuario_{pooling_name}_{bal_cfg['name']}"
+                print(f"\n{'='*60}")
+                print(f"ENTRENANDO: {run_name}")
+                print(f"  Train users: {len(y_u_train):,} | Eval users: {len(y_u_eval):,}")
+                print(f"  Pesos: female={bal_cfg['female_w']}, male={bal_cfg['male_w']}")
+                print(f"{'='*60}")
+
+                clf = SGDClassifier(
+                    loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+                    random_state=RANDOM_STATE, average=True,
+                )
+                classes = np.array([0, 1], dtype=np.int64)
+                sw = np.where(y_u_train == 0, bal_cfg["female_w"], bal_cfg["male_w"]).astype(np.float32)
+                clf.partial_fit(X_tr_n, y_u_train, classes=classes, sample_weight=sw)
+
+                for epoch in range(1, TRAIN_EPOCHS):
+                    perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(len(y_u_train))
+                    sw_perm = np.where(y_u_train[perm] == 0, bal_cfg["female_w"], bal_cfg["male_w"]).astype(np.float32)
+                    clf.partial_fit(X_tr_n[perm], y_u_train[perm], sample_weight=sw_perm)
+
+                y_pred = clf.predict(X_ev_n)
+                metrics = evaluar(f"EVAL {run_name}", y_u_eval, y_pred)
+                all_results[run_name] = metrics
+
+            # --- Configuraciones con resampling (SMOTE, ADASYN) ---
+            X_tr_n = u_scaler.transform(X_u_train)
+            X_ev_n = u_scaler.transform(X_u_eval)
+
+            for resample_cfg in RESAMPLE_CONFIGS:
+                resample_name = resample_cfg["name"]
+                print(f"\n  Aplicando {resample_name} a nivel usuario ({len(y_u_train):,} usuarios)...")
+
+                try:
+                    sampler = resample_cfg["cls"](**resample_cfg["kwargs"])
+                    X_resampled, y_resampled = sampler.fit_resample(X_tr_n, y_u_train)
+                    print(f"    Despues: f={int((y_resampled==0).sum()):,} m={int((y_resampled==1).sum()):,}")
+                except Exception as e:
+                    print(f"    ERROR en {resample_name}: {e}")
+                    continue
+
+                run_name = f"usuario_{pooling_name}_{resample_name}"
+                print(f"\n{'='*60}")
+                print(f"ENTRENANDO: {run_name}")
+                print(f"  Train users: {len(y_resampled):,} | Eval users: {len(y_u_eval):,}")
+                print(f"{'='*60}")
+
+                clf = SGDClassifier(
+                    loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+                    random_state=RANDOM_STATE, average=True,
+                )
+                classes = np.array([0, 1], dtype=np.int64)
+                clf.partial_fit(X_resampled, y_resampled, classes=classes)
+
+                for epoch in range(1, TRAIN_EPOCHS):
+                    perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(len(y_resampled))
+                    clf.partial_fit(X_resampled[perm], y_resampled[perm])
+
+                y_pred = clf.predict(X_ev_n)
+                metrics = evaluar(f"EVAL {run_name}", y_u_eval, y_pred)
+                all_results[run_name] = metrics
 
     # ==============================
     # RESUMEN FINAL
@@ -741,10 +926,10 @@ def main():
     print("\n\n" + "=" * 70)
     print("RESUMEN DE RESULTADOS (EVAL)")
     print("=" * 70)
-    print(f"{'Config':<45} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {'F1_f':>6} {'F1_m':>6}")
-    print("-" * 80)
+    print(f"{'Config':<50} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {'F1_f':>6} {'F1_m':>6}")
+    print("-" * 85)
     for key, m in all_results.items():
-        print(f"{key:<45} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
+        print(f"{key:<50} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
               f"{m['f1_macro']:.4f} {m['f1_female']:.4f} {m['f1_male']:.4f}")
 
     # (No se guarda resumen a disco para ahorrar almacenamiento)

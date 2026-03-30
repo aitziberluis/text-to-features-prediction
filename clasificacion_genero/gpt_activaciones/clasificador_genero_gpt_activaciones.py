@@ -31,6 +31,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import torch
+from imblearn.over_sampling import SMOTE, ADASYN
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import (
     accuracy_score,
@@ -42,6 +43,7 @@ from sklearn.metrics import (
     recall_score,
 )
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -95,6 +97,15 @@ USER_POOLINGS = ["mean_of_last", "mean_of_mean"]
 BALANCE_CONFIGS = [
     {"name": "sin_balanceo", "female_w": FEMALE_WEIGHT_DEFAULT, "male_w": MALE_WEIGHT_DEFAULT},
     {"name": "balanceado", "female_w": FEMALE_WEIGHT_BALANCED, "male_w": MALE_WEIGHT_BALANCED},
+]
+
+# Resampling: submuestra maxima para SMOTE/ADASYN (RAM limitada)
+MAX_RESAMPLE_TRAIN = 500_000
+
+# Tecnicas de resampling a probar
+RESAMPLE_CONFIGS = [
+    {"name": "SMOTE", "cls": SMOTE, "kwargs": {"random_state": RANDOM_STATE}},
+    {"name": "ADASYN", "cls": ADASYN, "kwargs": {"random_state": RANDOM_STATE}},
 ]
 
 # Output
@@ -412,8 +423,12 @@ def entrenar_comentario(
     X_eval: np.ndarray, y_eval: np.ndarray,
     female_w: float, male_w: float,
     pooling_name: str, balance_name: str,
+    scaler: StandardScaler = None,
 ) -> Tuple[SGDClassifier, Dict]:
-    """Entrena SGD incremental a nivel comentario y evalua en eval."""
+    """Entrena SGD incremental a nivel comentario y evalua en eval.
+
+    Si se proporciona scaler, normaliza cada batch con el.
+    """
     run_name = f"comentario_{pooling_name}_{balance_name}"
     print(f"\n{'='*60}")
     print(f"ENTRENANDO: {run_name}")
@@ -436,7 +451,9 @@ def entrenar_comentario(
         perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(n)
         for step, start in enumerate(range(0, n, batch_size)):
             idx = perm[start:start + batch_size]
-            xb = np.asarray(X_train[idx])
+            xb = np.asarray(X_train[idx], dtype=np.float32)
+            if scaler is not None:
+                xb = scaler.transform(xb)
             yb = y_train[idx]
             sw = np.where(yb == 0, female_w, male_w).astype(np.float32)
 
@@ -452,7 +469,10 @@ def entrenar_comentario(
                 last_print = now
 
     # Eval
-    y_pred = clf.predict(np.asarray(X_eval))
+    X_ev = np.asarray(X_eval, dtype=np.float32)
+    if scaler is not None:
+        X_ev = scaler.transform(X_ev)
+    y_pred = clf.predict(X_ev)
     metrics = evaluar(f"EVAL {run_name}", y_eval, y_pred)
 
     return clf, metrics
@@ -498,6 +518,7 @@ def entrenar_usuario(
     train_auth: np.ndarray, eval_auth: np.ndarray,
     female_w: float, male_w: float,
     pooling_name: str, balance_name: str,
+    scaler: StandardScaler = None,
 ) -> Tuple[SGDClassifier, Dict]:
     """Entrena SGD a nivel usuario (features ya agregadas) y evalua en eval."""
     run_name = f"usuario_{pooling_name}_{balance_name}"
@@ -505,6 +526,11 @@ def entrenar_usuario(
     print(f"\nAgregando features por usuario para {run_name}...")
     X_train, y_train = _agregar_por_usuario(authors, features, labels, set(train_auth))
     X_eval, y_eval = _agregar_por_usuario(authors, features, labels, set(eval_auth))
+
+    # Normalizar
+    if scaler is not None:
+        X_train = scaler.transform(X_train)
+        X_eval = scaler.transform(X_eval)
 
     print(f"\n{'='*60}")
     print(f"ENTRENANDO: {run_name}")
@@ -585,18 +611,79 @@ def main():
 
     for pooling_name in COMMENT_POOLINGS:
         feats, tr_idx, ev_idx = comment_features[pooling_name]
-        X_tr = feats[tr_idx]
-        X_ev = feats[ev_idx]
+        X_tr = np.asarray(feats[tr_idx], dtype=np.float32)
+        X_ev = np.asarray(feats[ev_idx], dtype=np.float32)
 
+        # Fit scaler en train
+        print(f"\n  Ajustando StandardScaler para {pooling_name}...")
+        scaler = StandardScaler()
+        scaler.fit(X_tr)
+
+        # --- Configuraciones con pesos de clase (sin resampling) ---
         for bal_cfg in BALANCE_CONFIGS:
             clf, metrics = entrenar_comentario(
                 X_train=X_tr, y_train=y_train_c,
                 X_eval=X_ev, y_eval=y_eval_c,
                 female_w=bal_cfg["female_w"], male_w=bal_cfg["male_w"],
                 pooling_name=pooling_name, balance_name=bal_cfg["name"],
+                scaler=scaler,
             )
 
             run_key = f"comentario_{pooling_name}_{bal_cfg['name']}"
+            all_results[run_key] = metrics
+
+            model_path = os.path.join(OUTPUT_DIR, f"{run_key}.pkl")
+            joblib.dump(clf, model_path)
+            print(f"  -> Modelo guardado: {model_path}")
+
+        # --- Configuraciones con resampling (SMOTE, ADASYN) ---
+        # Subsamplear si es necesario para caber en RAM
+        n_tr = len(y_train_c)
+        if n_tr > MAX_RESAMPLE_TRAIN:
+            print(f"\n  Submuestreando {n_tr:,} -> {MAX_RESAMPLE_TRAIN:,} para resampling...")
+            rng = np.random.RandomState(RANDOM_STATE)
+            n_f = int((y_train_c == 0).sum())
+            n_m = int((y_train_c == 1).sum())
+            # Mantener proporcion original pero limitando total
+            ratio = n_f / (n_f + n_m)
+            n_f_sub = min(int(MAX_RESAMPLE_TRAIN * ratio), n_f)
+            n_m_sub = min(MAX_RESAMPLE_TRAIN - n_f_sub, n_m)
+            sub_idx_f = rng.choice(np.where(y_train_c == 0)[0], size=n_f_sub, replace=False)
+            sub_idx_m = rng.choice(np.where(y_train_c == 1)[0], size=n_m_sub, replace=False)
+            sub_idx = np.concatenate([sub_idx_f, sub_idx_m])
+            X_tr_sub = X_tr[sub_idx]
+            y_tr_sub = y_train_c[sub_idx]
+        else:
+            X_tr_sub = X_tr
+            y_tr_sub = y_train_c
+
+        # Normalizar antes de resampling
+        X_tr_sub_norm = scaler.transform(X_tr_sub)
+
+        for resample_cfg in RESAMPLE_CONFIGS:
+            resample_name = resample_cfg["name"]
+            print(f"\n  Aplicando {resample_name} sobre {len(y_tr_sub):,} muestras...")
+            print(f"    Antes: f={int((y_tr_sub==0).sum()):,} m={int((y_tr_sub==1).sum()):,}")
+
+            try:
+                sampler = resample_cfg["cls"](**resample_cfg["kwargs"])
+                X_resampled, y_resampled = sampler.fit_resample(X_tr_sub_norm, y_tr_sub)
+                print(f"    Despues: f={int((y_resampled==0).sum()):,} m={int((y_resampled==1).sum()):,}")
+            except Exception as e:
+                print(f"    ERROR en {resample_name}: {e}")
+                continue
+
+            # Entrenar con datos ya normalizados (train ya normalizado, eval normalizar)
+            X_ev_norm = scaler.transform(X_ev)
+            clf, metrics = entrenar_comentario(
+                X_train=X_resampled, y_train=y_resampled,
+                X_eval=X_ev_norm, y_eval=y_eval_c,
+                female_w=1.0, male_w=1.0,
+                pooling_name=pooling_name, balance_name=resample_name,
+                scaler=None,  # ya normalizado
+            )
+
+            run_key = f"comentario_{pooling_name}_{resample_name}"
             all_results[run_key] = metrics
 
             model_path = os.path.join(OUTPUT_DIR, f"{run_key}.pkl")
@@ -623,20 +710,91 @@ def main():
 
         for pooling_name in USER_POOLINGS:
             feats = user_features[pooling_name]
-            for bal_cfg in BALANCE_CONFIGS:
-                clf, metrics = entrenar_usuario(
-                    authors=authors,
-                    features=feats,
-                    labels=labels,
-                    train_auth=train_auth, eval_auth=eval_auth,
-                    female_w=bal_cfg["female_w"], male_w=bal_cfg["male_w"],
-                    pooling_name=pooling_name, balance_name=bal_cfg["name"],
-                )
 
-                run_key = f"usuario_{pooling_name}_{bal_cfg['name']}"
+            # Pre-agregar para poder hacer scaler y resampling
+            print(f"\n  Agregando features por usuario para {pooling_name}...")
+            X_u_train, y_u_train = _agregar_por_usuario(authors, feats, labels, set(train_auth))
+            X_u_eval, y_u_eval = _agregar_por_usuario(authors, feats, labels, set(eval_auth))
+
+            # Fit scaler en train de usuarios
+            u_scaler = StandardScaler()
+            u_scaler.fit(X_u_train)
+
+            # --- Configuraciones con pesos de clase ---
+            for bal_cfg in BALANCE_CONFIGS:
+                X_tr_n = u_scaler.transform(X_u_train)
+                X_ev_n = u_scaler.transform(X_u_eval)
+
+                run_name = f"usuario_{pooling_name}_{bal_cfg['name']}"
+                print(f"\n{'='*60}")
+                print(f"ENTRENANDO: {run_name}")
+                print(f"  Train users: {len(y_u_train):,} | Eval users: {len(y_u_eval):,}")
+                print(f"  Pesos: female={bal_cfg['female_w']}, male={bal_cfg['male_w']}")
+                print(f"{'='*60}")
+
+                clf = SGDClassifier(
+                    loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+                    random_state=RANDOM_STATE, average=True,
+                )
+                classes = np.array([0, 1], dtype=np.int64)
+                sw = np.where(y_u_train == 0, bal_cfg["female_w"], bal_cfg["male_w"]).astype(np.float32)
+                clf.partial_fit(X_tr_n, y_u_train, classes=classes, sample_weight=sw)
+
+                for epoch in range(1, TRAIN_EPOCHS):
+                    perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(len(y_u_train))
+                    sw_perm = np.where(y_u_train[perm] == 0, bal_cfg["female_w"], bal_cfg["male_w"]).astype(np.float32)
+                    clf.partial_fit(X_tr_n[perm], y_u_train[perm], sample_weight=sw_perm)
+
+                y_pred = clf.predict(X_ev_n)
+                metrics = evaluar(f"EVAL {run_name}", y_u_eval, y_pred)
+
+                run_key = run_name
                 all_results[run_key] = metrics
 
                 model_path = os.path.join(OUTPUT_DIR, f"{run_key}.pkl")
+                joblib.dump(clf, model_path)
+                print(f"  -> Modelo guardado: {model_path}")
+
+            # --- Configuraciones con resampling (SMOTE, ADASYN) ---
+            X_tr_n = u_scaler.transform(X_u_train)
+            X_ev_n = u_scaler.transform(X_u_eval)
+
+            print(f"\n  Usuarios train: f={int((y_u_train==0).sum()):,} m={int((y_u_train==1).sum()):,}")
+
+            for resample_cfg in RESAMPLE_CONFIGS:
+                resample_name = resample_cfg["name"]
+                print(f"\n  Aplicando {resample_name} a nivel usuario ({len(y_u_train):,} usuarios)...")
+
+                try:
+                    sampler = resample_cfg["cls"](**resample_cfg["kwargs"])
+                    X_resampled, y_resampled = sampler.fit_resample(X_tr_n, y_u_train)
+                    print(f"    Despues: f={int((y_resampled==0).sum()):,} m={int((y_resampled==1).sum()):,}")
+                except Exception as e:
+                    print(f"    ERROR en {resample_name}: {e}")
+                    continue
+
+                run_name = f"usuario_{pooling_name}_{resample_name}"
+                print(f"\n{'='*60}")
+                print(f"ENTRENANDO: {run_name}")
+                print(f"{'='*60}")
+
+                clf = SGDClassifier(
+                    loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+                    random_state=RANDOM_STATE, average=True,
+                )
+                classes = np.array([0, 1], dtype=np.int64)
+                clf.partial_fit(X_resampled, y_resampled, classes=classes)
+
+                for epoch in range(1, TRAIN_EPOCHS):
+                    perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(len(y_resampled))
+                    clf.partial_fit(X_resampled[perm], y_resampled[perm])
+
+                y_pred = clf.predict(X_ev_n)
+                metrics = evaluar(f"EVAL {run_name}", y_u_eval, y_pred)
+
+                all_results[run_name] = metrics
+
+                model_path = os.path.join(OUTPUT_DIR, f"{run_name}.pkl")
                 joblib.dump(clf, model_path)
                 print(f"  -> Modelo guardado: {model_path}")
 
@@ -646,10 +804,10 @@ def main():
     print("\n\n" + "=" * 70)
     print("RESUMEN DE RESULTADOS (EVAL)")
     print("=" * 70)
-    print(f"{'Config':<45} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {'F1_f':>6} {'F1_m':>6}")
-    print("-" * 80)
+    print(f"{'Config':<50} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {'F1_f':>6} {'F1_m':>6}")
+    print("-" * 85)
     for key, m in all_results.items():
-        print(f"{key:<45} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
+        print(f"{key:<50} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
               f"{m['f1_macro']:.4f} {m['f1_female']:.4f} {m['f1_male']:.4f}")
 
     # Guardar resumen JSON

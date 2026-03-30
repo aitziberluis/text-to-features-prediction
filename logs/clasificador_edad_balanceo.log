@@ -371,3 +371,1661 @@ RESAMPLING: smote_tomek (pooling=last_token)
 
   Aplicando smote_tomek...
     Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [108832, 106490, 107801, 110797] (total: 433,920)
+    Tiempo: 730.7s
+
+============================================================
+SGD: comentario_last_token_smote_tomek_sgd
+  Train: 433,920 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 106/106
+
+=== EVAL comentario_last_token_smote_tomek_sgd ===
+Accuracy: 0.2540 | Balanced Acc: 0.3062 | F1 macro: 0.2403 | F1 weighted: 0.2293
+     14_19: prec=0.2304 rec=0.3935 f1=0.2906
+     20_29: prec=0.5176 rec=0.0742 f1=0.1298
+     30_39: prec=0.3021 rec=0.3887 f1=0.3400
+   40_plus: prec=0.1379 rec=0.3685 f1=0.2007
+              precision    recall  f1-score   support
+
+       14_19       0.23      0.39      0.29    168786
+       20_29       0.52      0.07      0.13    399466
+       30_39       0.30      0.39      0.34    287228
+     40_plus       0.14      0.37      0.20     83981
+
+    accuracy                           0.25    939461
+   macro avg       0.30      0.31      0.24    939461
+weighted avg       0.37      0.25      0.23    939461
+
+Confusion matrix:
+[[ 66418   9383  62038  30947]
+ [126711  29632 153934  89189]
+ [ 86721  15515 111641  73351]
+ [  8411   2717  41909  30944]]
+
+============================================================
+MLP: comentario_last_token_smote_tomek_mlp
+  Train: 433,920 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2431 train_acc=0.4161
+  Epoch 8/8: loss=1.1327 train_acc=0.4855
+
+=== EVAL comentario_last_token_smote_tomek_mlp ===
+Accuracy: 0.3128 | Balanced Acc: 0.3235 | F1 macro: 0.2948 | F1 weighted: 0.3198
+     14_19: prec=0.2544 rec=0.4486 f1=0.3247
+     20_29: prec=0.4709 rec=0.2763 f1=0.3483
+     30_39: prec=0.3384 rec=0.2948 f1=0.3151
+   40_plus: prec=0.1465 rec=0.2742 f1=0.1910
+              precision    recall  f1-score   support
+
+       14_19       0.25      0.45      0.32    168786
+       20_29       0.47      0.28      0.35    399466
+       30_39       0.34      0.29      0.32    287228
+     40_plus       0.15      0.27      0.19     83981
+
+    accuracy                           0.31    939461
+   macro avg       0.30      0.32      0.29    939461
+weighted avg       0.36      0.31      0.32    939461
+
+Confusion matrix:
+[[ 75725  38277  35215  19569]
+ [137250 110392  93177  58647]
+ [ 74211  72461  84681  55875]
+ [ 10481  13273  37203  23024]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: smote_enn (pooling=last_token)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando smote_enn...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [19606, 5980, 8201, 20267] (total: 54,054)
+    Tiempo: 715.9s
+
+============================================================
+SGD: comentario_last_token_smote_enn_sgd
+  Train: 54,054 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 14/14
+
+=== EVAL comentario_last_token_smote_enn_sgd ===
+Accuracy: 0.2301 | Balanced Acc: 0.3058 | F1 macro: 0.2225 | F1 weighted: 0.2044
+     14_19: prec=0.2330 rec=0.4451 f1=0.3059
+     20_29: prec=0.5689 rec=0.0576 f1=0.1045
+     30_39: prec=0.2910 rec=0.2832 f1=0.2870
+   40_plus: prec=0.1236 rec=0.4374 f1=0.1927
+              precision    recall  f1-score   support
+
+       14_19       0.23      0.45      0.31    168786
+       20_29       0.57      0.06      0.10    399466
+       30_39       0.29      0.28      0.29    287228
+     40_plus       0.12      0.44      0.19     83981
+
+    accuracy                           0.23    939461
+   macro avg       0.30      0.31      0.22    939461
+weighted avg       0.38      0.23      0.20    939461
+
+Confusion matrix:
+[[ 75120   6532  47953  39181]
+ [142746  22992 115205 118523]
+ [ 94045   9098  81329 102756]
+ [ 10476   1791  34980  36734]]
+
+============================================================
+MLP: comentario_last_token_smote_enn_mlp
+  Train: 54,054 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=0.9194 train_acc=0.6478
+  Epoch 8/8: loss=0.4891 train_acc=0.8230
+
+=== EVAL comentario_last_token_smote_enn_mlp ===
+Accuracy: 0.2490 | Balanced Acc: 0.3108 | F1 macro: 0.2461 | F1 weighted: 0.2481
+     14_19: prec=0.2360 rec=0.4355 f1=0.3061
+     20_29: prec=0.5195 rec=0.1460 f1=0.2280
+     30_39: prec=0.2974 rec=0.2287 f1=0.2586
+   40_plus: prec=0.1233 rec=0.4329 f1=0.1919
+              precision    recall  f1-score   support
+
+       14_19       0.24      0.44      0.31    168786
+       20_29       0.52      0.15      0.23    399466
+       30_39       0.30      0.23      0.26    287228
+     40_plus       0.12      0.43      0.19     83981
+
+    accuracy                           0.25    939461
+   macro avg       0.29      0.31      0.25    939461
+weighted avg       0.37      0.25      0.25    939461
+
+Confusion matrix:
+[[ 73500  20239  36591  38456]
+ [139363  58336  86506 115261]
+ [ 88579  28182  65692 104775]
+ [ 10011   5541  32074  36355]]
+
+######################################################################
+# COMENTARIO - pooling: mean
+######################################################################
+
+Fitting StandardScaler (mean)...
+
+────────────────────────────────────────────────────────────
+RESAMPLING: sin_balanceo (pooling=mean)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+============================================================
+SGD: comentario_mean_sin_balanceo_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_mean_sin_balanceo_sgd ===
+Accuracy: 0.3036 | Balanced Acc: 0.3494 | F1 macro: 0.2930 | F1 weighted: 0.2986
+     14_19: prec=0.2761 rec=0.4723 f1=0.3485
+     20_29: prec=0.4882 rec=0.1549 f1=0.2352
+     30_39: prec=0.3821 rec=0.3885 f1=0.3853
+   40_plus: prec=0.1382 rec=0.3817 f1=0.2029
+              precision    recall  f1-score   support
+
+       14_19       0.28      0.47      0.35    168786
+       20_29       0.49      0.15      0.24    399466
+       30_39       0.38      0.39      0.39    287228
+     40_plus       0.14      0.38      0.20     83981
+
+    accuracy                           0.30    939461
+   macro avg       0.32      0.35      0.29    939461
+weighted avg       0.39      0.30      0.30    939461
+
+Confusion matrix:
+[[ 79724  20059  37497  31506]
+ [134708  61886 110817  92055]
+ [ 59882  39420 111578  76348]
+ [ 14437   5402  32084  32058]]
+
+============================================================
+MLP: comentario_mean_sin_balanceo_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2359 train_acc=0.4148
+  Epoch 8/8: loss=1.1231 train_acc=0.4905
+
+=== EVAL comentario_mean_sin_balanceo_mlp ===
+Accuracy: 0.3280 | Balanced Acc: 0.3378 | F1 macro: 0.3092 | F1 weighted: 0.3351
+     14_19: prec=0.2728 rec=0.4581 f1=0.3419
+     20_29: prec=0.4684 rec=0.2964 f1=0.3630
+     30_39: prec=0.3612 rec=0.3067 f1=0.3317
+   40_plus: prec=0.1529 rec=0.2901 f1=0.2002
+              precision    recall  f1-score   support
+
+       14_19       0.27      0.46      0.34    168786
+       20_29       0.47      0.30      0.36    399466
+       30_39       0.36      0.31      0.33    287228
+     40_plus       0.15      0.29      0.20     83981
+
+    accuracy                           0.33    939461
+   macro avg       0.31      0.34      0.31    939461
+weighted avg       0.37      0.33      0.34    939461
+
+Confusion matrix:
+[[ 77317  38487  32219  20763]
+ [132239 118383  88297  60547]
+ [ 63156  82294  88088  53690]
+ [ 10752  13562  35305  24362]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: random_oversample (pooling=mean)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando random_oversample...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [125000, 125000, 125000, 125000] (total: 500,000)
+    Tiempo: 5.0s
+
+============================================================
+SGD: comentario_mean_random_oversample_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_mean_random_oversample_sgd ===
+Accuracy: 0.3036 | Balanced Acc: 0.3494 | F1 macro: 0.2930 | F1 weighted: 0.2986
+     14_19: prec=0.2761 rec=0.4723 f1=0.3485
+     20_29: prec=0.4882 rec=0.1549 f1=0.2352
+     30_39: prec=0.3821 rec=0.3885 f1=0.3853
+   40_plus: prec=0.1382 rec=0.3817 f1=0.2029
+              precision    recall  f1-score   support
+
+       14_19       0.28      0.47      0.35    168786
+       20_29       0.49      0.15      0.24    399466
+       30_39       0.38      0.39      0.39    287228
+     40_plus       0.14      0.38      0.20     83981
+
+    accuracy                           0.30    939461
+   macro avg       0.32      0.35      0.29    939461
+weighted avg       0.39      0.30      0.30    939461
+
+Confusion matrix:
+[[ 79724  20059  37497  31506]
+ [134708  61886 110817  92055]
+ [ 59882  39420 111578  76348]
+ [ 14437   5402  32084  32058]]
+
+============================================================
+MLP: comentario_mean_random_oversample_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2356 train_acc=0.4152
+  Epoch 8/8: loss=1.1237 train_acc=0.4896
+
+=== EVAL comentario_mean_random_oversample_mlp ===
+Accuracy: 0.3257 | Balanced Acc: 0.3359 | F1 macro: 0.3075 | F1 weighted: 0.3322
+     14_19: prec=0.2725 rec=0.4553 f1=0.3410
+     20_29: prec=0.4616 rec=0.2907 f1=0.3568
+     30_39: prec=0.3568 rec=0.3091 f1=0.3313
+   40_plus: prec=0.1541 rec=0.2883 f1=0.2008
+              precision    recall  f1-score   support
+
+       14_19       0.27      0.46      0.34    168786
+       20_29       0.46      0.29      0.36    399466
+       30_39       0.36      0.31      0.33    287228
+     40_plus       0.15      0.29      0.20     83981
+
+    accuracy                           0.33    939461
+   macro avg       0.31      0.34      0.31    939461
+weighted avg       0.37      0.33      0.33    939461
+
+Confusion matrix:
+[[ 76844  37910  33261  20771]
+ [132239 116139  91258  59830]
+ [ 62371  83740  88782  52335]
+ [ 10491  13786  35493  24211]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: random_undersample (pooling=mean)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando random_undersample...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [125000, 125000, 125000, 125000] (total: 500,000)
+    Tiempo: 0.7s
+
+============================================================
+SGD: comentario_mean_random_undersample_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_mean_random_undersample_sgd ===
+Accuracy: 0.2990 | Balanced Acc: 0.3493 | F1 macro: 0.2881 | F1 weighted: 0.2903
+     14_19: prec=0.2756 rec=0.4721 f1=0.3480
+     20_29: prec=0.4973 rec=0.1355 f1=0.2129
+     30_39: prec=0.3824 rec=0.3976 f1=0.3899
+   40_plus: prec=0.1356 rec=0.3920 f1=0.2015
+              precision    recall  f1-score   support
+
+       14_19       0.28      0.47      0.35    168786
+       20_29       0.50      0.14      0.21    399466
+       30_39       0.38      0.40      0.39    287228
+     40_plus       0.14      0.39      0.20     83981
+
+    accuracy                           0.30    939461
+   macro avg       0.32      0.35      0.29    939461
+weighted avg       0.39      0.30      0.29    939461
+
+Confusion matrix:
+[[ 79690  17436  38498  33162]
+ [134952  54112 113614  96788]
+ [ 60196  32860 114202  79970]
+ [ 14357   4405  32300  32919]]
+
+============================================================
+MLP: comentario_mean_random_undersample_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2397 train_acc=0.4138
+  Epoch 8/8: loss=1.1230 train_acc=0.4900
+
+=== EVAL comentario_mean_random_undersample_mlp ===
+Accuracy: 0.3276 | Balanced Acc: 0.3395 | F1 macro: 0.3085 | F1 weighted: 0.3330
+     14_19: prec=0.2713 rec=0.4933 f1=0.3500
+     20_29: prec=0.4694 rec=0.2822 f1=0.3525
+     30_39: prec=0.3683 rec=0.3090 f1=0.3361
+   40_plus: prec=0.1519 rec=0.2736 f1=0.1953
+              precision    recall  f1-score   support
+
+       14_19       0.27      0.49      0.35    168786
+       20_29       0.47      0.28      0.35    399466
+       30_39       0.37      0.31      0.34    287228
+     40_plus       0.15      0.27      0.20     83981
+
+    accuracy                           0.33    939461
+   macro avg       0.32      0.34      0.31    939461
+weighted avg       0.37      0.33      0.33    939461
+
+Confusion matrix:
+[[ 83264  35521  30427  19574]
+ [142583 112745  86879  57259]
+ [ 67897  79112  88767  51452]
+ [ 13213  12824  34969  22975]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: smote (pooling=mean)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando smote...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [125000, 125000, 125000, 125000] (total: 500,000)
+    Tiempo: 1.3s
+
+============================================================
+SGD: comentario_mean_smote_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_mean_smote_sgd ===
+Accuracy: 0.3036 | Balanced Acc: 0.3494 | F1 macro: 0.2930 | F1 weighted: 0.2986
+     14_19: prec=0.2761 rec=0.4723 f1=0.3485
+     20_29: prec=0.4882 rec=0.1549 f1=0.2352
+     30_39: prec=0.3821 rec=0.3885 f1=0.3853
+   40_plus: prec=0.1382 rec=0.3817 f1=0.2029
+              precision    recall  f1-score   support
+
+       14_19       0.28      0.47      0.35    168786
+       20_29       0.49      0.15      0.24    399466
+       30_39       0.38      0.39      0.39    287228
+     40_plus       0.14      0.38      0.20     83981
+
+    accuracy                           0.30    939461
+   macro avg       0.32      0.35      0.29    939461
+weighted avg       0.39      0.30      0.30    939461
+
+Confusion matrix:
+[[ 79724  20059  37497  31506]
+ [134708  61886 110817  92055]
+ [ 59882  39420 111578  76348]
+ [ 14437   5402  32084  32058]]
+
+============================================================
+MLP: comentario_mean_smote_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2359 train_acc=0.4156
+  Epoch 8/8: loss=1.1223 train_acc=0.4916
+
+=== EVAL comentario_mean_smote_mlp ===
+Accuracy: 0.3224 | Balanced Acc: 0.3398 | F1 macro: 0.3056 | F1 weighted: 0.3274
+     14_19: prec=0.2706 rec=0.4952 f1=0.3500
+     20_29: prec=0.4644 rec=0.2717 f1=0.3428
+     30_39: prec=0.3660 rec=0.3001 f1=0.3298
+   40_plus: prec=0.1520 rec=0.2920 f1=0.1999
+              precision    recall  f1-score   support
+
+       14_19       0.27      0.50      0.35    168786
+       20_29       0.46      0.27      0.34    399466
+       30_39       0.37      0.30      0.33    287228
+     40_plus       0.15      0.29      0.20     83981
+
+    accuracy                           0.32    939461
+   macro avg       0.31      0.34      0.31    939461
+weighted avg       0.37      0.32      0.33    939461
+
+Confusion matrix:
+[[ 83575  33842  30007  21362]
+ [144177 108533  85142  61614]
+ [ 68176  78993  86211  53848]
+ [ 12879  12357  34220  24525]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: adasyn (pooling=mean)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando adasyn...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [125000, 125000, 125000, 125000] (total: 500,000)
+    Tiempo: 1.4s
+
+============================================================
+SGD: comentario_mean_adasyn_sgd
+  Train: 500,000 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 123/123
+
+=== EVAL comentario_mean_adasyn_sgd ===
+Accuracy: 0.3036 | Balanced Acc: 0.3494 | F1 macro: 0.2930 | F1 weighted: 0.2986
+     14_19: prec=0.2761 rec=0.4723 f1=0.3485
+     20_29: prec=0.4882 rec=0.1549 f1=0.2352
+     30_39: prec=0.3821 rec=0.3885 f1=0.3853
+   40_plus: prec=0.1382 rec=0.3817 f1=0.2029
+              precision    recall  f1-score   support
+
+       14_19       0.28      0.47      0.35    168786
+       20_29       0.49      0.15      0.24    399466
+       30_39       0.38      0.39      0.39    287228
+     40_plus       0.14      0.38      0.20     83981
+
+    accuracy                           0.30    939461
+   macro avg       0.32      0.35      0.29    939461
+weighted avg       0.39      0.30      0.30    939461
+
+Confusion matrix:
+[[ 79724  20059  37497  31506]
+ [134708  61886 110817  92055]
+ [ 59882  39420 111578  76348]
+ [ 14437   5402  32084  32058]]
+
+============================================================
+MLP: comentario_mean_adasyn_mlp
+  Train: 500,000 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2342 train_acc=0.4149
+  Epoch 8/8: loss=1.1232 train_acc=0.4897
+
+=== EVAL comentario_mean_adasyn_mlp ===
+Accuracy: 0.3209 | Balanced Acc: 0.3389 | F1 macro: 0.3049 | F1 weighted: 0.3262
+     14_19: prec=0.2707 rec=0.4811 f1=0.3464
+     20_29: prec=0.4699 rec=0.2621 f1=0.3365
+     30_39: prec=0.3610 rec=0.3157 f1=0.3368
+   40_plus: prec=0.1506 rec=0.2968 f1=0.1998
+              precision    recall  f1-score   support
+
+       14_19       0.27      0.48      0.35    168786
+       20_29       0.47      0.26      0.34    399466
+       30_39       0.36      0.32      0.34    287228
+     40_plus       0.15      0.30      0.20     83981
+
+    accuracy                           0.32    939461
+   macro avg       0.31      0.34      0.30    939461
+weighted avg       0.37      0.32      0.33    939461
+
+Confusion matrix:
+[[ 81197  32376  33209  22004]
+ [140215 104690  91375  63186]
+ [ 66437  74725  90683  55383]
+ [ 12138  10993  35926  24924]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: smote_tomek (pooling=mean)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando smote_tomek...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [117760, 117000, 117486, 119114] (total: 471,360)
+    Tiempo: 588.6s
+
+============================================================
+SGD: comentario_mean_smote_tomek_sgd
+  Train: 471,360 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 116/116
+
+=== EVAL comentario_mean_smote_tomek_sgd ===
+Accuracy: 0.3025 | Balanced Acc: 0.3461 | F1 macro: 0.2923 | F1 weighted: 0.2992
+     14_19: prec=0.2750 rec=0.4867 f1=0.3514
+     20_29: prec=0.4784 rec=0.1664 f1=0.2470
+     30_39: prec=0.3754 rec=0.3648 f1=0.3700
+   40_plus: prec=0.1383 rec=0.3666 f1=0.2009
+              precision    recall  f1-score   support
+
+       14_19       0.27      0.49      0.35    168786
+       20_29       0.48      0.17      0.25    399466
+       30_39       0.38      0.36      0.37    287228
+     40_plus       0.14      0.37      0.20     83981
+
+    accuracy                           0.30    939461
+   macro avg       0.32      0.35      0.29    939461
+weighted avg       0.38      0.30      0.30    939461
+
+Confusion matrix:
+[[ 82147  20240  36228  30171]
+ [138955  66490 106002  88019]
+ [ 62422  46421 104794  73591]
+ [ 15204   5836  32153  30788]]
+
+============================================================
+MLP: comentario_mean_smote_tomek_mlp
+  Train: 471,360 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.2289 train_acc=0.4195
+  Epoch 8/8: loss=1.1131 train_acc=0.4969
+
+=== EVAL comentario_mean_smote_tomek_mlp ===
+Accuracy: 0.3260 | Balanced Acc: 0.3385 | F1 macro: 0.3083 | F1 weighted: 0.3316
+     14_19: prec=0.2744 rec=0.4639 f1=0.3448
+     20_29: prec=0.4726 rec=0.2684 f1=0.3424
+     30_39: prec=0.3588 rec=0.3372 f1=0.3477
+   40_plus: prec=0.1520 rec=0.2846 f1=0.1981
+              precision    recall  f1-score   support
+
+       14_19       0.27      0.46      0.34    168786
+       20_29       0.47      0.27      0.34    399466
+       30_39       0.36      0.34      0.35    287228
+     40_plus       0.15      0.28      0.20     83981
+
+    accuracy                           0.33    939461
+   macro avg       0.31      0.34      0.31    939461
+weighted avg       0.37      0.33      0.33    939461
+
+Confusion matrix:
+[[ 78296  33185  36522  20783]
+ [133424 107234  98683  60125]
+ [ 62697  75182  96858  52491]
+ [ 10898  11302  37876  23905]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING: smote_enn (pooling=mean)
+────────────────────────────────────────────────────────────
+  Submuestreando train: 3,896,989 -> 500,000 (para que SMOTE sea viable)
+
+  Aplicando smote_enn...
+    Antes: [125000, 125000, 125000, 125000] (total: 500,000)
+    Despues: [17544, 6967, 10105, 28130] (total: 62,746)
+    Tiempo: 706.5s
+
+============================================================
+SGD: comentario_mean_smote_enn_sgd
+  Train: 62,746 | Eval: 939,461 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 16/16
+
+=== EVAL comentario_mean_smote_enn_sgd ===
+Accuracy: 0.2159 | Balanced Acc: 0.3241 | F1 macro: 0.2204 | F1 weighted: 0.2009
+     14_19: prec=0.2870 rec=0.4283 f1=0.3437
+     20_29: prec=0.5370 rec=0.0659 f1=0.1175
+     30_39: prec=0.3481 rec=0.1812 f1=0.2384
+   40_plus: prec=0.1067 rec=0.6211 f1=0.1821
+              precision    recall  f1-score   support
+
+       14_19       0.29      0.43      0.34    168786
+       20_29       0.54      0.07      0.12    399466
+       30_39       0.35      0.18      0.24    287228
+     40_plus       0.11      0.62      0.18     83981
+
+    accuracy                           0.22    939461
+   macro avg       0.32      0.32      0.22    939461
+weighted avg       0.40      0.22      0.20    939461
+
+Confusion matrix:
+[[ 72284   7409  18476  70617]
+ [118358  26342  60766 194000]
+ [ 49427  13496  52059 172246]
+ [ 11773   1811  18234  52163]]
+
+============================================================
+MLP: comentario_mean_smote_enn_mlp
+  Train: 62,746 | Eval: 939,461
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=0.9044 train_acc=0.6487
+  Epoch 8/8: loss=0.4743 train_acc=0.8259
+
+=== EVAL comentario_mean_smote_enn_mlp ===
+Accuracy: 0.2522 | Balanced Acc: 0.3251 | F1 macro: 0.2540 | F1 weighted: 0.2515
+     14_19: prec=0.2873 rec=0.4195 f1=0.3410
+     20_29: prec=0.5013 rec=0.1190 f1=0.1924
+     30_39: prec=0.3449 rec=0.2685 f1=0.3020
+   40_plus: prec=0.1106 rec=0.4934 f1=0.1808
+              precision    recall  f1-score   support
+
+       14_19       0.29      0.42      0.34    168786
+       20_29       0.50      0.12      0.19    399466
+       30_39       0.34      0.27      0.30    287228
+     40_plus       0.11      0.49      0.18     83981
+
+    accuracy                           0.25    939461
+   macro avg       0.31      0.33      0.25    939461
+weighted avg       0.38      0.25      0.25    939461
+
+Confusion matrix:
+[[ 70804  15054  29525  53403]
+ [115604  47550  90139 146173]
+ [ 48809  27822  77128 133469]
+ [ 11268   4434  26844  41435]]
+
+######################################################################
+# CLASIFICACION A NIVEL DE USUARIO
+######################################################################
+
+--- Usuario pooling: mean_of_last ---
+  Usuarios: train=1,626 eval=349
+  Dist train: [279, 959, 317, 71]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: sin_balanceo (pooling=mean_of_last)
+────────────────────────────────────────────────────────────
+
+============================================================
+SGD: usuario_mean_of_last_sin_balanceo_sgd
+  Train: 1,626 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_last_sin_balanceo_sgd ===
+Accuracy: 0.6332 | Balanced Acc: 0.4066 | F1 macro: 0.4124 | F1 weighted: 0.5964
+     14_19: prec=0.6585 rec=0.4091 f1=0.5047
+     20_29: prec=0.6706 rec=0.8636 f1=0.7550
+     30_39: prec=0.4340 rec=0.3538 f1=0.3898
+   40_plus: prec=0.0000 rec=0.0000 f1=0.0000
+              precision    recall  f1-score   support
+
+       14_19       0.66      0.41      0.50        66
+       20_29       0.67      0.86      0.75       198
+       30_39       0.43      0.35      0.39        65
+     40_plus       0.00      0.00      0.00        20
+
+    accuracy                           0.63       349
+   macro avg       0.44      0.41      0.41       349
+weighted avg       0.59      0.63      0.60       349
+
+Confusion matrix:
+[[ 27  39   0   0]
+ [ 11 171  16   0]
+ [  3  39  23   0]
+ [  0   6  14   0]]
+
+============================================================
+MLP: usuario_mean_of_last_sin_balanceo_mlp
+  Train: 1,626 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.3802 train_acc=0.3075
+  Epoch 8/8: loss=1.1290 train_acc=0.5043
+
+=== EVAL usuario_mean_of_last_sin_balanceo_mlp ===
+Accuracy: 0.4470 | Balanced Acc: 0.4236 | F1 macro: 0.3767 | F1 weighted: 0.4535
+     14_19: prec=0.3839 rec=0.6515 f1=0.4831
+     20_29: prec=0.7551 rec=0.3737 f1=0.5000
+     30_39: prec=0.2803 rec=0.5692 f1=0.3756
+   40_plus: prec=0.2857 rec=0.1000 f1=0.1481
+              precision    recall  f1-score   support
+
+       14_19       0.38      0.65      0.48        66
+       20_29       0.76      0.37      0.50       198
+       30_39       0.28      0.57      0.38        65
+     40_plus       0.29      0.10      0.15        20
+
+    accuracy                           0.45       349
+   macro avg       0.43      0.42      0.38       349
+weighted avg       0.57      0.45      0.45       349
+
+Confusion matrix:
+[[43  9 14  0]
+ [59 74 63  2]
+ [10 15 37  3]
+ [ 0  0 18  2]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: random_oversample (pooling=mean_of_last)
+────────────────────────────────────────────────────────────
+
+  Aplicando random_oversample...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [959, 959, 959, 959] (total: 3,836)
+    Tiempo: 0.0s
+
+============================================================
+SGD: usuario_mean_of_last_random_oversample_sgd
+  Train: 3,836 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_last_random_oversample_sgd ===
+Accuracy: 0.5129 | Balanced Acc: 0.5102 | F1 macro: 0.4530 | F1 weighted: 0.5242
+     14_19: prec=0.4752 rec=0.7273 f1=0.5749
+     20_29: prec=0.7652 rec=0.4444 f1=0.5623
+     30_39: prec=0.3700 rec=0.5692 f1=0.4485
+   40_plus: prec=0.1818 rec=0.3000 f1=0.2264
+              precision    recall  f1-score   support
+
+       14_19       0.48      0.73      0.57        66
+       20_29       0.77      0.44      0.56       198
+       30_39       0.37      0.57      0.45        65
+     40_plus       0.18      0.30      0.23        20
+
+    accuracy                           0.51       349
+   macro avg       0.45      0.51      0.45       349
+weighted avg       0.60      0.51      0.52       349
+
+Confusion matrix:
+[[48 15  3  0]
+ [48 88 46 16]
+ [ 5 12 37 11]
+ [ 0  0 14  6]]
+
+============================================================
+MLP: usuario_mean_of_last_random_oversample_mlp
+  Train: 3,836 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.5112 train_acc=0.2304
+  Epoch 8/8: loss=1.1215 train_acc=0.5167
+
+=== EVAL usuario_mean_of_last_random_oversample_mlp ===
+Accuracy: 0.2607 | Balanced Acc: 0.4542 | F1 macro: 0.2597 | F1 weighted: 0.2341
+     14_19: prec=0.3559 rec=0.6364 f1=0.4565
+     20_29: prec=0.8261 rec=0.0960 f1=0.1719
+     30_39: prec=0.2353 rec=0.1846 f1=0.2069
+   40_plus: prec=0.1146 rec=0.9000 f1=0.2034
+              precision    recall  f1-score   support
+
+       14_19       0.36      0.64      0.46        66
+       20_29       0.83      0.10      0.17       198
+       30_39       0.24      0.18      0.21        65
+     40_plus       0.11      0.90      0.20        20
+
+    accuracy                           0.26       349
+   macro avg       0.38      0.45      0.26       349
+weighted avg       0.59      0.26      0.23       349
+
+Confusion matrix:
+[[42  3  2 19]
+ [67 19 35 77]
+ [ 9  1 12 43]
+ [ 0  0  2 18]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: random_undersample (pooling=mean_of_last)
+────────────────────────────────────────────────────────────
+
+  Aplicando random_undersample...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [71, 71, 71, 71] (total: 284)
+    Tiempo: 0.0s
+
+============================================================
+SGD: usuario_mean_of_last_random_undersample_sgd
+  Train: 284 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_last_random_undersample_sgd ===
+Accuracy: 0.3381 | Balanced Acc: 0.4260 | F1 macro: 0.3148 | F1 weighted: 0.3413
+     14_19: prec=0.3772 rec=0.6515 f1=0.4778
+     20_29: prec=0.5882 rec=0.2525 f1=0.3534
+     30_39: prec=0.2031 rec=0.2000 f1=0.2016
+   40_plus: prec=0.1395 rec=0.6000 f1=0.2264
+              precision    recall  f1-score   support
+
+       14_19       0.38      0.65      0.48        66
+       20_29       0.59      0.25      0.35       198
+       30_39       0.20      0.20      0.20        65
+     40_plus       0.14      0.60      0.23        20
+
+    accuracy                           0.34       349
+   macro avg       0.33      0.43      0.31       349
+weighted avg       0.45      0.34      0.34       349
+
+Confusion matrix:
+[[43 14  5  4]
+ [64 50 42 42]
+ [ 7 17 13 28]
+ [ 0  4  4 12]]
+
+============================================================
+MLP: usuario_mean_of_last_random_undersample_mlp
+  Train: 284 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.5019 train_acc=0.2183
+  Epoch 8/8: loss=1.0468 train_acc=0.5669
+
+=== EVAL usuario_mean_of_last_random_undersample_mlp ===
+Accuracy: 0.3496 | Balanced Acc: 0.3756 | F1 macro: 0.3108 | F1 weighted: 0.3546
+     14_19: prec=0.3259 rec=0.6667 f1=0.4378
+     20_29: prec=0.6667 rec=0.2626 f1=0.3768
+     30_39: prec=0.2165 rec=0.3231 f1=0.2593
+   40_plus: prec=0.1282 rec=0.2500 f1=0.1695
+              precision    recall  f1-score   support
+
+       14_19       0.33      0.67      0.44        66
+       20_29       0.67      0.26      0.38       198
+       30_39       0.22      0.32      0.26        65
+     40_plus       0.13      0.25      0.17        20
+
+    accuracy                           0.35       349
+   macro avg       0.33      0.38      0.31       349
+weighted avg       0.49      0.35      0.35       349
+
+Confusion matrix:
+[[44  9 10  3]
+ [76 52 55 15]
+ [14 14 21 16]
+ [ 1  3 11  5]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: smote (pooling=mean_of_last)
+────────────────────────────────────────────────────────────
+
+  Aplicando smote...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [959, 959, 959, 959] (total: 3,836)
+    Tiempo: 0.1s
+
+============================================================
+SGD: usuario_mean_of_last_smote_sgd
+  Train: 3,836 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_last_smote_sgd ===
+Accuracy: 0.5043 | Balanced Acc: 0.4798 | F1 macro: 0.4331 | F1 weighted: 0.5199
+     14_19: prec=0.4796 rec=0.7121 f1=0.5732
+     20_29: prec=0.7419 rec=0.4646 f1=0.5714
+     30_39: prec=0.3596 rec=0.4923 f1=0.4156
+   40_plus: prec=0.1316 rec=0.2500 f1=0.1724
+              precision    recall  f1-score   support
+
+       14_19       0.48      0.71      0.57        66
+       20_29       0.74      0.46      0.57       198
+       30_39       0.36      0.49      0.42        65
+     40_plus       0.13      0.25      0.17        20
+
+    accuracy                           0.50       349
+   macro avg       0.43      0.48      0.43       349
+weighted avg       0.59      0.50      0.52       349
+
+Confusion matrix:
+[[47 17  2  0]
+ [46 92 41 19]
+ [ 5 14 32 14]
+ [ 0  1 14  5]]
+
+============================================================
+MLP: usuario_mean_of_last_smote_mlp
+  Train: 3,836 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4896 train_acc=0.2552
+  Epoch 8/8: loss=1.0529 train_acc=0.5727
+
+=== EVAL usuario_mean_of_last_smote_mlp ===
+Accuracy: 0.2894 | Balanced Acc: 0.4529 | F1 macro: 0.2895 | F1 weighted: 0.2553
+     14_19: prec=0.3413 rec=0.6515 f1=0.4479
+     20_29: prec=0.7778 rec=0.1061 f1=0.1867
+     30_39: prec=0.2170 rec=0.3538 f1=0.2690
+   40_plus: prec=0.1556 rec=0.7000 f1=0.2545
+              precision    recall  f1-score   support
+
+       14_19       0.34      0.65      0.45        66
+       20_29       0.78      0.11      0.19       198
+       30_39       0.22      0.35      0.27        65
+     40_plus       0.16      0.70      0.25        20
+
+    accuracy                           0.29       349
+   macro avg       0.37      0.45      0.29       349
+weighted avg       0.56      0.29      0.26       349
+
+Confusion matrix:
+[[43  3 12  8]
+ [72 21 65 40]
+ [11  3 23 28]
+ [ 0  0  6 14]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: adasyn (pooling=mean_of_last)
+────────────────────────────────────────────────────────────
+
+  Aplicando adasyn...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [917, 959, 974, 972] (total: 3,822)
+    Tiempo: 0.2s
+
+============================================================
+SGD: usuario_mean_of_last_adasyn_sgd
+  Train: 3,822 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_last_adasyn_sgd ===
+Accuracy: 0.4728 | Balanced Acc: 0.4557 | F1 macro: 0.4096 | F1 weighted: 0.4873
+     14_19: prec=0.4688 rec=0.6818 f1=0.5556
+     20_29: prec=0.6967 rec=0.4293 f1=0.5312
+     30_39: prec=0.3261 rec=0.4615 f1=0.3822
+   40_plus: prec=0.1282 rec=0.2500 f1=0.1695
+              precision    recall  f1-score   support
+
+       14_19       0.47      0.68      0.56        66
+       20_29       0.70      0.43      0.53       198
+       30_39       0.33      0.46      0.38        65
+     40_plus       0.13      0.25      0.17        20
+
+    accuracy                           0.47       349
+   macro avg       0.40      0.46      0.41       349
+weighted avg       0.55      0.47      0.49       349
+
+Confusion matrix:
+[[45 18  3  0]
+ [47 85 45 21]
+ [ 4 18 30 13]
+ [ 0  1 14  5]]
+
+============================================================
+MLP: usuario_mean_of_last_adasyn_mlp
+  Train: 3,822 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4665 train_acc=0.2465
+  Epoch 8/8: loss=1.0361 train_acc=0.5960
+
+=== EVAL usuario_mean_of_last_adasyn_mlp ===
+Accuracy: 0.3381 | Balanced Acc: 0.4545 | F1 macro: 0.3361 | F1 weighted: 0.3329
+     14_19: prec=0.3853 rec=0.6364 f1=0.4800
+     20_29: prec=0.7358 rec=0.1970 f1=0.3108
+     30_39: prec=0.2016 rec=0.3846 f1=0.2646
+   40_plus: prec=0.1905 rec=0.6000 f1=0.2892
+              precision    recall  f1-score   support
+
+       14_19       0.39      0.64      0.48        66
+       20_29       0.74      0.20      0.31       198
+       30_39       0.20      0.38      0.26        65
+     40_plus       0.19      0.60      0.29        20
+
+    accuracy                           0.34       349
+   macro avg       0.38      0.45      0.34       349
+weighted avg       0.54      0.34      0.33       349
+
+Confusion matrix:
+[[42  6 15  3]
+ [60 39 77 22]
+ [ 7  7 25 26]
+ [ 0  1  7 12]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: smote_tomek (pooling=mean_of_last)
+────────────────────────────────────────────────────────────
+
+  Aplicando smote_tomek...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [958, 957, 958, 959] (total: 3,832)
+    Tiempo: 0.3s
+
+============================================================
+SGD: usuario_mean_of_last_smote_tomek_sgd
+  Train: 3,832 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_last_smote_tomek_sgd ===
+Accuracy: 0.5014 | Balanced Acc: 0.4898 | F1 macro: 0.4389 | F1 weighted: 0.5167
+     14_19: prec=0.4792 rec=0.6970 f1=0.5679
+     20_29: prec=0.7500 rec=0.4545 f1=0.5660
+     30_39: prec=0.3402 rec=0.5077 f1=0.4074
+   40_plus: prec=0.1667 rec=0.3000 f1=0.2143
+              precision    recall  f1-score   support
+
+       14_19       0.48      0.70      0.57        66
+       20_29       0.75      0.45      0.57       198
+       30_39       0.34      0.51      0.41        65
+     40_plus       0.17      0.30      0.21        20
+
+    accuracy                           0.50       349
+   macro avg       0.43      0.49      0.44       349
+weighted avg       0.59      0.50      0.52       349
+
+Confusion matrix:
+[[46 16  4  0]
+ [44 90 47 17]
+ [ 6 13 33 13]
+ [ 0  1 13  6]]
+
+============================================================
+MLP: usuario_mean_of_last_smote_tomek_mlp
+  Train: 3,832 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4496 train_acc=0.2792
+  Epoch 8/8: loss=1.0148 train_acc=0.5898
+
+=== EVAL usuario_mean_of_last_smote_tomek_mlp ===
+Accuracy: 0.3983 | Balanced Acc: 0.4589 | F1 macro: 0.3635 | F1 weighted: 0.4159
+     14_19: prec=0.3689 rec=0.5758 f1=0.4497
+     20_29: prec=0.6990 rec=0.3636 f1=0.4784
+     30_39: prec=0.2105 rec=0.2462 f1=0.2270
+   40_plus: prec=0.1940 rec=0.6500 f1=0.2989
+              precision    recall  f1-score   support
+
+       14_19       0.37      0.58      0.45        66
+       20_29       0.70      0.36      0.48       198
+       30_39       0.21      0.25      0.23        65
+     40_plus       0.19      0.65      0.30        20
+
+    accuracy                           0.40       349
+   macro avg       0.37      0.46      0.36       349
+weighted avg       0.52      0.40      0.42       349
+
+Confusion matrix:
+[[38 15  8  5]
+ [55 72 46 25]
+ [ 9 16 16 24]
+ [ 1  0  6 13]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: smote_enn (pooling=mean_of_last)
+────────────────────────────────────────────────────────────
+
+  Aplicando smote_enn...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [852, 61, 826, 956] (total: 2,695)
+    Tiempo: 0.3s
+
+============================================================
+SGD: usuario_mean_of_last_smote_enn_sgd
+  Train: 2,695 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_last_smote_enn_sgd ===
+Accuracy: 0.2894 | Balanced Acc: 0.4329 | F1 macro: 0.2681 | F1 weighted: 0.1982
+     14_19: prec=0.3595 rec=0.8333 f1=0.5023
+     20_29: prec=1.0000 rec=0.0253 f1=0.0493
+     30_39: prec=0.2656 rec=0.5231 f1=0.3523
+   40_plus: prec=0.1111 rec=0.3500 f1=0.1687
+              precision    recall  f1-score   support
+
+       14_19       0.36      0.83      0.50        66
+       20_29       1.00      0.03      0.05       198
+       30_39       0.27      0.52      0.35        65
+     40_plus       0.11      0.35      0.17        20
+
+    accuracy                           0.29       349
+   macro avg       0.43      0.43      0.27       349
+weighted avg       0.69      0.29      0.20       349
+
+Confusion matrix:
+[[55  0  5  6]
+ [88  5 76 29]
+ [10  0 34 21]
+ [ 0  0 13  7]]
+
+============================================================
+MLP: usuario_mean_of_last_smote_enn_mlp
+  Train: 2,695 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4226 train_acc=0.2972
+  Epoch 8/8: loss=0.8485 train_acc=0.7440
+
+=== EVAL usuario_mean_of_last_smote_enn_mlp ===
+Accuracy: 0.2235 | Balanced Acc: 0.4076 | F1 macro: 0.2244 | F1 weighted: 0.1449
+     14_19: prec=0.3125 rec=0.6061 f1=0.4124
+     20_29: prec=1.0000 rec=0.0051 f1=0.0101
+     30_39: prec=0.2051 rec=0.3692 f1=0.2637
+   40_plus: prec=0.1262 rec=0.6500 f1=0.2114
+              precision    recall  f1-score   support
+
+       14_19       0.31      0.61      0.41        66
+       20_29       1.00      0.01      0.01       198
+       30_39       0.21      0.37      0.26        65
+     40_plus       0.13      0.65      0.21        20
+
+    accuracy                           0.22       349
+   macro avg       0.41      0.41      0.22       349
+weighted avg       0.67      0.22      0.14       349
+
+Confusion matrix:
+[[40  0 14 12]
+ [77  1 73 47]
+ [10  0 24 31]
+ [ 1  0  6 13]]
+
+--- Usuario pooling: mean_of_mean ---
+  Usuarios: train=1,626 eval=349
+  Dist train: [279, 959, 317, 71]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: sin_balanceo (pooling=mean_of_mean)
+────────────────────────────────────────────────────────────
+
+============================================================
+SGD: usuario_mean_of_mean_sin_balanceo_sgd
+  Train: 1,626 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_mean_sin_balanceo_sgd ===
+Accuracy: 0.6017 | Balanced Acc: 0.3990 | F1 macro: 0.4123 | F1 weighted: 0.5718
+     14_19: prec=0.5455 rec=0.3636 f1=0.4364
+     20_29: prec=0.6492 rec=0.8131 f1=0.7220
+     30_39: prec=0.4364 rec=0.3692 f1=0.4000
+   40_plus: prec=0.5000 rec=0.0500 f1=0.0909
+              precision    recall  f1-score   support
+
+       14_19       0.55      0.36      0.44        66
+       20_29       0.65      0.81      0.72       198
+       30_39       0.44      0.37      0.40        65
+     40_plus       0.50      0.05      0.09        20
+
+    accuracy                           0.60       349
+   macro avg       0.53      0.40      0.41       349
+weighted avg       0.58      0.60      0.57       349
+
+Confusion matrix:
+[[ 24  42   0   0]
+ [ 18 161  18   1]
+ [  2  39  24   0]
+ [  0   6  13   1]]
+
+============================================================
+MLP: usuario_mean_of_mean_sin_balanceo_mlp
+  Train: 1,626 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4974 train_acc=0.2134
+  Epoch 8/8: loss=1.1568 train_acc=0.5320
+
+=== EVAL usuario_mean_of_mean_sin_balanceo_mlp ===
+Accuracy: 0.4413 | Balanced Acc: 0.4433 | F1 macro: 0.3658 | F1 weighted: 0.4265
+     14_19: prec=0.4071 rec=0.6970 f1=0.5140
+     20_29: prec=0.7317 rec=0.3030 f1=0.4286
+     30_39: prec=0.3133 rec=0.7231 f1=0.4372
+   40_plus: prec=0.2500 rec=0.0500 f1=0.0833
+              precision    recall  f1-score   support
+
+       14_19       0.41      0.70      0.51        66
+       20_29       0.73      0.30      0.43       198
+       30_39       0.31      0.72      0.44        65
+     40_plus       0.25      0.05      0.08        20
+
+    accuracy                           0.44       349
+   macro avg       0.43      0.44      0.37       349
+weighted avg       0.56      0.44      0.43       349
+
+Confusion matrix:
+[[46 11  9  0]
+ [60 60 75  3]
+ [ 7 11 47  0]
+ [ 0  0 19  1]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: random_oversample (pooling=mean_of_mean)
+────────────────────────────────────────────────────────────
+
+  Aplicando random_oversample...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [959, 959, 959, 959] (total: 3,836)
+    Tiempo: 0.0s
+
+============================================================
+SGD: usuario_mean_of_mean_random_oversample_sgd
+  Train: 3,836 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_mean_random_oversample_sgd ===
+Accuracy: 0.5186 | Balanced Acc: 0.5050 | F1 macro: 0.4562 | F1 weighted: 0.5287
+     14_19: prec=0.4706 rec=0.7273 f1=0.5714
+     20_29: prec=0.7440 rec=0.4697 f1=0.5759
+     30_39: prec=0.3617 rec=0.5231 f1=0.4277
+   40_plus: prec=0.2143 rec=0.3000 f1=0.2500
+              precision    recall  f1-score   support
+
+       14_19       0.47      0.73      0.57        66
+       20_29       0.74      0.47      0.58       198
+       30_39       0.36      0.52      0.43        65
+     40_plus       0.21      0.30      0.25        20
+
+    accuracy                           0.52       349
+   macro avg       0.45      0.51      0.46       349
+weighted avg       0.59      0.52      0.53       349
+
+Confusion matrix:
+[[48 16  1  1]
+ [49 93 45 11]
+ [ 5 16 34 10]
+ [ 0  0 14  6]]
+
+============================================================
+MLP: usuario_mean_of_mean_random_oversample_mlp
+  Train: 3,836 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4472 train_acc=0.2636
+  Epoch 8/8: loss=1.0305 train_acc=0.5852
+
+=== EVAL usuario_mean_of_mean_random_oversample_mlp ===
+Accuracy: 0.3696 | Balanced Acc: 0.5242 | F1 macro: 0.3546 | F1 weighted: 0.3628
+     14_19: prec=0.3475 rec=0.7424 f1=0.4734
+     20_29: prec=0.8036 rec=0.2273 f1=0.3543
+     30_39: prec=0.3214 rec=0.2769 f1=0.2975
+   40_plus: prec=0.1771 rec=0.8500 f1=0.2931
+              precision    recall  f1-score   support
+
+       14_19       0.35      0.74      0.47        66
+       20_29       0.80      0.23      0.35       198
+       30_39       0.32      0.28      0.30        65
+     40_plus       0.18      0.85      0.29        20
+
+    accuracy                           0.37       349
+   macro avg       0.41      0.52      0.35       349
+weighted avg       0.59      0.37      0.36       349
+
+Confusion matrix:
+[[49  7  5  5]
+ [79 45 31 43]
+ [12  4 18 31]
+ [ 1  0  2 17]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: random_undersample (pooling=mean_of_mean)
+────────────────────────────────────────────────────────────
+
+  Aplicando random_undersample...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [71, 71, 71, 71] (total: 284)
+    Tiempo: 0.0s
+
+============================================================
+SGD: usuario_mean_of_mean_random_undersample_sgd
+  Train: 284 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_mean_random_undersample_sgd ===
+Accuracy: 0.3811 | Balanced Acc: 0.4760 | F1 macro: 0.3637 | F1 weighted: 0.3881
+     14_19: prec=0.3874 rec=0.6515 f1=0.4859
+     20_29: prec=0.6795 rec=0.2677 f1=0.3841
+     30_39: prec=0.3165 rec=0.3846 f1=0.3472
+   40_plus: prec=0.1481 rec=0.6000 f1=0.2376
+              precision    recall  f1-score   support
+
+       14_19       0.39      0.65      0.49        66
+       20_29       0.68      0.27      0.38       198
+       30_39       0.32      0.38      0.35        65
+     40_plus       0.15      0.60      0.24        20
+
+    accuracy                           0.38       349
+   macro avg       0.38      0.48      0.36       349
+weighted avg       0.53      0.38      0.39       349
+
+Confusion matrix:
+[[43 12  8  3]
+ [64 53 40 41]
+ [ 4 11 25 25]
+ [ 0  2  6 12]]
+
+============================================================
+MLP: usuario_mean_of_mean_random_undersample_mlp
+  Train: 284 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4802 train_acc=0.2113
+  Epoch 8/8: loss=1.0103 train_acc=0.5915
+
+=== EVAL usuario_mean_of_mean_random_undersample_mlp ===
+Accuracy: 0.3352 | Balanced Acc: 0.4478 | F1 macro: 0.3301 | F1 weighted: 0.3072
+     14_19: prec=0.3629 rec=0.6818 f1=0.4737
+     20_29: prec=0.6667 rec=0.1515 f1=0.2469
+     30_39: prec=0.2500 rec=0.5077 f1=0.3350
+   40_plus: prec=0.1875 rec=0.4500 f1=0.2647
+              precision    recall  f1-score   support
+
+       14_19       0.36      0.68      0.47        66
+       20_29       0.67      0.15      0.25       198
+       30_39       0.25      0.51      0.34        65
+     40_plus       0.19      0.45      0.26        20
+
+    accuracy                           0.34       349
+   macro avg       0.37      0.45      0.33       349
+weighted avg       0.50      0.34      0.31       349
+
+Confusion matrix:
+[[45  6 13  2]
+ [71 30 76 21]
+ [ 8  8 33 16]
+ [ 0  1 10  9]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: smote (pooling=mean_of_mean)
+────────────────────────────────────────────────────────────
+
+  Aplicando smote...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [959, 959, 959, 959] (total: 3,836)
+    Tiempo: 0.1s
+
+============================================================
+SGD: usuario_mean_of_mean_smote_sgd
+  Train: 3,836 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_mean_smote_sgd ===
+Accuracy: 0.5330 | Balanced Acc: 0.4961 | F1 macro: 0.4592 | F1 weighted: 0.5459
+     14_19: prec=0.4583 rec=0.6667 f1=0.5432
+     20_29: prec=0.7482 rec=0.5253 f1=0.6172
+     30_39: prec=0.3678 rec=0.4923 f1=0.4211
+   40_plus: prec=0.2222 rec=0.3000 f1=0.2553
+              precision    recall  f1-score   support
+
+       14_19       0.46      0.67      0.54        66
+       20_29       0.75      0.53      0.62       198
+       30_39       0.37      0.49      0.42        65
+     40_plus       0.22      0.30      0.26        20
+
+    accuracy                           0.53       349
+   macro avg       0.45      0.50      0.46       349
+weighted avg       0.59      0.53      0.55       349
+
+Confusion matrix:
+[[ 44  18   4   0]
+ [ 47 104  38   9]
+ [  5  16  32  12]
+ [  0   1  13   6]]
+
+============================================================
+MLP: usuario_mean_of_mean_smote_mlp
+  Train: 3,836 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4844 train_acc=0.2638
+  Epoch 8/8: loss=1.0246 train_acc=0.6082
+
+=== EVAL usuario_mean_of_mean_smote_mlp ===
+Accuracy: 0.2980 | Balanced Acc: 0.4233 | F1 macro: 0.2875 | F1 weighted: 0.2526
+     14_19: prec=0.3125 rec=0.7576 f1=0.4425
+     20_29: prec=0.6452 rec=0.1010 f1=0.1747
+     30_39: prec=0.2525 rec=0.3846 f1=0.3049
+   40_plus: prec=0.1525 rec=0.4500 f1=0.2278
+              precision    recall  f1-score   support
+
+       14_19       0.31      0.76      0.44        66
+       20_29       0.65      0.10      0.17       198
+       30_39       0.25      0.38      0.30        65
+     40_plus       0.15      0.45      0.23        20
+
+    accuracy                           0.30       349
+   macro avg       0.34      0.42      0.29       349
+weighted avg       0.48      0.30      0.25       349
+
+Confusion matrix:
+[[50  6  5  5]
+ [97 20 58 23]
+ [13  5 25 22]
+ [ 0  0 11  9]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: adasyn (pooling=mean_of_mean)
+────────────────────────────────────────────────────────────
+
+  Aplicando adasyn...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [947, 959, 968, 938] (total: 3,812)
+    Tiempo: 0.2s
+
+============================================================
+SGD: usuario_mean_of_mean_adasyn_sgd
+  Train: 3,812 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_mean_adasyn_sgd ===
+Accuracy: 0.5501 | Balanced Acc: 0.5086 | F1 macro: 0.4724 | F1 weighted: 0.5614
+     14_19: prec=0.4947 rec=0.7121 f1=0.5839
+     20_29: prec=0.7500 rec=0.5455 f1=0.6316
+     30_39: prec=0.3735 rec=0.4769 f1=0.4189
+   40_plus: prec=0.2222 rec=0.3000 f1=0.2553
+              precision    recall  f1-score   support
+
+       14_19       0.49      0.71      0.58        66
+       20_29       0.75      0.55      0.63       198
+       30_39       0.37      0.48      0.42        65
+     40_plus       0.22      0.30      0.26        20
+
+    accuracy                           0.55       349
+   macro avg       0.46      0.51      0.47       349
+weighted avg       0.60      0.55      0.56       349
+
+Confusion matrix:
+[[ 47  15   2   2]
+ [ 44 108  38   8]
+ [  4  19  31  11]
+ [  0   2  12   6]]
+
+============================================================
+MLP: usuario_mean_of_mean_adasyn_mlp
+  Train: 3,812 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4304 train_acc=0.2545
+  Epoch 8/8: loss=1.0033 train_acc=0.6278
+
+=== EVAL usuario_mean_of_mean_adasyn_mlp ===
+Accuracy: 0.3524 | Balanced Acc: 0.4662 | F1 macro: 0.3341 | F1 weighted: 0.3591
+     14_19: prec=0.3571 rec=0.6061 f1=0.4494
+     20_29: prec=0.6582 rec=0.2626 f1=0.3755
+     30_39: prec=0.2462 rec=0.2462 f1=0.2462
+   40_plus: prec=0.1613 rec=0.7500 f1=0.2655
+              precision    recall  f1-score   support
+
+       14_19       0.36      0.61      0.45        66
+       20_29       0.66      0.26      0.38       198
+       30_39       0.25      0.25      0.25        65
+     40_plus       0.16      0.75      0.27        20
+
+    accuracy                           0.35       349
+   macro avg       0.36      0.47      0.33       349
+weighted avg       0.50      0.35      0.36       349
+
+Confusion matrix:
+[[40 16  3  7]
+ [64 52 42 40]
+ [ 8 10 16 31]
+ [ 0  1  4 15]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: smote_tomek (pooling=mean_of_mean)
+────────────────────────────────────────────────────────────
+
+  Aplicando smote_tomek...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [959, 958, 958, 959] (total: 3,834)
+    Tiempo: 0.2s
+
+============================================================
+SGD: usuario_mean_of_mean_smote_tomek_sgd
+  Train: 3,834 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_mean_smote_tomek_sgd ===
+Accuracy: 0.5072 | Balanced Acc: 0.4872 | F1 macro: 0.4447 | F1 weighted: 0.5184
+     14_19: prec=0.4737 rec=0.6818 f1=0.5590
+     20_29: prec=0.7121 rec=0.4747 f1=0.5697
+     30_39: prec=0.3441 rec=0.4923 f1=0.4051
+   40_plus: prec=0.2069 rec=0.3000 f1=0.2449
+              precision    recall  f1-score   support
+
+       14_19       0.47      0.68      0.56        66
+       20_29       0.71      0.47      0.57       198
+       30_39       0.34      0.49      0.41        65
+     40_plus       0.21      0.30      0.24        20
+
+    accuracy                           0.51       349
+   macro avg       0.43      0.49      0.44       349
+weighted avg       0.57      0.51      0.52       349
+
+Confusion matrix:
+[[45 18  1  2]
+ [48 94 47  9]
+ [ 2 19 32 12]
+ [ 0  1 13  6]]
+
+============================================================
+MLP: usuario_mean_of_mean_smote_tomek_mlp
+  Train: 3,834 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4434 train_acc=0.2559
+  Epoch 8/8: loss=0.9800 train_acc=0.6328
+
+=== EVAL usuario_mean_of_mean_smote_tomek_mlp ===
+Accuracy: 0.3668 | Balanced Acc: 0.4422 | F1 macro: 0.3464 | F1 weighted: 0.3802
+     14_19: prec=0.3883 rec=0.6061 f1=0.4734
+     20_29: prec=0.7222 rec=0.2626 f1=0.3852
+     30_39: prec=0.2737 rec=0.4000 f1=0.3250
+   40_plus: prec=0.1266 rec=0.5000 f1=0.2020
+              precision    recall  f1-score   support
+
+       14_19       0.39      0.61      0.47        66
+       20_29       0.72      0.26      0.39       198
+       30_39       0.27      0.40      0.33        65
+     40_plus       0.13      0.50      0.20        20
+
+    accuracy                           0.37       349
+   macro avg       0.38      0.44      0.35       349
+weighted avg       0.54      0.37      0.38       349
+
+Confusion matrix:
+[[40 11  8  7]
+ [57 52 52 37]
+ [ 6  8 26 25]
+ [ 0  1  9 10]]
+
+────────────────────────────────────────────────────────────
+RESAMPLING USUARIO: smote_enn (pooling=mean_of_mean)
+────────────────────────────────────────────────────────────
+
+  Aplicando smote_enn...
+    Antes: [279, 959, 317, 71] (total: 1,626)
+    Despues: [865, 45, 822, 959] (total: 2,691)
+    Tiempo: 0.3s
+
+============================================================
+SGD: usuario_mean_of_mean_smote_enn_sgd
+  Train: 2,691 | Eval: 349 | Epocas: 5
+============================================================
+  [100.0%] Epoch 5/5 step 1/1
+
+=== EVAL usuario_mean_of_mean_smote_enn_sgd ===
+Accuracy: 0.3266 | Balanced Acc: 0.4761 | F1 macro: 0.3112 | F1 weighted: 0.2429
+     14_19: prec=0.3819 rec=0.8333 f1=0.5238
+     20_29: prec=0.9167 rec=0.0556 f1=0.1048
+     30_39: prec=0.2759 rec=0.6154 f1=0.3810
+   40_plus: prec=0.1667 rec=0.4000 f1=0.2353
+              precision    recall  f1-score   support
+
+       14_19       0.38      0.83      0.52        66
+       20_29       0.92      0.06      0.10       198
+       30_39       0.28      0.62      0.38        65
+     40_plus       0.17      0.40      0.24        20
+
+    accuracy                           0.33       349
+   macro avg       0.44      0.48      0.31       349
+weighted avg       0.65      0.33      0.24       349
+
+Confusion matrix:
+[[55  1  6  4]
+ [85 11 87 15]
+ [ 4  0 40 21]
+ [ 0  0 12  8]]
+
+============================================================
+MLP: usuario_mean_of_mean_smote_enn_mlp
+  Train: 2,691 | Eval: 349
+  Hidden: [256, 64] | Dropout: 0.3 | Epochs: 8
+============================================================
+  Epoch 1/8: loss=1.4903 train_acc=0.2523
+  Epoch 8/8: loss=0.7580 train_acc=0.8082
+
+=== EVAL usuario_mean_of_mean_smote_enn_mlp ===
+Accuracy: 0.2493 | Balanced Acc: 0.4245 | F1 macro: 0.2455 | F1 weighted: 0.1643
+     14_19: prec=0.3672 rec=0.7121 f1=0.4845
+     20_29: prec=0.5000 rec=0.0051 f1=0.0100
+     30_39: prec=0.2333 rec=0.4308 f1=0.3027
+   40_plus: prec=0.1111 rec=0.5500 f1=0.1849
+              precision    recall  f1-score   support
+
+       14_19       0.37      0.71      0.48        66
+       20_29       0.50      0.01      0.01       198
+       30_39       0.23      0.43      0.30        65
+     40_plus       0.11      0.55      0.18        20
+
+    accuracy                           0.25       349
+   macro avg       0.30      0.42      0.25       349
+weighted avg       0.40      0.25      0.16       349
+
+Confusion matrix:
+[[47  1 11  7]
+ [74  1 72 51]
+ [ 7  0 28 30]
+ [ 0  0  9 11]]
+
+
+======================================================================
+RESUMEN DE RESULTADOS (EVAL)
+======================================================================
+Config                                                     Acc  BalAcc  F1mac F1_14_19 F1_20_29 F1_30_39 F1_40_plus
+-----------------------------------------------------------------------------------------------------------------
+comentario_last_token_sin_balanceo_sgd                  0.2571 0.30883 0.2403   0.2975   0.1089   0.3518   0.2029
+comentario_last_token_sin_balanceo_mlp                  0.3064 0.32480 0.2910   0.3285   0.3308   0.3128   0.1920
+comentario_last_token_random_oversample_sgd             0.2571 0.30883 0.2403   0.2975   0.1089   0.3518   0.2029
+comentario_last_token_random_oversample_mlp             0.3057 0.32469 0.2906   0.3285   0.3278   0.3144   0.1919
+comentario_last_token_random_undersample_sgd            0.2610 0.31005 0.2460   0.2980   0.1321   0.3502   0.2037
+comentario_last_token_random_undersample_mlp            0.3072 0.32342 0.2913   0.3241   0.3370   0.3113   0.1929
+comentario_last_token_smote_sgd                         0.2571 0.30883 0.2403   0.2975   0.1089   0.3518   0.2029
+comentario_last_token_smote_mlp                         0.3119 0.32606 0.2951   0.3271   0.3457   0.3142   0.1933
+comentario_last_token_adasyn_sgd                        0.2571 0.30883 0.2403   0.2975   0.1089   0.3518   0.2029
+comentario_last_token_adasyn_mlp                        0.3085 0.32630 0.2927   0.3292   0.3334   0.3153   0.1930
+comentario_last_token_smote_tomek_sgd                   0.2540 0.30621 0.2403   0.2906   0.1298   0.3400   0.2007
+comentario_last_token_smote_tomek_mlp                   0.3128 0.32349 0.2948   0.3247   0.3483   0.3151   0.1910
+comentario_last_token_smote_enn_sgd                     0.2301 0.30579 0.2225   0.3059   0.1045   0.2870   0.1927
+comentario_last_token_smote_enn_mlp                     0.2490 0.31078 0.2461   0.3061   0.2280   0.2586   0.1919
+comentario_mean_sin_balanceo_sgd                        0.3036 0.34936 0.2930   0.3485   0.2352   0.3853   0.2029
+comentario_mean_sin_balanceo_mlp                        0.3280 0.33780 0.3092   0.3419   0.3630   0.3317   0.2002
+comentario_mean_random_oversample_sgd                   0.3036 0.34936 0.2930   0.3485   0.2352   0.3853   0.2029
+comentario_mean_random_oversample_mlp                   0.3257 0.33585 0.3075   0.3410   0.3568   0.3313   0.2008
+comentario_mean_random_undersample_sgd                  0.2990 0.34929 0.2881   0.3480   0.2129   0.3899   0.2015
+comentario_mean_random_undersample_mlp                  0.3276 0.33954 0.3085   0.3500   0.3525   0.3361   0.1953
+comentario_mean_smote_sgd                               0.3036 0.34936 0.2930   0.3485   0.2352   0.3853   0.2029
+comentario_mean_smote_mlp                               0.3224 0.33976 0.3056   0.3500   0.3428   0.3298   0.1999
+comentario_mean_adasyn_sgd                              0.3036 0.34936 0.2930   0.3485   0.2352   0.3853   0.2029
+comentario_mean_adasyn_mlp                              0.3209 0.33891 0.3049   0.3464   0.3365   0.3368   0.1998
+comentario_mean_smote_tomek_sgd                         0.3025 0.34615 0.2923   0.3514   0.2470   0.3700   0.2009
+comentario_mean_smote_tomek_mlp                         0.3260 0.33855 0.3083   0.3448   0.3424   0.3477   0.1981
+comentario_mean_smote_enn_sgd                           0.2159 0.32414 0.2204   0.3437   0.1175   0.2384   0.1821
+comentario_mean_smote_enn_mlp                           0.2522 0.32511 0.2540   0.3410   0.1924   0.3020   0.1808
+usuario_mean_of_last_sin_balanceo_sgd                   0.6332 0.40664 0.4124   0.5047   0.7550   0.3898   0.0000
+usuario_mean_of_last_sin_balanceo_mlp                   0.4470 0.42362 0.3767   0.4831   0.5000   0.3756   0.1481
+usuario_mean_of_last_random_oversample_sgd              0.5129 0.51024 0.4530   0.5749   0.5623   0.4485   0.2264
+usuario_mean_of_last_random_oversample_mlp              0.2607 0.45423 0.2597   0.4565   0.1719   0.2069   0.2034
+usuario_mean_of_last_random_undersample_sgd             0.3381 0.42601 0.3148   0.4778   0.3534   0.2016   0.2264
+usuario_mean_of_last_random_undersample_mlp             0.3496 0.37559 0.3108   0.4378   0.3768   0.2593   0.1695
+usuario_mean_of_last_smote_sgd                          0.5043 0.47977 0.4331   0.5732   0.5714   0.4156   0.1724
+usuario_mean_of_last_smote_mlp                          0.2894 0.45286 0.2895   0.4479   0.1867   0.2690   0.2545
+usuario_mean_of_last_adasyn_sgd                         0.4728 0.45566 0.4096   0.5556   0.5312   0.3822   0.1695
+usuario_mean_of_last_adasyn_mlp                         0.3381 0.45449 0.3361   0.4800   0.3108   0.2646   0.2892
+usuario_mean_of_last_smote_tomek_sgd                    0.5014 0.48980 0.4389   0.5679   0.5660   0.4074   0.2143
+usuario_mean_of_last_smote_tomek_mlp                    0.3983 0.45889 0.3635   0.4497   0.4784   0.2270   0.2989
+usuario_mean_of_last_smote_enn_sgd                      0.2894 0.43292 0.2681   0.5023   0.0493   0.3523   0.1687
+usuario_mean_of_last_smote_enn_mlp                      0.2235 0.40759 0.2244   0.4124   0.0101   0.2637   0.2114
+usuario_mean_of_mean_sin_balanceo_sgd                   0.6017 0.39900 0.4123   0.4364   0.7220   0.4000   0.0909
+usuario_mean_of_mean_sin_balanceo_mlp                   0.4413 0.44327 0.3658   0.5140   0.4286   0.4372   0.0833
+usuario_mean_of_mean_random_oversample_sgd              0.5186 0.50501 0.4562   0.5714   0.5759   0.4277   0.2500
+usuario_mean_of_mean_random_oversample_mlp              0.3696 0.52416 0.3546   0.4734   0.3543   0.2975   0.2931
+usuario_mean_of_mean_random_undersample_sgd             0.3811 0.47595 0.3637   0.4859   0.3841   0.3472   0.2376
+usuario_mean_of_mean_random_undersample_mlp             0.3352 0.44776 0.3301   0.4737   0.2469   0.3350   0.2647
+usuario_mean_of_mean_smote_sgd                          0.5330 0.49606 0.4592   0.5432   0.6172   0.4211   0.2553
+usuario_mean_of_mean_smote_mlp                          0.2980 0.42330 0.2875   0.4425   0.1747   0.3049   0.2278
+usuario_mean_of_mean_adasyn_sgd                         0.5501 0.50862 0.4724   0.5839   0.6316   0.4189   0.2553
+usuario_mean_of_mean_adasyn_mlp                         0.3524 0.46621 0.3341   0.4494   0.3755   0.2462   0.2655
+usuario_mean_of_mean_smote_tomek_sgd                    0.5072 0.48722 0.4447   0.5590   0.5697   0.4051   0.2449
+usuario_mean_of_mean_smote_tomek_mlp                    0.3668 0.44217 0.3464   0.4734   0.3852   0.3250   0.2020
+usuario_mean_of_mean_smote_enn_sgd                      0.3266 0.47607 0.3112   0.5238   0.1048   0.3810   0.2353
+usuario_mean_of_mean_smote_enn_mlp                      0.2493 0.42449 0.2455   0.4845   0.0100   0.3027   0.1849
+
+======================================================================
+COMPLETADO
+======================================================================

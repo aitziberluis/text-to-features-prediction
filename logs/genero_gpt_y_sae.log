@@ -1,0 +1,30 @@
+nohup: ignoring input
+======================================================================
+CLASIFICADOR GENERO - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
+======================================================================
+
+============================================================
+PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con género por autor...
+   ✓ 17,639,863 comentarios con info de género
+
+4. Filtrando solo género conocido (m/f)...
+   ✓ 7,379,659 comentarios con género m/f
+   (Eliminados 10,260,204 con género unknown)
+
+5. Distribución por género:
+   m: 4,920,137 comentarios (66.7%)
+   f: 2,459,522 comentarios (33.3%)
+
+============================================================
+✓ Dataset preparado y listo para usar
+============================================================

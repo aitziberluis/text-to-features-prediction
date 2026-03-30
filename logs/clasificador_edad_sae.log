@@ -39,3 +39,4 @@ SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
 Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  80%|███████▉  | 118/148 [00:00<00:00, 1152.41it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 949.95it/s] 
   [  0.0%] step 1/173088 (32/5,538,809 comentarios)
   [ 16.8%] step 29123/173088 (931,936/5,538,809 comentarios)
+  [ 33.0%] step 57048/173088 (1,825,536/5,538,809 comentarios)
