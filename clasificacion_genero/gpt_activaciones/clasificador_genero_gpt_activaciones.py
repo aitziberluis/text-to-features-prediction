@@ -137,7 +137,6 @@ def cargar_datos_genero() -> pd.DataFrame:
 
 
 # EXTRACCION DE ACTIVACIONES
-
 def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     """Extrae activaciones de GPT-2 y guarda last_token + mean por comentario."""
 
