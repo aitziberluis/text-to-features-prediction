@@ -163,3 +163,333 @@ Confusion matrix:
     Antes 20_29: 260,083
     Antes 30_39: 122,879
     Antes 40_plus: 38,409
+    Despues 14_19: 262,433
+    Despues 20_29: 260,083
+    Despues 30_39: 260,006
+    Despues 40_plus: 259,620
+
+============================================================
+ENTRENANDO: comentario_last_token_ADASYN
+  Train: 1,042,142 | Eval: 939,461
+  Pesos de clase: ninguno (todos 1.0)
+============================================================
+  [Epoch 1] 100.0% (255/255)
+
+=== EVAL comentario_last_token_ADASYN ===
+Accuracy: 0.2592 | Balanced Acc: 0.3204 | F1 macro: 0.2522 | F1 weighted: 0.2444
+     14_19: prec=0.2415 rec=0.4403 f1=0.3119
+     20_29: prec=0.4669 rec=0.1012 f1=0.1663
+     30_39: prec=0.3215 rec=0.3278 f1=0.3246
+   40_plus: prec=0.1373 rec=0.4123 f1=0.2060
+              precision    recall  f1-score   support
+
+       14_19       0.24      0.44      0.31    168786
+       20_29       0.47      0.10      0.17    399466
+       30_39       0.32      0.33      0.32    287228
+     40_plus       0.14      0.41      0.21     83981
+
+    accuracy                           0.26    939461
+   macro avg       0.29      0.32      0.25    939461
+weighted avg       0.35      0.26      0.24    939461
+
+Confusion matrix:
+[[ 74323  12545  45711  36207]
+ [139666  40423 118550 100827]
+ [ 82658  29882  94161  80527]
+ [ 11117   3735  34501  34628]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/comentario_last_token_ADASYN.pkl
+
+  Ajustando StandardScaler para mean...
+
+============================================================
+ENTRENANDO: comentario_mean_sin_balanceo
+  Train: 3,896,989 | Eval: 939,461
+  Pesos de clase: ninguno (todos 1.0)
+============================================================
+  [Epoch 1] 100.0% (952/952)
+
+=== EVAL comentario_mean_sin_balanceo ===
+Accuracy: 0.4191 | Balanced Acc: 0.2629 | F1 macro: 0.2028 | F1 weighted: 0.2959
+     14_19: prec=0.3454 rec=0.0570 f1=0.0978
+     20_29: prec=0.4284 rec=0.9216 f1=0.5849
+     30_39: prec=0.3268 rec=0.0482 f1=0.0839
+   40_plus: prec=0.2096 rec=0.0248 f1=0.0444
+              precision    recall  f1-score   support
+
+       14_19       0.35      0.06      0.10    168786
+       20_29       0.43      0.92      0.58    399466
+       30_39       0.33      0.05      0.08    287228
+     40_plus       0.21      0.02      0.04     83981
+
+    accuracy                           0.42    939461
+   macro avg       0.33      0.26      0.20    939461
+weighted avg       0.36      0.42      0.30    939461
+
+Confusion matrix:
+[[  9618 153736   4398   1034]
+ [ 13164 368162  14742   3398]
+ [  4363 265608  13833   3424]
+ [   699  71844   9355   2083]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/comentario_mean_sin_balanceo.pkl
+
+============================================================
+ENTRENANDO: comentario_mean_balanceo_manual
+  Train: 3,896,989 | Eval: 939,461
+  Pesos de clase: 14_19=1.100, 20_29=0.850, 30_39=0.950, 40_plus=1.300
+============================================================
+  [Epoch 1] 100.0% (952/952)
+
+=== EVAL comentario_mean_balanceo_manual ===
+Accuracy: 0.4084 | Balanced Acc: 0.2818 | F1 macro: 0.2568 | F1 weighted: 0.3339
+     14_19: prec=0.3338 rec=0.1364 f1=0.1937
+     20_29: prec=0.4327 rec=0.8104 f1=0.5642
+     30_39: prec=0.3396 rec=0.1068 f1=0.1625
+   40_plus: prec=0.1934 rec=0.0737 f1=0.1067
+              precision    recall  f1-score   support
+
+       14_19       0.33      0.14      0.19    168786
+       20_29       0.43      0.81      0.56    399466
+       30_39       0.34      0.11      0.16    287228
+     40_plus       0.19      0.07      0.11     83981
+
+    accuracy                           0.41    939461
+   macro avg       0.32      0.28      0.26    939461
+weighted avg       0.37      0.41      0.33    939461
+
+Confusion matrix:
+[[ 23027 132319   9761   3679]
+ [ 32361 323745  31886  11474]
+ [ 11445 234452  30682  10649]
+ [  2149  57637  18007   6188]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/comentario_mean_balanceo_manual.pkl
+
+  Submuestreando 3,896,989 -> 500,000 para resampling...
+
+  Aplicando SMOTE sobre 500,000 muestras...
+    Antes 14_19: 78,629
+    Antes 20_29: 260,083
+    Antes 30_39: 122,879
+    Antes 40_plus: 38,409
+    Despues 14_19: 260,083
+    Despues 20_29: 260,083
+    Despues 30_39: 260,083
+    Despues 40_plus: 260,083
+
+============================================================
+ENTRENANDO: comentario_mean_SMOTE
+  Train: 1,040,332 | Eval: 939,461
+  Pesos de clase: ninguno (todos 1.0)
+============================================================
+  [Epoch 1] 100.0% (254/254)
+
+=== EVAL comentario_mean_SMOTE ===
+Accuracy: 0.3072 | Balanced Acc: 0.3377 | F1 macro: 0.2970 | F1 weighted: 0.3120
+     14_19: prec=0.2816 rec=0.4267 f1=0.3393
+     20_29: prec=0.4505 rec=0.2159 f1=0.2919
+     30_39: prec=0.3649 rec=0.3485 f1=0.3565
+   40_plus: prec=0.1387 rec=0.3599 f1=0.2002
+              precision    recall  f1-score   support
+
+       14_19       0.28      0.43      0.34    168786
+       20_29       0.45      0.22      0.29    399466
+       30_39       0.36      0.35      0.36    287228
+     40_plus       0.14      0.36      0.20     83981
+
+    accuracy                           0.31    939461
+   macro avg       0.31      0.34      0.30    939461
+weighted avg       0.37      0.31      0.31    939461
+
+Confusion matrix:
+[[ 72016  31088  36626  29056]
+ [122351  86244 104749  86122]
+ [ 49491  65103 100087  72547]
+ [ 11899   9015  32846  30221]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/comentario_mean_SMOTE.pkl
+
+  Aplicando ADASYN sobre 500,000 muestras...
+    Antes 14_19: 78,629
+    Antes 20_29: 260,083
+    Antes 30_39: 122,879
+    Antes 40_plus: 38,409
+    Despues 14_19: 267,630
+    Despues 20_29: 260,083
+    Despues 30_39: 254,654
+    Despues 40_plus: 269,584
+
+============================================================
+ENTRENANDO: comentario_mean_ADASYN
+  Train: 1,051,951 | Eval: 939,461
+  Pesos de clase: ninguno (todos 1.0)
+============================================================
+  [Epoch 1] 100.0% (257/257)
+
+=== EVAL comentario_mean_ADASYN ===
+Accuracy: 0.2979 | Balanced Acc: 0.3402 | F1 macro: 0.2914 | F1 weighted: 0.3028
+     14_19: prec=0.2739 rec=0.4405 f1=0.3378
+     20_29: prec=0.4454 rec=0.2117 f1=0.2870
+     30_39: prec=0.3679 rec=0.3021 f1=0.3318
+   40_plus: prec=0.1409 rec=0.4065 f1=0.2093
+              precision    recall  f1-score   support
+
+       14_19       0.27      0.44      0.34    168786
+       20_29       0.45      0.21      0.29    399466
+       30_39       0.37      0.30      0.33    287228
+     40_plus       0.14      0.41      0.21     83981
+
+    accuracy                           0.30    939461
+   macro avg       0.31      0.34      0.29    939461
+weighted avg       0.36      0.30      0.30    939461
+
+Confusion matrix:
+[[ 74347  30431  31913  32095]
+ [130483  84550  89071  95362]
+ [ 54132  65620  86784  80692]
+ [ 12482   9224  28135  34140]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/comentario_mean_ADASYN.pkl
+
+######################################################################
+# B) CLASIFICACION A NIVEL DE USUARIO
+######################################################################
+Splits de usuarios cargados desde data/splits_edad/
+
+Split usuarios: train=1,626 eval=349 test=349
+
+  Agregando features por usuario para mean_of_last...
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_sin_balanceo
+  Train users: 1,626 | Eval users: 349
+  Pesos de clase: ninguno (todos 1.0)
+============================================================
+
+=== EVAL usuario_mean_of_last_sin_balanceo ===
+Accuracy: 0.5702 | Balanced Acc: 0.4182 | F1 macro: 0.4165 | F1 weighted: 0.5615
+     14_19: prec=0.5079 rec=0.4848 f1=0.4961
+     20_29: prec=0.6716 rec=0.6919 f1=0.6816
+     30_39: prec=0.3816 rec=0.4462 f1=0.4113
+   40_plus: prec=0.1667 rec=0.0500 f1=0.0769
+              precision    recall  f1-score   support
+
+       14_19       0.51      0.48      0.50        66
+       20_29       0.67      0.69      0.68       198
+       30_39       0.38      0.45      0.41        65
+     40_plus       0.17      0.05      0.08        20
+
+    accuracy                           0.57       349
+   macro avg       0.43      0.42      0.42       349
+weighted avg       0.56      0.57      0.56       349
+
+Confusion matrix:
+[[ 32  34   0   0]
+ [ 27 137  31   3]
+ [  4  30  29   2]
+ [  0   3  16   1]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/usuario_mean_of_last_sin_balanceo.pkl
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_balanceo_manual
+  Train users: 1,626 | Eval users: 349
+  Pesos de clase: 14_19=1.100, 20_29=0.850, 30_39=0.950, 40_plus=1.300
+============================================================
+
+=== EVAL usuario_mean_of_last_balanceo_manual ===
+Accuracy: 0.5759 | Balanced Acc: 0.4720 | F1 macro: 0.4634 | F1 weighted: 0.5771
+     14_19: prec=0.5122 rec=0.6364 f1=0.5676
+     20_29: prec=0.7011 rec=0.6515 f1=0.6754
+     30_39: prec=0.4000 rec=0.4000 f1=0.4000
+   40_plus: prec=0.2222 rec=0.2000 f1=0.2105
+              precision    recall  f1-score   support
+
+       14_19       0.51      0.64      0.57        66
+       20_29       0.70      0.65      0.68       198
+       30_39       0.40      0.40      0.40        65
+     40_plus       0.22      0.20      0.21        20
+
+    accuracy                           0.58       349
+   macro avg       0.46      0.47      0.46       349
+weighted avg       0.58      0.58      0.58       349
+
+Confusion matrix:
+[[ 42  22   1   1]
+ [ 36 129  25   8]
+ [  4  30  26   5]
+ [  0   3  13   4]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/usuario_mean_of_last_balanceo_manual.pkl
+
+  Usuarios train dist:
+    14_19: 279
+    20_29: 959
+    30_39: 317
+    40_plus: 71
+
+  Aplicando SMOTE a nivel usuario (1,626 usuarios)...
+    Despues 14_19: 959
+    Despues 20_29: 959
+    Despues 30_39: 959
+    Despues 40_plus: 959
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_SMOTE
+  Train users: 3,836 | Eval users: 349
+============================================================
+
+=== EVAL usuario_mean_of_last_SMOTE ===
+Accuracy: 0.4069 | Balanced Acc: 0.4573 | F1 macro: 0.3692 | F1 weighted: 0.4184
+     14_19: prec=0.4609 rec=0.8030 f1=0.5856
+     20_29: prec=0.7595 rec=0.3030 f1=0.4332
+     30_39: prec=0.2414 rec=0.3231 f1=0.2763
+   40_plus: prec=0.1176 rec=0.4000 f1=0.1818
+              precision    recall  f1-score   support
+
+       14_19       0.46      0.80      0.59        66
+       20_29       0.76      0.30      0.43       198
+       30_39       0.24      0.32      0.28        65
+     40_plus       0.12      0.40      0.18        20
+
+    accuracy                           0.41       349
+   macro avg       0.39      0.46      0.37       349
+weighted avg       0.57      0.41      0.42       349
+
+Confusion matrix:
+[[53  9  1  3]
+ [56 60 53 29]
+ [ 6 10 21 28]
+ [ 0  0 12  8]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/usuario_mean_of_last_SMOTE.pkl
+
+  Aplicando ADASYN a nivel usuario (1,626 usuarios)...
+    Despues 14_19: 917
+    Despues 20_29: 959
+    Despues 30_39: 974
+    Despues 40_plus: 972
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_ADASYN
+  Train users: 3,822 | Eval users: 349
+============================================================
+
+=== EVAL usuario_mean_of_last_ADASYN ===
+Accuracy: 0.3983 | Balanced Acc: 0.4650 | F1 macro: 0.3689 | F1 weighted: 0.4066
+     14_19: prec=0.4224 rec=0.7424 f1=0.5385
+     20_29: prec=0.7568 rec=0.2828 f1=0.4118
+     30_39: prec=0.2717 rec=0.3846 f1=0.3185
+   40_plus: prec=0.1343 rec=0.4500 f1=0.2069
+              precision    recall  f1-score   support
+
+       14_19       0.42      0.74      0.54        66
+       20_29       0.76      0.28      0.41       198
+       30_39       0.27      0.38      0.32        65
+     40_plus       0.13      0.45      0.21        20
+
+    accuracy                           0.40       349
+   macro avg       0.40      0.46      0.37       349
+weighted avg       0.57      0.40      0.41       349
+
+Confusion matrix:
+[[49  9  4  4]
+ [62 56 52 28]
+ [ 5  9 25 26]
+ [ 0  0 11  9]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/usuario_mean_of_last_ADASYN.pkl
+
+  Agregando features por usuario para mean_of_mean...

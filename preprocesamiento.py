@@ -853,6 +853,216 @@ def preparar_dataset_para_edad(
 	return df_comentarios_con_edad, df_autores
 
 
+# Columnas relevantes para el experimento
+COLUMNAS_EXPERIMENTO = ["age", "gender", "country", "perceiving", "introverted", "thinking", "intuitive"]
+COLUMNAS_MBTI = ["perceiving", "introverted", "thinking", "intuitive"]
+
+
+def analizar_columnas_experimento(
+	df_autores: pd.DataFrame,
+	output_dir: str = "figuras",
+) -> Dict[str, Any]:
+	"""Analiza las columnas usadas en los experimentos: edad, genero, country, MBTI.
+
+	Para cada columna muestra:
+	- Valores posibles con conteo y porcentaje
+	- Nulos
+	- Outliers (para numericas continuas como age)
+	- Graficos de distribución y outliers
+	"""
+
+	os.makedirs(output_dir, exist_ok=True)
+
+	print("\n" + "=" * 70)
+	print("ANÁLISIS DE COLUMNAS DEL EXPERIMENTO")
+	print("=" * 70)
+
+	cols_presentes = [c for c in COLUMNAS_EXPERIMENTO if c in df_autores.columns]
+	cols_faltantes = [c for c in COLUMNAS_EXPERIMENTO if c not in df_autores.columns]
+	if cols_faltantes:
+		print(f"AVISO: columnas no encontradas: {cols_faltantes}")
+
+	n_total = len(df_autores)
+	resumen = {}
+
+	# --- Tabla de valores posibles y porcentajes para cada columna ---
+	for col in cols_presentes:
+		serie = df_autores[col]
+		n_nulos = int(serie.isna().sum())
+		pct_nulos = 100 * n_nulos / n_total if n_total > 0 else 0
+
+		print(f"\n{'─' * 60}")
+		print(f"COLUMNA: {col}")
+		print(f"{'─' * 60}")
+		print(f"  Total registros: {n_total:,}")
+		print(f"  Nulos: {n_nulos:,} ({pct_nulos:.1f}%)")
+		print(f"  No nulos: {n_total - n_nulos:,} ({100 - pct_nulos:.1f}%)")
+		print(f"  Valores únicos: {serie.nunique(dropna=True)}")
+
+		# Tabla de frecuencias
+		vc = serie.value_counts(dropna=False).reset_index()
+		vc.columns = ["valor", "conteo"]
+		vc["porcentaje"] = (100 * vc["conteo"] / n_total).round(2)
+		vc["pct_no_nulos"] = np.where(
+			vc["valor"] is not pd.NA,
+			(100 * vc["conteo"] / max(n_total - n_nulos, 1)).round(2),
+			0.0,
+		)
+
+		# Para columnas con muchos valores, mostrar solo top 20
+		if len(vc) > 25:
+			print(f"\n  Top 20 valores (de {len(vc)} únicos):")
+			print(vc.head(20).to_string(index=False))
+			# Agrupar el resto
+			resto = vc.iloc[20:]
+			print(f"  ... y {len(resto)} valores más ({resto['conteo'].sum():,} registros, "
+				  f"{resto['porcentaje'].sum():.1f}%)")
+		else:
+			print(f"\n  Distribución completa:")
+			print(vc.to_string(index=False))
+
+		resumen[col] = vc
+
+	# --- Outliers para 'age' (numérica continua) ---
+	if "age" in df_autores.columns:
+		print(f"\n{'─' * 60}")
+		print("ANÁLISIS DE OUTLIERS: age")
+		print(f"{'─' * 60}")
+
+		age = pd.to_numeric(df_autores["age"], errors="coerce").dropna()
+		if len(age) > 0:
+			q1 = age.quantile(0.25)
+			q3 = age.quantile(0.75)
+			iqr = q3 - q1
+			lower = q1 - 1.5 * iqr
+			upper = q3 + 1.5 * iqr
+			outliers = age[(age < lower) | (age > upper)]
+
+			print(f"  Q1={q1:.1f}  Q3={q3:.1f}  IQR={iqr:.1f}")
+			print(f"  Límite inferior: {lower:.1f}")
+			print(f"  Límite superior: {upper:.1f}")
+			print(f"  Outliers: {len(outliers):,} ({100*len(outliers)/len(age):.1f}%)")
+			print(f"  Rango de outliers: [{outliers.min():.1f}, {outliers.max():.1f}]")
+			print(f"  Media: {age.mean():.1f}  Mediana: {age.median():.1f}  Std: {age.std():.1f}")
+
+	# --- GRÁFICOS ---
+
+	# 1. Outliers de age: boxplot + histograma con límites IQR
+	if "age" in df_autores.columns:
+		age = pd.to_numeric(df_autores["age"], errors="coerce").dropna()
+		if len(age) > 0:
+			fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+			# Boxplot
+			ax = axes[0]
+			bp = ax.boxplot(age, vert=True, patch_artist=True,
+							boxprops=dict(facecolor="#8da0cb", alpha=0.7),
+							medianprops=dict(color="red", linewidth=2))
+			ax.set_title("Boxplot de Edad (outliers IQR)", fontsize=12, fontweight="bold")
+			ax.set_ylabel("Edad")
+			ax.set_xticklabels(["age"])
+
+			# Histograma con líneas de IQR
+			ax = axes[1]
+			ax.hist(age, bins=40, color="#66c2a5", edgecolor="black", alpha=0.7)
+			q1 = age.quantile(0.25)
+			q3 = age.quantile(0.75)
+			iqr = q3 - q1
+			ax.axvline(q1 - 1.5 * iqr, color="red", linestyle="--", label=f"Lower={q1 - 1.5*iqr:.0f}")
+			ax.axvline(q3 + 1.5 * iqr, color="red", linestyle="--", label=f"Upper={q3 + 1.5*iqr:.0f}")
+			ax.axvline(age.median(), color="blue", linestyle="-", label=f"Mediana={age.median():.0f}")
+			ax.set_title("Distribución de Edad con límites de outliers", fontsize=12, fontweight="bold")
+			ax.set_xlabel("Edad")
+			ax.set_ylabel("Frecuencia")
+			ax.legend()
+
+			plt.tight_layout()
+			path_fig = os.path.join(output_dir, "outliers_edad.png")
+			plt.savefig(path_fig, dpi=300, bbox_inches="tight")
+			plt.close()
+			print(f"\n✓ Figura de outliers de edad guardada: {path_fig}")
+
+	# 2. Distribución de gender y country (categóricas)
+	fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+
+	if "gender" in df_autores.columns:
+		ax = axes[0]
+		vc = df_autores["gender"].value_counts(dropna=False).head(10)
+		labels = [str(v) if pd.notna(v) else "NaN" for v in vc.index]
+		colors = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854"]
+		bars = ax.bar(labels, vc.values, color=colors[:len(labels)], edgecolor="black")
+		ax.set_title("Distribución de Gender", fontsize=12, fontweight="bold")
+		ax.set_xlabel("Gender")
+		ax.set_ylabel("Nº de autores")
+		for bar, val in zip(bars, vc.values):
+			pct = 100 * val / n_total
+			ax.text(bar.get_x() + bar.get_width() / 2, val + n_total * 0.01,
+					f"{val:,}\n({pct:.1f}%)", ha="center", va="bottom", fontsize=9)
+
+	if "country" in df_autores.columns:
+		ax = axes[1]
+		vc = df_autores["country"].value_counts(dropna=False).head(12)
+		labels = [str(v) if pd.notna(v) else "NaN" for v in vc.index]
+		bars = ax.bar(labels, vc.values, color="#8da0cb", edgecolor="black")
+		ax.set_title("Top 12 países", fontsize=12, fontweight="bold")
+		ax.set_xlabel("Country")
+		ax.set_ylabel("Nº de autores")
+		ax.tick_params(axis="x", rotation=45)
+		for bar, val in zip(bars, vc.values):
+			pct = 100 * val / n_total
+			ax.text(bar.get_x() + bar.get_width() / 2, val + n_total * 0.005,
+					f"{pct:.1f}%", ha="center", va="bottom", fontsize=8)
+
+	plt.tight_layout()
+	path_fig = os.path.join(output_dir, "distribucion_gender_country.png")
+	plt.savefig(path_fig, dpi=300, bbox_inches="tight")
+	plt.close()
+	print(f"✓ Figura de gender y country guardada: {path_fig}")
+
+	# 3. Distribución de columnas MBTI (binarias 0/1)
+	mbti_presentes = [c for c in COLUMNAS_MBTI if c in df_autores.columns]
+	if mbti_presentes:
+		fig, axes = plt.subplots(1, len(mbti_presentes), figsize=(4 * len(mbti_presentes), 5))
+		if len(mbti_presentes) == 1:
+			axes = [axes]
+
+		palette = {"0": "#fc8d62", "1": "#66c2a5", "NaN": "#cccccc"}
+		for ax, col in zip(axes, mbti_presentes):
+			serie = df_autores[col]
+			vc = serie.value_counts(dropna=False)
+			labels = []
+			vals = []
+			colors = []
+			for v in [1.0, 0.0]:
+				if v in vc.index:
+					labels.append(str(int(v)))
+					vals.append(vc[v])
+					colors.append(palette[str(int(v))])
+			n_nan = int(serie.isna().sum())
+			if n_nan > 0:
+				labels.append("NaN")
+				vals.append(n_nan)
+				colors.append(palette["NaN"])
+
+			bars = ax.bar(labels, vals, color=colors, edgecolor="black")
+			ax.set_title(col, fontsize=12, fontweight="bold")
+			ax.set_ylabel("Nº de autores")
+			for bar, val in zip(bars, vals):
+				pct = 100 * val / n_total
+				ax.text(bar.get_x() + bar.get_width() / 2, val + n_total * 0.008,
+						f"{val:,}\n({pct:.1f}%)", ha="center", va="bottom", fontsize=9)
+
+		plt.suptitle("Dimensiones MBTI (0 = opuesto, 1 = rasgo)", fontsize=13, fontweight="bold", y=1.02)
+		plt.tight_layout()
+		path_fig = os.path.join(output_dir, "distribucion_mbti.png")
+		plt.savefig(path_fig, dpi=300, bbox_inches="tight")
+		plt.close()
+		print(f"✓ Figura de dimensiones MBTI guardada: {path_fig}")
+
+	print(f"\n✓ Análisis de columnas del experimento completado")
+	return resumen
+
+
 if __name__ == "__main__":
 	print("\n" + "#"*60)
 	print("# PREPROCESAMIENTO Y ANÁLISIS EXPLORATORIO DE DATOS")
@@ -917,6 +1127,10 @@ if __name__ == "__main__":
 
 	# 5. Análisis exploratorio centrado en género CON GRÁFICOS
 	resultados = analisis_exploratorio_por_genero(df_merged, con_graficos=True)
+
+	# 6. Análisis de columnas del experimento (edad, género, country, MBTI)
+	print("\n[PASO 6] Análisis de columnas del experimento...")
+	analizar_columnas_experimento(df_autores_raw, output_dir="figuras")
 	
 	print("\n" + "#"*60)
 	print("# ANÁLISIS COMPLETO")
