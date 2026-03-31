@@ -854,15 +854,74 @@ def preparar_dataset_para_edad(
 
 
 # Columnas relevantes para el experimento
-COLUMNAS_EXPERIMENTO = ["age", "gender", "country", "perceiving", "introverted", "thinking", "intuitive"]
+COLUMNAS_EXPERIMENTO = ["age", "gender", "perceiving", "introverted", "thinking", "intuitive"]
 COLUMNAS_MBTI = ["perceiving", "introverted", "thinking", "intuitive"]
+
+
+def preparar_dataset_para_mbti(
+	path_comentarios: str,
+	path_autores: str,
+	columna_mbti: str,
+	max_comments: Optional[int] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+	"""Prepara dataset para clasificacion binaria de una dimension MBTI.
+
+	Filtra autores con la columna MBTI especificada no nula y devuelve
+	comentarios con la etiqueta binaria (0/1).
+	"""
+
+	print("\n" + "=" * 60)
+	print(f"PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE {columna_mbti.upper()}")
+	print("=" * 60)
+
+	print("\n1. Cargando comentarios...")
+	df_comentarios = cargar_comentarios(path_comentarios, nrows=max_comments)
+	print(f"   ✓ {len(df_comentarios):,} comentarios cargados")
+
+	print("\n2. Cargando autores...")
+	df_autores = cargar_autores(path_autores)
+	print(f"   ✓ {len(df_autores):,} autores cargados")
+
+	print(f"\n3. Filtrando autores con '{columna_mbti}' conocido...")
+	if columna_mbti not in df_autores.columns:
+		raise ValueError(f"Columna '{columna_mbti}' no encontrada en autores. "
+						 f"Columnas disponibles: {list(df_autores.columns)}")
+
+	df_autores_filtrado = df_autores[df_autores[columna_mbti].notna()].copy()
+	df_autores_filtrado[columna_mbti] = df_autores_filtrado[columna_mbti].astype(int)
+	n_filtrados = len(df_autores) - len(df_autores_filtrado)
+	print(f"   ✓ {len(df_autores_filtrado):,} autores con {columna_mbti} conocido")
+	print(f"   (Eliminados {n_filtrados:,} autores con {columna_mbti} nulo)")
+
+	print(f"\n4. Uniendo comentarios con {columna_mbti} por autor...")
+	df_merged = df_comentarios.merge(
+		df_autores_filtrado[["author", columna_mbti]],
+		on="author",
+		how="inner",
+	)
+	print(f"   ✓ {len(df_merged):,} comentarios con info de {columna_mbti}")
+
+	eliminados = len(df_comentarios) - len(df_merged)
+	print(f"   (Eliminados {eliminados:,} comentarios sin {columna_mbti} conocido)")
+
+	print(f"\n5. Distribución de {columna_mbti}:")
+	dist = df_merged[columna_mbti].value_counts()
+	for val, count in dist.items():
+		pct = 100 * count / len(df_merged)
+		print(f"   {int(val)}: {count:,} comentarios ({pct:.1f}%)")
+
+	print("\n" + "=" * 60)
+	print(f"✓ Dataset de {columna_mbti} preparado y listo para usar")
+	print("=" * 60)
+
+	return df_merged, df_autores_filtrado
 
 
 def analizar_columnas_experimento(
 	df_autores: pd.DataFrame,
 	output_dir: str = "figuras",
 ) -> Dict[str, Any]:
-	"""Analiza las columnas usadas en los experimentos: edad, genero, country, MBTI.
+	"""Analiza las columnas usadas en los experimentos: edad, genero, MBTI.
 
 	Para cada columna muestra:
 	- Valores posibles con conteo y porcentaje
@@ -945,25 +1004,34 @@ def analizar_columnas_experimento(
 			print(f"  Rango de outliers: [{outliers.min():.1f}, {outliers.max():.1f}]")
 			print(f"  Media: {age.mean():.1f}  Mediana: {age.median():.1f}  Std: {age.std():.1f}")
 
-	# --- GRÁFICOS ---
+	# --- GRÁFICO COMBINADO ---
+	# Layout: 2 filas
+	#   Fila 1 (3 cols): boxplot edad, histograma edad con IQR, gender
+	#   Fila 2 (4 cols): 4 dimensiones MBTI
 
-	# 1. Outliers de age: boxplot + histograma con límites IQR
+	mbti_presentes = [c for c in COLUMNAS_MBTI if c in df_autores.columns]
+
+	fig = plt.figure(figsize=(16, 7))
+	gs = fig.add_gridspec(2, 1, hspace=0.45)
+	gs_row1 = gs[0].subgridspec(1, 3, wspace=0.3)
+	n_mbti_cols = max(len(mbti_presentes), 1)
+	gs_row2 = gs[1].subgridspec(1, n_mbti_cols, wspace=0.3)
+
+	# Fila 1: age boxplot + age histogram + gender
 	if "age" in df_autores.columns:
 		age = pd.to_numeric(df_autores["age"], errors="coerce").dropna()
 		if len(age) > 0:
-			fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
 			# Boxplot
-			ax = axes[0]
-			bp = ax.boxplot(age, vert=True, patch_artist=True,
-							boxprops=dict(facecolor="#8da0cb", alpha=0.7),
-							medianprops=dict(color="red", linewidth=2))
+			ax = fig.add_subplot(gs_row1[0])
+			ax.boxplot(age, vert=True, patch_artist=True,
+					   boxprops=dict(facecolor="#8da0cb", alpha=0.7),
+					   medianprops=dict(color="red", linewidth=2))
 			ax.set_title("Boxplot de Edad (outliers IQR)", fontsize=12, fontweight="bold")
 			ax.set_ylabel("Edad")
 			ax.set_xticklabels(["age"])
 
 			# Histograma con líneas de IQR
-			ax = axes[1]
+			ax = fig.add_subplot(gs_row1[1])
 			ax.hist(age, bins=40, color="#66c2a5", edgecolor="black", alpha=0.7)
 			q1 = age.quantile(0.25)
 			q3 = age.quantile(0.75)
@@ -976,21 +1044,12 @@ def analizar_columnas_experimento(
 			ax.set_ylabel("Frecuencia")
 			ax.legend()
 
-			plt.tight_layout()
-			path_fig = os.path.join(output_dir, "outliers_edad.png")
-			plt.savefig(path_fig, dpi=300, bbox_inches="tight")
-			plt.close()
-			print(f"\n✓ Figura de outliers de edad guardada: {path_fig}")
-
-	# 2. Distribución de gender y country (categóricas)
-	fig, axes = plt.subplots(1, 2, figsize=(15, 5))
-
 	if "gender" in df_autores.columns:
-		ax = axes[0]
+		ax = fig.add_subplot(gs_row1[2])
 		vc = df_autores["gender"].value_counts(dropna=False).head(10)
 		labels = [str(v) if pd.notna(v) else "NaN" for v in vc.index]
-		colors = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854"]
-		bars = ax.bar(labels, vc.values, color=colors[:len(labels)], edgecolor="black")
+		colors_bar = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854"]
+		bars = ax.bar(labels, vc.values, color=colors_bar[:len(labels)], edgecolor="black")
 		ax.set_title("Distribución de Gender", fontsize=12, fontweight="bold")
 		ax.set_xlabel("Gender")
 		ax.set_ylabel("Nº de autores")
@@ -999,65 +1058,41 @@ def analizar_columnas_experimento(
 			ax.text(bar.get_x() + bar.get_width() / 2, val + n_total * 0.01,
 					f"{val:,}\n({pct:.1f}%)", ha="center", va="bottom", fontsize=9)
 
-	if "country" in df_autores.columns:
-		ax = axes[1]
-		vc = df_autores["country"].value_counts(dropna=False).head(12)
-		labels = [str(v) if pd.notna(v) else "NaN" for v in vc.index]
-		bars = ax.bar(labels, vc.values, color="#8da0cb", edgecolor="black")
-		ax.set_title("Top 12 países", fontsize=12, fontweight="bold")
-		ax.set_xlabel("Country")
-		ax.set_ylabel("Nº de autores")
-		ax.tick_params(axis="x", rotation=45)
-		for bar, val in zip(bars, vc.values):
-			pct = 100 * val / n_total
-			ax.text(bar.get_x() + bar.get_width() / 2, val + n_total * 0.005,
-					f"{pct:.1f}%", ha="center", va="bottom", fontsize=8)
-
-	plt.tight_layout()
-	path_fig = os.path.join(output_dir, "distribucion_gender_country.png")
-	plt.savefig(path_fig, dpi=300, bbox_inches="tight")
-	plt.close()
-	print(f"✓ Figura de gender y country guardada: {path_fig}")
-
-	# 3. Distribución de columnas MBTI (binarias 0/1)
-	mbti_presentes = [c for c in COLUMNAS_MBTI if c in df_autores.columns]
+	# Fila 2: Dimensiones MBTI (4 columnas)
 	if mbti_presentes:
-		fig, axes = plt.subplots(1, len(mbti_presentes), figsize=(4 * len(mbti_presentes), 5))
-		if len(mbti_presentes) == 1:
-			axes = [axes]
-
 		palette = {"0": "#fc8d62", "1": "#66c2a5", "NaN": "#cccccc"}
-		for ax, col in zip(axes, mbti_presentes):
+		for idx, col in enumerate(mbti_presentes):
+			ax = fig.add_subplot(gs_row2[idx])
+
 			serie = df_autores[col]
 			vc = serie.value_counts(dropna=False)
-			labels = []
+			bar_labels = []
 			vals = []
-			colors = []
+			bar_colors = []
 			for v in [1.0, 0.0]:
 				if v in vc.index:
-					labels.append(str(int(v)))
+					bar_labels.append(str(int(v)))
 					vals.append(vc[v])
-					colors.append(palette[str(int(v))])
+					bar_colors.append(palette[str(int(v))])
 			n_nan = int(serie.isna().sum())
 			if n_nan > 0:
-				labels.append("NaN")
+				bar_labels.append("NaN")
 				vals.append(n_nan)
-				colors.append(palette["NaN"])
+				bar_colors.append(palette["NaN"])
 
-			bars = ax.bar(labels, vals, color=colors, edgecolor="black")
-			ax.set_title(col, fontsize=12, fontweight="bold")
+			bars = ax.bar(bar_labels, vals, color=bar_colors, edgecolor="black")
+			ax.set_title(f"MBTI: {col}", fontsize=12, fontweight="bold")
 			ax.set_ylabel("Nº de autores")
 			for bar, val in zip(bars, vals):
 				pct = 100 * val / n_total
 				ax.text(bar.get_x() + bar.get_width() / 2, val + n_total * 0.008,
 						f"{val:,}\n({pct:.1f}%)", ha="center", va="bottom", fontsize=9)
 
-		plt.suptitle("Dimensiones MBTI (0 = opuesto, 1 = rasgo)", fontsize=13, fontweight="bold", y=1.02)
-		plt.tight_layout()
-		path_fig = os.path.join(output_dir, "distribucion_mbti.png")
-		plt.savefig(path_fig, dpi=300, bbox_inches="tight")
-		plt.close()
-		print(f"✓ Figura de dimensiones MBTI guardada: {path_fig}")
+	fig.suptitle("Análisis de columnas del experimento", fontsize=15, fontweight="bold", y=1.01)
+	path_fig = os.path.join(output_dir, "columnas_experimento.png")
+	plt.savefig(path_fig, dpi=300, bbox_inches="tight")
+	plt.close()
+	print(f"\n✓ Figura combinada guardada: {path_fig}")
 
 	print(f"\n✓ Análisis de columnas del experimento completado")
 	return resumen

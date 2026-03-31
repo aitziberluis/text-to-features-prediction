@@ -493,3 +493,208 @@ Confusion matrix:
   -> Modelo guardado: modelos/edad_gpt_activaciones/usuario_mean_of_last_ADASYN.pkl
 
   Agregando features por usuario para mean_of_mean...
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_sin_balanceo
+  Train users: 1,626 | Eval users: 349
+  Pesos de clase: ninguno (todos 1.0)
+============================================================
+
+=== EVAL usuario_mean_of_mean_sin_balanceo ===
+Accuracy: 0.5673 | Balanced Acc: 0.4155 | F1 macro: 0.4226 | F1 weighted: 0.5600
+     14_19: prec=0.5273 rec=0.4394 f1=0.4793
+     20_29: prec=0.6699 rec=0.7071 f1=0.6880
+     30_39: prec=0.3506 rec=0.4154 f1=0.3803
+   40_plus: prec=0.2500 rec=0.1000 f1=0.1429
+              precision    recall  f1-score   support
+
+       14_19       0.53      0.44      0.48        66
+       20_29       0.67      0.71      0.69       198
+       30_39       0.35      0.42      0.38        65
+     40_plus       0.25      0.10      0.14        20
+
+    accuracy                           0.57       349
+   macro avg       0.45      0.42      0.42       349
+weighted avg       0.56      0.57      0.56       349
+
+Confusion matrix:
+[[ 29  33   3   1]
+ [ 24 140  31   3]
+ [  2  34  27   2]
+ [  0   2  16   2]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/usuario_mean_of_mean_sin_balanceo.pkl
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_balanceo_manual
+  Train users: 1,626 | Eval users: 349
+  Pesos de clase: 14_19=1.100, 20_29=0.850, 30_39=0.950, 40_plus=1.300
+============================================================
+
+=== EVAL usuario_mean_of_mean_balanceo_manual ===
+Accuracy: 0.5072 | Balanced Acc: 0.4127 | F1 macro: 0.4044 | F1 weighted: 0.5108
+     14_19: prec=0.4337 rec=0.5455 f1=0.4832
+     20_29: prec=0.6457 rec=0.5707 f1=0.6059
+     30_39: prec=0.3247 rec=0.3846 f1=0.3521
+   40_plus: prec=0.2143 rec=0.1500 f1=0.1765
+              precision    recall  f1-score   support
+
+       14_19       0.43      0.55      0.48        66
+       20_29       0.65      0.57      0.61       198
+       30_39       0.32      0.38      0.35        65
+     40_plus       0.21      0.15      0.18        20
+
+    accuracy                           0.51       349
+   macro avg       0.40      0.41      0.40       349
+weighted avg       0.52      0.51      0.51       349
+
+Confusion matrix:
+[[ 36  29   1   0]
+ [ 43 113  37   5]
+ [  4  30  25   6]
+ [  0   3  14   3]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/usuario_mean_of_mean_balanceo_manual.pkl
+
+  Usuarios train dist:
+    14_19: 279
+    20_29: 959
+    30_39: 317
+    40_plus: 71
+
+  Aplicando SMOTE a nivel usuario (1,626 usuarios)...
+    Despues 14_19: 959
+    Despues 20_29: 959
+    Despues 30_39: 959
+    Despues 40_plus: 959
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_SMOTE
+  Train users: 3,836 | Eval users: 349
+============================================================
+
+=== EVAL usuario_mean_of_mean_SMOTE ===
+Accuracy: 0.4241 | Balanced Acc: 0.4512 | F1 macro: 0.3749 | F1 weighted: 0.4392
+     14_19: prec=0.4215 rec=0.7727 f1=0.5455
+     20_29: prec=0.7727 rec=0.3434 f1=0.4755
+     30_39: prec=0.2716 rec=0.3385 f1=0.3014
+   40_plus: prec=0.1186 rec=0.3500 f1=0.1772
+              precision    recall  f1-score   support
+
+       14_19       0.42      0.77      0.55        66
+       20_29       0.77      0.34      0.48       198
+       30_39       0.27      0.34      0.30        65
+     40_plus       0.12      0.35      0.18        20
+
+    accuracy                           0.42       349
+   macro avg       0.40      0.45      0.37       349
+weighted avg       0.58      0.42      0.44       349
+
+Confusion matrix:
+[[51 11  2  2]
+ [63 68 45 22]
+ [ 7  8 22 28]
+ [ 0  1 12  7]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/usuario_mean_of_mean_SMOTE.pkl
+
+  Aplicando ADASYN a nivel usuario (1,626 usuarios)...
+    Despues 14_19: 947
+    Despues 20_29: 959
+    Despues 30_39: 968
+    Despues 40_plus: 938
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_ADASYN
+  Train users: 3,812 | Eval users: 349
+============================================================
+
+=== EVAL usuario_mean_of_mean_ADASYN ===
+Accuracy: 0.4183 | Balanced Acc: 0.4678 | F1 macro: 0.3830 | F1 weighted: 0.4301
+     14_19: prec=0.4286 rec=0.7273 f1=0.5393
+     20_29: prec=0.7654 rec=0.3131 f1=0.4444
+     30_39: prec=0.2887 rec=0.4308 f1=0.3457
+   40_plus: prec=0.1356 rec=0.4000 f1=0.2025
+              precision    recall  f1-score   support
+
+       14_19       0.43      0.73      0.54        66
+       20_29       0.77      0.31      0.44       198
+       30_39       0.29      0.43      0.35        65
+     40_plus       0.14      0.40      0.20        20
+
+    accuracy                           0.42       349
+   macro avg       0.40      0.47      0.38       349
+weighted avg       0.58      0.42      0.43       349
+
+Confusion matrix:
+[[48 12  3  3]
+ [60 62 55 21]
+ [ 4  6 28 27]
+ [ 0  1 11  8]]
+  -> Modelo guardado: modelos/edad_gpt_activaciones/usuario_mean_of_mean_ADASYN.pkl
+
+
+======================================================================
+RESUMEN DE RESULTADOS (EVAL)
+======================================================================
+Config                                           Acc  BalAcc  F1mac F1_14_19 F1_20_29 F1_30_39 F1_40_plus
+-------------------------------------------------------------------------------------------------------
+comentario_last_token_sin_balanceo            0.4168 0.25908 0.1912   0.0828   0.5859   0.0493   0.0468
+comentario_last_token_balanceo_manual         0.3984 0.27966 0.2617   0.1788   0.5548   0.1945   0.1188
+comentario_last_token_SMOTE                   0.2681 0.31268 0.2537   0.3047   0.1565   0.3555   0.1982
+comentario_last_token_ADASYN                  0.2592 0.32042 0.2522   0.3119   0.1663   0.3246   0.2060
+comentario_mean_sin_balanceo                  0.4191 0.26290 0.2028   0.0978   0.5849   0.0839   0.0444
+comentario_mean_balanceo_manual               0.4084 0.28184 0.2568   0.1937   0.5642   0.1625   0.1067
+comentario_mean_SMOTE                         0.3072 0.33772 0.2970   0.3393   0.2919   0.3565   0.2002
+comentario_mean_ADASYN                        0.2979 0.34020 0.2914   0.3378   0.2870   0.3318   0.2093
+usuario_mean_of_last_sin_balanceo             0.5702 0.41823 0.4165   0.4961   0.6816   0.4113   0.0769
+usuario_mean_of_last_balanceo_manual          0.5759 0.47197 0.4634   0.5676   0.6754   0.4000   0.2105
+usuario_mean_of_last_SMOTE                    0.4069 0.45728 0.3692   0.5856   0.4332   0.2763   0.1818
+usuario_mean_of_last_ADASYN                   0.3983 0.46497 0.3689   0.5385   0.4118   0.3185   0.2069
+usuario_mean_of_mean_sin_balanceo             0.5673 0.41546 0.4226   0.4793   0.6880   0.3803   0.1429
+usuario_mean_of_mean_balanceo_manual          0.5072 0.41269 0.4044   0.4832   0.6059   0.3521   0.1765
+usuario_mean_of_mean_SMOTE                    0.4241 0.45116 0.3749   0.5455   0.4755   0.3014   0.1772
+usuario_mean_of_mean_ADASYN                   0.4183 0.46779 0.3830   0.5393   0.4444   0.3457   0.2025
+
+Resumen guardado en: modelos/edad_gpt_activaciones/resultados_resumen.json
+
+======================================================================
+COMPLETADO - Test reservado para uso futuro
+======================================================================
+======================================================================
+CLASIFICADOR EDAD - REPRESENTACIONES SAE SOBRE GPT-2
+======================================================================
+
+============================================================
+PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE EDAD
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con edad por autor...
+   ✓ 17,639,863 comentarios con info de edad
+
+4. Filtrando solo edad conocida (rangos válidos)...
+   ✓ 5,538,809 comentarios con rango de edad válido
+   (Eliminados 12,101,054 comentarios con edad nula/fuera de rango)
+
+5. Distribución por rango de edad:
+   20_29: 2,811,112 comentarios (50.8%)
+   30_39: 1,422,075 comentarios (25.7%)
+   14_19: 877,575 comentarios (15.8%)
+   40_plus: 428,047 comentarios (7.7%)
+
+============================================================
+✓ Dataset de edad preparado y listo para usar
+============================================================
+Rangos de edad presentes: {'20_29': 2811112, '30_39': 1422075, '14_19': 877575, '40_plus': 428047}
+
+Extrayendo representaciones SAE para 5,538,809 comentarios...
+SAE: sae-ckpts/sae-gpt2-comments
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  32%|███▏      | 48/148 [00:00<00:00, 475.95it/s]Loading weights:  80%|███████▉  | 118/148 [00:00<00:00, 605.91it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 478.20it/s]
+  [  0.0%] step 1/173088 (32/5,538,809 comentarios)
+  [  9.2%] step 15913/173088 (509,216/5,538,809 comentarios)
