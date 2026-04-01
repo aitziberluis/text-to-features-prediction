@@ -215,7 +215,8 @@ def _pool_sparse_to_dense(
     batch_size, seq_len, k = top_acts.shape
     device = top_acts.device
     dtype = top_acts.dtype
-    mask = attention_mask.to(device).float()
+    # Mantener dtype consistente con top_acts para evitar errores en index_put_/scatter
+    mask = attention_mask.to(device=device, dtype=dtype)
 
     # --- last_token ---
     lengths = mask.sum(dim=1).clamp(min=1).long() - 1
@@ -244,7 +245,7 @@ def _pool_sparse_to_dense(
     # Flatten todo y hacer scatter_add
     flat_batch = batch_ids.reshape(-1)
     flat_indices = top_indices.reshape(-1).long()
-    flat_acts = masked_acts.reshape(-1)
+    flat_acts = masked_acts.reshape(-1).to(mean_pooled.dtype)
 
     mean_pooled.index_put_(
         (flat_batch, flat_indices),
@@ -317,6 +318,7 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
 
     last_print = time.time()
 
+    ok = False
     try:
         with torch.inference_mode():
             start = 0
@@ -378,7 +380,6 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
                         )
                         batch_size = new_batch_size
 
-                # Liberar memoria explícitamente
                 del batch_texts, tokens, input_ids, attention_mask, acts, top_acts, top_indices
                 del last_pooled, mean_pooled
                 captured.clear()
@@ -398,14 +399,14 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
                         flush=True,
                     )
                     last_print = now
-
+        ok = True
     finally:
         handle.remove()
-        # Limpiar GPU memory al finalizar
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         del model, tokenizer, sae
-        print(f"Representaciones SAE extraidas y guardadas en {ACTIVATIONS_DIR}.", flush=True)
+        if ok:
+            print(f"Representaciones SAE extraidas y guardadas en {ACTIVATIONS_DIR}.", flush=True)
 
     labels = np.array([LABEL_MAP[g] for g in df["age_group"]], dtype=np.int8)
     authors = df["author"].to_numpy() if "author" in df.columns else None

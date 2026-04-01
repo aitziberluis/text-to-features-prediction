@@ -20,3 +20,95 @@ PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE EDAD
 ============================================================
 
 1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con edad por autor...
+   ✓ 17,639,863 comentarios con info de edad
+
+4. Filtrando solo edad conocida (rangos válidos)...
+   ✓ 5,538,809 comentarios con rango de edad válido
+   (Eliminados 12,101,054 comentarios con edad nula/fuera de rango)
+
+5. Distribución por rango de edad:
+   20_29: 2,811,112 comentarios (50.8%)
+   30_39: 1,422,075 comentarios (25.7%)
+   14_19: 877,575 comentarios (15.8%)
+   40_plus: 428,047 comentarios (7.7%)
+
+============================================================
+✓ Dataset de edad preparado y listo para usar
+============================================================
+Rangos de edad presentes: {'20_29': 2811112, '30_39': 1422075, '14_19': 877575, '40_plus': 428047}
+
+Extrayendo representaciones SAE para 5,538,809 comentarios...
+SAE: sae-ckpts/sae-gpt2-comments
+Device: cuda:0
+CUDA disponible: True
+GPU actual: 0
+Nombre GPU: NVIDIA RTX A6000
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+Features dtype: float16 | RAM estimada features: 338.1 GiB
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  39%|███▉      | 58/148 [00:00<00:00, 534.07it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 526.70it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 526.16it/s]
+Representaciones SAE extraidas y guardadas en /hdd/aitziber.l/activaciones_sae_gpt2_edad.
+Traceback (most recent call last):
+  File "/home/aitziber.l/TFM/clasificacion_edad/gpt_activaciones/clasificador_edad_sae_activaciones.py", line 1092, in <module>
+    main()
+  File "/home/aitziber.l/TFM/clasificacion_edad/gpt_activaciones/clasificador_edad_sae_activaciones.py", line 804, in main
+    last_token, mean_token, labels, authors, num_latents = extraer_activaciones(df)
+  File "/home/aitziber.l/TFM/clasificacion_edad/gpt_activaciones/clasificador_edad_sae_activaciones.py", line 458, in extraer_activaciones
+    return _extraer_activaciones(df)
+  File "/home/aitziber.l/TFM/clasificacion_edad/gpt_activaciones/clasificador_edad_sae_activaciones.py", line 349, in _extraer_activaciones
+    last_pooled, mean_pooled = _pool_sparse_to_dense(
+  File "/home/aitziber.l/TFM/clasificacion_edad/gpt_activaciones/clasificador_edad_sae_activaciones.py", line 249, in _pool_sparse_to_dense
+    mean_pooled.index_put_(
+RuntimeError: expected scalar type Float but found Half
+nohup: ignoring input
+cuda0
+======================================================================
+CLASIFICADOR EDAD - REPRESENTACIONES SAE SOBRE GPT-2
+======================================================================
+
+============================================================
+PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE EDAD
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con edad por autor...
+   ✓ 17,639,863 comentarios con info de edad
+
+4. Filtrando solo edad conocida (rangos válidos)...
+   ✓ 5,538,809 comentarios con rango de edad válido
+   (Eliminados 12,101,054 comentarios con edad nula/fuera de rango)
+
+5. Distribución por rango de edad:
+   20_29: 2,811,112 comentarios (50.8%)
+   30_39: 1,422,075 comentarios (25.7%)
+   14_19: 877,575 comentarios (15.8%)
+   40_plus: 428,047 comentarios (7.7%)
+
+============================================================
+✓ Dataset de edad preparado y listo para usar
+============================================================
+Rangos de edad presentes: {'20_29': 2811112, '30_39': 1422075, '14_19': 877575, '40_plus': 428047}
+
+Extrayendo representaciones SAE para 5,538,809 comentarios...
+SAE: sae-ckpts/sae-gpt2-comments
+Device: cuda:0
+CUDA disponible: True
+GPU actual: 0
+Nombre GPU: NVIDIA RTX A6000
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+Features dtype: float16 | RAM estimada features: 338.1 GiB
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1191.44it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1186.63it/s]
+  [  0.0%] step 1/173088 (32/5,538,809 comentarios) | batch=32

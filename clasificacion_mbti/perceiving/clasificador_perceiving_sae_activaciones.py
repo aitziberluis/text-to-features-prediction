@@ -21,6 +21,7 @@ Evaluacion solo en eval set (test reservado para uso futuro).
 """
 
 import gc
+import json
 import math
 import os
 import sys
@@ -62,7 +63,11 @@ TRAIT_NAME = "perceiving"
 
 MODEL = "openai-community/gpt2"
 CONTEXT_LEN = 512
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+if torch.cuda.is_available():
+    torch.cuda.set_device(0)
+    DEVICE = "cuda:0"
+else:
+    DEVICE = "cpu"
 
 # Ruta a la SAE entrenada sobre todo el corpus
 PATH_SAE = "sae-ckpts/sae-gpt2-comments"
@@ -72,6 +77,9 @@ PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
 PATH_AUTORES = "data/author_profiles.csv"
 TEXT_COLUMN = "body"
 MAX_COMMENTS = None
+
+# Directorio donde se guardan las representaciones SAE extraidas (HDD)
+ACTIVATIONS_DIR = f"/hdd/aitziber.l/activaciones_sae_gpt2_{TRAIT_NAME}"
 
 # Clases binarias
 CLASS_NAMES = ["0", "1"]
@@ -87,8 +95,14 @@ RANDOM_STATE = 42
 
 # Entrenamiento
 EXTRACT_BATCH_SIZE = 32
+MIN_EXTRACT_BATCH_SIZE = 4
 TRAIN_EPOCHS = 1
 SGD_ALPHA = 1e-5
+
+# Precision/limpieza para reducir uso de memoria
+SAE_DTYPE = torch.float16 if torch.cuda.is_available() else torch.float32
+FEATURES_DTYPE = np.float16
+CUDA_EMPTY_CACHE_EVERY = 200
 
 # Progreso: imprimir cada hora (3600 s)
 PROGRESS_INTERVAL = 3600
@@ -132,6 +146,13 @@ def sample_weights_from_class_weights(y: np.ndarray, class_weights: Optional[np.
     if class_weights is None:
         return np.ones(len(y), dtype=np.float32)
     return class_weights[y]
+
+
+def _is_oom_error(exc: BaseException) -> bool:
+    """Detecta OOM de CUDA lanzado como excepcion tipada o RuntimeError."""
+    if isinstance(exc, torch.OutOfMemoryError):
+        return True
+    return "out of memory" in str(exc).lower()
 
 
 # =====================
@@ -186,7 +207,7 @@ def _pool_sparse_to_dense(
     batch_size, seq_len, k = top_acts.shape
     device = top_acts.device
     dtype = top_acts.dtype
-    mask = attention_mask.to(device).float()
+    mask = attention_mask.to(device=device, dtype=dtype)
 
     # --- last_token ---
     lengths = mask.sum(dim=1).clamp(min=1).long() - 1
@@ -215,7 +236,7 @@ def _pool_sparse_to_dense(
     # Flatten todo y hacer scatter_add
     flat_batch = batch_ids.reshape(-1)
     flat_indices = top_indices.reshape(-1).long()
-    flat_acts = masked_acts.reshape(-1)
+    flat_acts = masked_acts.reshape(-1).to(mean_pooled.dtype)
 
     mean_pooled.index_put_(
         (flat_batch, flat_indices),
@@ -230,17 +251,26 @@ def _pool_sparse_to_dense(
 
 
 def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
-    """Extrae representaciones SAE de GPT-2 en memoria (sin guardar a disco)."""
+    """Extrae representaciones SAE de GPT-2 con cache en disco (memmap)."""
 
     n = len(df)
-    print(f"\nExtrayendo representaciones SAE para {n:,} comentarios...")
-    print(f"SAE: {PATH_SAE}")
+    print(f"\nExtrayendo representaciones SAE para {n:,} comentarios...", flush=True)
+    print(f"SAE: {PATH_SAE}", flush=True)
+    print(f"Device: {DEVICE}", flush=True)
+    print(f"CUDA disponible: {torch.cuda.is_available()}", flush=True)
+    if torch.cuda.is_available():
+        print(f"GPU actual: {torch.cuda.current_device()}", flush=True)
+        print(f"Nombre GPU: {torch.cuda.get_device_name()}", flush=True)
 
     # Cargar SAE
     sae = Sae.load_from_disk(PATH_SAE, device=DEVICE)
+    if hasattr(sae, "to"):
+        sae = sae.to(device=DEVICE, dtype=SAE_DTYPE)
     num_latents = sae.cfg.num_latents
     hookpoint_name = sae.cfg.hookpoint
-    print(f"SAE cargada: {num_latents} latentes, k={sae.cfg.k}, hookpoint={hookpoint_name}")
+    print(f"SAE cargada: {num_latents} latentes, k={sae.cfg.k}, hookpoint={hookpoint_name}", flush=True)
+    est_features_gb = (n * num_latents * np.dtype(FEATURES_DTYPE).itemsize * 2) / (1024 ** 3)
+    print(f"Features dtype: {FEATURES_DTYPE.__name__} | RAM estimada features: {est_features_gb:.1f} GiB", flush=True)
 
     # Cargar modelo GPT-2
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
@@ -250,7 +280,7 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
     model = AutoModelForCausalLM.from_pretrained(
         MODEL,
         device_map={"": DEVICE},
-        torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+        dtype=SAE_DTYPE,
     )
     model.eval()
 
@@ -266,69 +296,157 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
 
     total_steps = math.ceil(n / EXTRACT_BATCH_SIZE)
 
-    # Pre-allocate arrays en memoria
-    last_token_arr = np.zeros((n, num_latents), dtype=np.float32)
-    mean_token_arr = np.zeros((n, num_latents), dtype=np.float32)
+    # Pre-allocate arrays en disco con memmap
+    os.makedirs(ACTIVATIONS_DIR, exist_ok=True)
+    last_token_arr = np.memmap(
+        os.path.join(ACTIVATIONS_DIR, "last_token.mmap"),
+        dtype=FEATURES_DTYPE, mode="w+", shape=(n, num_latents),
+    )
+    mean_token_arr = np.memmap(
+        os.path.join(ACTIVATIONS_DIR, "mean_token.mmap"),
+        dtype=FEATURES_DTYPE, mode="w+", shape=(n, num_latents),
+    )
 
-    textos = df["text"].tolist()
     last_print = time.time()
 
+    ok = False
     try:
-        with torch.no_grad():
-            for step, start in enumerate(range(0, n, EXTRACT_BATCH_SIZE)):
-                end = min(start + EXTRACT_BATCH_SIZE, n)
-                batch_texts = textos[start:end]
+        with torch.inference_mode():
+            start = 0
+            step = 0
+            current_batch_size = EXTRACT_BATCH_SIZE
 
-                tokens = tokenizer(
-                    batch_texts,
-                    max_length=CONTEXT_LEN,
-                    truncation=True,
-                    padding="max_length",
-                    return_attention_mask=True,
-                    return_tensors="pt",
-                )
-                input_ids = tokens["input_ids"].to(model.device)
-                attention_mask = tokens["attention_mask"].to(model.device)
+            while start < n:
+                batch_size = current_batch_size
+                while True:
+                    end = min(start + batch_size, n)
+                    batch_texts = df["text"].iloc[start:end].tolist()
 
-                model.transformer(input_ids=input_ids, attention_mask=attention_mask)
+                    try:
+                        tokens = tokenizer(
+                            batch_texts,
+                            max_length=CONTEXT_LEN,
+                            truncation=True,
+                            padding="max_length",
+                            return_attention_mask=True,
+                            return_tensors="pt",
+                        )
+                        input_ids = tokens["input_ids"].to(model.device)
+                        attention_mask = tokens["attention_mask"].to(model.device)
 
-                acts = captured["act"].to(sae.dtype).to(sae.device)
-                top_acts, top_indices = sae.encode(acts)
+                        model.transformer(input_ids=input_ids, attention_mask=attention_mask)
 
-                last_pooled, mean_pooled = _pool_sparse_to_dense(
-                    top_acts=top_acts,
-                    top_indices=top_indices,
-                    attention_mask=attention_mask,
-                    num_latents=num_latents,
-                )
+                        acts = captured["act"].to(sae.dtype).to(sae.device)
+                        top_acts, top_indices = sae.encode(acts)
 
-                last_token_arr[start:end] = last_pooled.float().cpu().numpy()
-                mean_token_arr[start:end] = mean_pooled.float().cpu().numpy()
+                        last_pooled, mean_pooled = _pool_sparse_to_dense(
+                            top_acts=top_acts,
+                            top_indices=top_indices,
+                            attention_mask=attention_mask,
+                            num_latents=num_latents,
+                        )
+
+                        last_token_arr[start:end] = last_pooled.float().cpu().numpy().astype(FEATURES_DTYPE, copy=False)
+                        mean_token_arr[start:end] = mean_pooled.float().cpu().numpy().astype(FEATURES_DTYPE, copy=False)
+                        break
+                    except Exception as e:
+                        if not _is_oom_error(e):
+                            raise
+
+                        captured.clear()
+                        if torch.cuda.is_available():
+                            torch.cuda.empty_cache()
+
+                        if batch_size <= MIN_EXTRACT_BATCH_SIZE:
+                            raise RuntimeError(
+                                f"OOM incluso con batch_size={batch_size}. "
+                                f"Prueba menor CONTEXT_LEN o precision mas agresiva."
+                            ) from e
+
+                        new_batch_size = max(MIN_EXTRACT_BATCH_SIZE, batch_size // 2)
+                        print(
+                            f"  OOM detectado en step={step+1} ({start:,}:{end:,}). "
+                            f"Reduciendo batch_size {batch_size} -> {new_batch_size} y reintentando...",
+                            flush=True,
+                        )
+                        batch_size = new_batch_size
+
+                del batch_texts, tokens, input_ids, attention_mask, acts, top_acts, top_indices
+                del last_pooled, mean_pooled
+                captured.clear()
+                if torch.cuda.is_available() and ((step + 1) % CUDA_EMPTY_CACHE_EVERY == 0):
+                    torch.cuda.empty_cache()
+
+                start = end
+                step += 1
+                current_batch_size = batch_size
 
                 now = time.time()
-                if now - last_print >= PROGRESS_INTERVAL or step == 0 or step == total_steps - 1:
-                    pct = 100.0 * (step + 1) / total_steps
-                    print(f"  [{pct:5.1f}%] step {step+1}/{total_steps} "
-                          f"({end:,}/{n:,} comentarios)")
+                if now - last_print >= PROGRESS_INTERVAL or step == 1 or start >= n:
+                    pct = 100.0 * start / n
+                    print(
+                        f"  [{pct:5.1f}%] step {step}/{total_steps} "
+                        f"({start:,}/{n:,} comentarios) | batch={current_batch_size}",
+                        flush=True,
+                    )
                     last_print = now
+        ok = True
 
     finally:
         handle.remove()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        del model, tokenizer, sae
+        if ok:
+            print(f"Representaciones SAE extraidas y guardadas en {ACTIVATIONS_DIR}.", flush=True)
 
     labels = df["label"].to_numpy().astype(np.int8)
     authors = df["author"].to_numpy() if "author" in df.columns else None
 
-    print(f"Representaciones SAE extraidas en memoria (sin guardar a disco).")
+    last_token_arr.flush()
+    mean_token_arr.flush()
+    meta = {"n": n, "num_latents": num_latents}
+    with open(os.path.join(ACTIVATIONS_DIR, "meta.json"), "w") as f:
+        json.dump(meta, f)
+    np.save(os.path.join(ACTIVATIONS_DIR, "labels.npy"), labels)
+    if authors is not None:
+        np.save(os.path.join(ACTIVATIONS_DIR, "authors.npy"), authors)
+
     return last_token_arr, mean_token_arr, labels, authors, num_latents
 
 
 def extraer_activaciones(
     df: pd.DataFrame,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
-    """Extrae representaciones SAE en memoria (no guarda nada a disco).
+    """Extrae representaciones SAE con cache en disco (memmap).
 
     Returns: (last_token, mean_token, labels, authors_array, num_latents)
     """
+    meta_path = os.path.join(ACTIVATIONS_DIR, "meta.json")
+    if os.path.exists(meta_path):
+        print(f"\nCargando representaciones SAE desde cache: {ACTIVATIONS_DIR}")
+        with open(meta_path) as f:
+            meta = json.load(f)
+        n, num_latents = meta["n"], meta["num_latents"]
+
+        if n != len(df):
+            print(f"  AVISO: cache tiene {n} filas pero df tiene {len(df)}. Re-extrayendo...")
+            return _extraer_activaciones(df)
+
+        last_token = np.memmap(
+            os.path.join(ACTIVATIONS_DIR, "last_token.mmap"),
+            dtype=FEATURES_DTYPE, mode="r", shape=(n, num_latents),
+        )
+        mean_token = np.memmap(
+            os.path.join(ACTIVATIONS_DIR, "mean_token.mmap"),
+            dtype=FEATURES_DTYPE, mode="r", shape=(n, num_latents),
+        )
+        labels = np.load(os.path.join(ACTIVATIONS_DIR, "labels.npy"))
+        authors_path = os.path.join(ACTIVATIONS_DIR, "authors.npy")
+        authors = np.load(authors_path, allow_pickle=True) if os.path.exists(authors_path) else None
+        print(f"  Cache cargada: {n:,} comentarios, {num_latents} latentes")
+        return last_token, mean_token, labels, authors, num_latents
+
     return _extraer_activaciones(df)
 
 
@@ -479,8 +597,8 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
 
 
 def entrenar_comentario(
-    X_train: np.ndarray, y_train: np.ndarray,
-    X_eval: np.ndarray, y_eval: np.ndarray,
+    feats: np.ndarray, train_idx: np.ndarray, eval_idx: np.ndarray,
+    y_train: np.ndarray, y_eval: np.ndarray,
     class_weights: Optional[np.ndarray],
     pooling_name: str, balance_name: str,
     scaler: StandardScaler = None,
@@ -514,11 +632,11 @@ def entrenar_comentario(
     for epoch in range(TRAIN_EPOCHS):
         perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(n)
         for step, start in enumerate(range(0, n, batch_size)):
-            idx = perm[start:start + batch_size]
-            xb = np.asarray(X_train[idx], dtype=np.float32)
+            batch_perm = perm[start:start + batch_size]
+            xb = np.asarray(feats[train_idx[batch_perm]], dtype=np.float32)
             if scaler is not None:
                 xb = scaler.transform(xb)
-            yb = y_train[idx]
+            yb = y_train[batch_perm]
             sw = sample_weights_from_class_weights(yb, class_weights)
 
             if epoch == 0 and step == 0:
@@ -532,11 +650,15 @@ def entrenar_comentario(
                 print(f"  [Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
                 last_print = now
 
-    # Eval
-    X_ev = np.asarray(X_eval, dtype=np.float32)
-    if scaler is not None:
-        X_ev = scaler.transform(X_ev)
-    y_pred = clf.predict(X_ev)
+    # Eval por lotes
+    y_pred_parts = []
+    for ev_start in range(0, len(y_eval), batch_size):
+        ev_end = min(ev_start + batch_size, len(y_eval))
+        xb = np.asarray(feats[eval_idx[ev_start:ev_end]], dtype=np.float32)
+        if scaler is not None:
+            xb = scaler.transform(xb)
+        y_pred_parts.append(clf.predict(xb))
+    y_pred = np.concatenate(y_pred_parts)
     metrics = evaluar(f"EVAL {run_name}", y_eval, y_pred)
 
     return clf, metrics
@@ -553,25 +675,45 @@ def _agregar_por_usuario(
     labels: np.ndarray,
     author_set: set,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Agrega features por media de usuario para un subconjunto de autores."""
-    mask = np.isin(authors, list(author_set))
-    sub_authors = authors[mask]
-    sub_features = features[mask]
-    sub_labels = labels[mask]
+    """Agrega features por media de usuario para un subconjunto de autores.
 
-    df_tmp = pd.DataFrame({"author": sub_authors, "label": sub_labels})
-    df_tmp["row"] = np.arange(len(sub_authors))
+    Escanea features (puede ser memmap) por chunks secuenciales para evitar OOM.
+    """
+    num_latents = features.shape[1]
 
-    user_feats = []
-    user_labels = []
+    auth_list = sorted(author_set)
+    auth_to_idx = {a: i for i, a in enumerate(auth_list)}
+    n_users = len(auth_list)
 
-    for author, group in df_tmp.groupby("author", sort=False):
-        rows = group["row"].to_numpy()
-        user_feat = np.asarray(sub_features[rows]).mean(axis=0)
-        user_feats.append(user_feat)
-        user_labels.append(int(group["label"].iloc[0]))
+    user_sums = np.zeros((n_users, num_latents), dtype=np.float64)
+    user_counts = np.zeros(n_users, dtype=np.int64)
+    user_labels = np.full(n_users, -1, dtype=np.int64)
 
-    return np.array(user_feats, dtype=np.float32), np.array(user_labels, dtype=np.int64)
+    row_to_user = np.full(len(authors), -1, dtype=np.int64)
+    for i, auth in enumerate(authors):
+        if auth in auth_to_idx:
+            uidx = auth_to_idx[auth]
+            row_to_user[i] = uidx
+            if user_labels[uidx] == -1:
+                user_labels[uidx] = labels[i]
+
+    chunk_size = 8192
+    n = len(authors)
+    for start in range(0, n, chunk_size):
+        end = min(start + chunk_size, n)
+        chunk_user_ids = row_to_user[start:end]
+
+        valid_mask = chunk_user_ids >= 0
+        if not valid_mask.any():
+            continue
+
+        chunk_feats = np.asarray(features[start:end])
+        np.add.at(user_sums, chunk_user_ids[valid_mask], chunk_feats[valid_mask].astype(np.float64))
+        np.add.at(user_counts, chunk_user_ids[valid_mask], 1)
+
+    valid = user_counts > 0
+    user_sums[valid] /= user_counts[valid, np.newaxis]
+    return user_sums[valid].astype(np.float32), user_labels[valid]
 
 
 # =====================
@@ -639,13 +781,17 @@ def main():
 
     for pooling_name in COMMENT_POOLINGS:
         feats, tr_idx, ev_idx = comment_features[pooling_name]
-        X_tr = feats[tr_idx]
-        X_ev = feats[ev_idx]
 
-        # Fit scaler en train
-        print(f"\n  Ajustando StandardScaler para {pooling_name}...")
+        # Fit scaler incremental en train (memmap grande)
+        print(f"\n  Ajustando StandardScaler para {pooling_name} (incremental)...")
         scaler = StandardScaler()
-        scaler.fit(X_tr)
+        scaler_batch = 8192
+        n_tr = len(tr_idx)
+        for sc_start in range(0, n_tr, scaler_batch):
+            sc_end = min(sc_start + scaler_batch, n_tr)
+            chunk = np.asarray(feats[tr_idx[sc_start:sc_end]], dtype=np.float32)
+            scaler.partial_fit(chunk)
+        print(f"    Scaler ajustado sobre {n_tr:,} muestras")
 
         # --- Configuraciones con pesos de clase (sin resampling) ---
         for bal_cfg in BALANCE_CONFIGS:
@@ -655,8 +801,8 @@ def main():
                 cw = train_class_weights_manual
 
             clf, metrics = entrenar_comentario(
-                X_train=X_tr, y_train=y_train_c,
-                X_eval=X_ev, y_eval=y_eval_c,
+                feats=feats, train_idx=tr_idx, eval_idx=ev_idx,
+                y_train=y_train_c, y_eval=y_eval_c,
                 class_weights=cw,
                 pooling_name=pooling_name, balance_name=bal_cfg["name"],
                 scaler=scaler,
@@ -679,10 +825,10 @@ def main():
                 n_take = min(sub_counts[c], len(c_idx))
                 sub_idx_parts.append(rng.choice(c_idx, size=n_take, replace=False))
             sub_idx = np.concatenate(sub_idx_parts)
-            X_tr_sub = np.asarray(X_tr[sub_idx], dtype=np.float32)
+            X_tr_sub = np.asarray(feats[tr_idx[sub_idx]], dtype=np.float32)
             y_tr_sub = y_train_c[sub_idx]
         else:
-            X_tr_sub = np.asarray(X_tr, dtype=np.float32)
+            X_tr_sub = np.asarray(feats[tr_idx], dtype=np.float32)
             y_tr_sub = y_train_c
 
         # Normalizar antes de resampling
@@ -703,15 +849,50 @@ def main():
                 print(f"    ERROR en {resample_name}: {e}")
                 continue
 
-            # Entrenar con datos ya normalizados
-            X_ev_norm = scaler.transform(np.asarray(X_ev, dtype=np.float32))
-            clf, metrics = entrenar_comentario(
-                X_train=X_resampled, y_train=y_resampled,
-                X_eval=X_ev_norm, y_eval=y_eval_c,
-                class_weights=None,
-                pooling_name=pooling_name, balance_name=resample_name,
-                scaler=None,  # ya normalizado
+            run_name = f"comentario_{pooling_name}_{resample_name}"
+            print(f"\n{'='*60}")
+            print(f"ENTRENANDO: {run_name}")
+            print(f"  Train: {len(y_resampled):,} | Eval: {len(y_eval_c):,}")
+            print(f"{'='*60}")
+
+            clf = SGDClassifier(
+                loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+                random_state=RANDOM_STATE, average=True,
             )
+
+            classes = np.arange(NUM_CLASSES, dtype=np.int64)
+            n_res = len(y_resampled)
+            batch_size = 4096
+            total_steps = math.ceil(n_res / batch_size)
+            last_print = time.time()
+
+            for epoch in range(TRAIN_EPOCHS):
+                perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(n_res)
+                for step, start_r in enumerate(range(0, n_res, batch_size)):
+                    idx = perm[start_r:start_r + batch_size]
+                    xb = X_resampled[idx]
+                    yb = y_resampled[idx]
+
+                    if epoch == 0 and step == 0:
+                        clf.partial_fit(xb, yb, classes=classes)
+                    else:
+                        clf.partial_fit(xb, yb)
+
+                    now = time.time()
+                    if now - last_print >= PROGRESS_INTERVAL or step == total_steps - 1:
+                        pct = 100.0 * (step + 1) / total_steps
+                        print(f"  [Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
+                        last_print = now
+
+            y_pred_parts = []
+            eval_bs = 4096
+            for ev_start in range(0, len(y_eval_c), eval_bs):
+                ev_end = min(ev_start + eval_bs, len(y_eval_c))
+                xb = np.asarray(feats[ev_idx[ev_start:ev_end]], dtype=np.float32)
+                xb = scaler.transform(xb)
+                y_pred_parts.append(clf.predict(xb))
+            y_pred = np.concatenate(y_pred_parts)
+            metrics = evaluar(f"EVAL {run_name}", y_eval_c, y_pred)
 
             run_key = f"comentario_{pooling_name}_{resample_name}"
             all_results[run_key] = metrics
