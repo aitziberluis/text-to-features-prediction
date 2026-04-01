@@ -1,0 +1,4 @@
+[2026-04-01 11:47:26] Launcher MBTI secuencial arrancado
+[2026-04-01 11:47:26] CUDA_VISIBLE_DEVICES=0
+[2026-04-01 11:47:26] Log maestro: /home/aitziber.l/TFM/logs/mbti_secuencial_20260401_114726.log
+[2026-04-01 11:47:26] Esperando a que termine el proceso 44035 antes de arrancar la cola
