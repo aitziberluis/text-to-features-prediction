@@ -1050,7 +1050,7 @@ def analizar_columnas_experimento(
 		labels = [str(v) if pd.notna(v) else "NaN" for v in vc.index]
 		colors_bar = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854"]
 		bars = ax.bar(labels, vc.values, color=colors_bar[:len(labels)], edgecolor="black")
-		ax.set_title("Distribución de Gender", fontsize=12, fontweight="bold")
+		ax.set_title("Distribución género", fontsize=12, fontweight="bold")
 		ax.set_xlabel("Gender")
 		ax.set_ylabel("Nº de autores")
 		for bar, val in zip(bars, vc.values):
@@ -1081,7 +1081,7 @@ def analizar_columnas_experimento(
 				bar_colors.append(palette["NaN"])
 
 			bars = ax.bar(bar_labels, vals, color=bar_colors, edgecolor="black")
-			ax.set_title(f"MBTI: {col}", fontsize=12, fontweight="bold")
+			ax.set_title(f"{col}", fontsize=12, fontweight="bold")
 			ax.set_ylabel("Nº de autores")
 			for bar, val in zip(bars, vals):
 				pct = 100 * val / n_total
