@@ -113,3 +113,4 @@ Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF
 Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1191.44it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1186.63it/s]
   [  0.0%] step 1/173088 (32/5,538,809 comentarios) | batch=32
   [ 19.2%] step 33253/173088 (1,064,096/5,538,809 comentarios) | batch=32
+  [ 38.4%] step 66440/173088 (2,126,080/5,538,809 comentarios) | batch=32

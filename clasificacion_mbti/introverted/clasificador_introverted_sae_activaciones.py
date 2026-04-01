@@ -117,6 +117,8 @@ BALANCE_CONFIGS = [
 
 # Resampling: submuestra maxima para SMOTE/ADASYN (RAM limitada, alta dim)
 MAX_RESAMPLE_TRAIN = 50_000
+RESAMPLE_MEMORY_BUDGET_GB = float(os.getenv("MBTI_RESAMPLE_MEMORY_BUDGET_GB", "2.0"))
+RESAMPLE_WORKINGSET_MULTIPLIER = float(os.getenv("MBTI_RESAMPLE_WORKINGSET_MULTIPLIER", "8.0"))
 
 # Tecnicas de resampling a probar
 RESAMPLE_CONFIGS = [
@@ -153,6 +155,36 @@ def _is_oom_error(exc: BaseException) -> bool:
     if isinstance(exc, torch.OutOfMemoryError):
         return True
     return "out of memory" in str(exc).lower()
+
+
+def _estimar_memoria_gb(
+    n_rows: int,
+    n_cols: int,
+    dtype: np.dtype | type = np.float32,
+    multiplier: float = 1.0,
+) -> float:
+    return (n_rows * n_cols * np.dtype(dtype).itemsize * multiplier) / (1024 ** 3)
+
+
+def _cap_resample_size(requested_rows: int, n_features: int, scope_name: str) -> int:
+    budget_bytes = RESAMPLE_MEMORY_BUDGET_GB * (1024 ** 3)
+    bytes_per_row = max(
+        1,
+        int(np.dtype(np.float32).itemsize * n_features * RESAMPLE_WORKINGSET_MULTIPLIER),
+    )
+    budget_cap = max(NUM_CLASSES * 2, int(budget_bytes // bytes_per_row))
+    safe_rows = max(NUM_CLASSES * 2, min(requested_rows, budget_cap))
+    est_gb = _estimar_memoria_gb(
+        safe_rows,
+        n_features,
+        dtype=np.float32,
+        multiplier=RESAMPLE_WORKINGSET_MULTIPLIER,
+    )
+    print(
+        f"  {scope_name}: limite resampling={safe_rows:,} "
+        f"(~{est_gb:.2f} GiB de working set, budget={RESAMPLE_MEMORY_BUDGET_GB:.1f} GiB)"
+    )
+    return safe_rows
 
 
 # =====================
@@ -813,12 +845,17 @@ def main():
 
         # --- Configuraciones con resampling (SMOTE, ADASYN) ---
         n_tr = len(y_train_c)
-        if n_tr > MAX_RESAMPLE_TRAIN:
-            print(f"\n  Submuestreando {n_tr:,} -> {MAX_RESAMPLE_TRAIN:,} para resampling...")
+        safe_resample_cap = _cap_resample_size(
+            MAX_RESAMPLE_TRAIN,
+            feats.shape[1],
+            f"comentario/{pooling_name}",
+        )
+        if n_tr > safe_resample_cap:
+            print(f"\n  Submuestreando {n_tr:,} -> {safe_resample_cap:,} para resampling...")
             rng = np.random.RandomState(RANDOM_STATE)
             counts = np.bincount(y_train_c, minlength=NUM_CLASSES)
             fracs = counts / counts.sum()
-            sub_counts = np.round(fracs * MAX_RESAMPLE_TRAIN).astype(int)
+            sub_counts = np.round(fracs * safe_resample_cap).astype(int)
             sub_idx_parts = []
             for c in range(NUM_CLASSES):
                 c_idx = np.where(y_train_c == c)[0]
@@ -896,6 +933,9 @@ def main():
 
             run_key = f"comentario_{pooling_name}_{resample_name}"
             all_results[run_key] = metrics
+
+            del X_resampled, y_resampled
+            gc.collect()
 
         # Liberar RAM de submuestra
         del X_tr_sub, y_tr_sub
@@ -980,9 +1020,31 @@ def main():
                 resample_name = resample_cfg["name"]
                 print(f"\n  Aplicando {resample_name} a nivel usuario ({len(y_u_train):,} usuarios)...")
 
+                safe_user_resample_cap = _cap_resample_size(
+                    len(y_u_train),
+                    X_u_train.shape[1],
+                    f"usuario/{pooling_name}",
+                )
+                if len(y_u_train) > safe_user_resample_cap:
+                    rng = np.random.RandomState(RANDOM_STATE)
+                    counts = np.bincount(y_u_train, minlength=NUM_CLASSES)
+                    fracs = counts / counts.sum()
+                    sub_counts = np.round(fracs * safe_user_resample_cap).astype(int)
+                    sub_idx_parts = []
+                    for c in range(NUM_CLASSES):
+                        c_idx = np.where(y_u_train == c)[0]
+                        n_take = min(sub_counts[c], len(c_idx))
+                        sub_idx_parts.append(rng.choice(c_idx, size=n_take, replace=False))
+                    sub_idx = np.concatenate(sub_idx_parts)
+                    X_resample_base = X_tr_n[sub_idx]
+                    y_resample_base = y_u_train[sub_idx]
+                else:
+                    X_resample_base = X_tr_n
+                    y_resample_base = y_u_train
+
                 try:
                     sampler = resample_cfg["cls"](**resample_cfg["kwargs"])
-                    X_resampled, y_resampled = sampler.fit_resample(X_tr_n, y_u_train)
+                    X_resampled, y_resampled = sampler.fit_resample(X_resample_base, y_resample_base)
                     for i, cn in enumerate(CLASS_NAMES):
                         print(f"    Despues {cn}: {int((y_resampled==i).sum()):,}")
                 except Exception as e:
@@ -1009,6 +1071,12 @@ def main():
                 y_pred = clf.predict(X_ev_n)
                 metrics = evaluar(f"EVAL {run_name}", y_u_eval, y_pred)
                 all_results[run_name] = metrics
+
+                del X_resampled, y_resampled
+                gc.collect()
+
+            del X_u_train, y_u_train, X_u_eval, y_u_eval, X_tr_n, X_ev_n
+            gc.collect()
 
     # ==============================
     # RESUMEN FINAL
