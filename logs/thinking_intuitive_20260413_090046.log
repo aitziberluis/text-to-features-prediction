@@ -1,0 +1,48 @@
+[2026-04-13 09:00:46] Iniciando clasificacion_mbti/thinking/clasificador_thinking_sae_activaciones.py
+======================================================================
+CLASIFICADOR THINKING - SAE SOBRE GPT-2 (STREAMING)
+======================================================================
+
+============================================================
+PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE THINKING
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Filtrando autores con 'thinking' conocido...
+   ✓ 9,080 autores con thinking conocido
+   (Eliminados 1,215 autores con thinking nulo)
+
+4. Uniendo comentarios con thinking por autor...
+   ✓ 15,581,291 comentarios con info de thinking
+   (Eliminados 2,058,573 comentarios sin thinking conocido)
+
+5. Distribución de thinking:
+   1: 11,388,118 comentarios (73.1%)
+   0: 4,193,173 comentarios (26.9%)
+
+============================================================
+✓ Dataset de thinking preparado y listo para usar
+============================================================
+Distribucion de thinking: {1: 11388118, 0: 4193173}
+Splits de usuarios guardados en data/splits_thinking/
+
+Comentarios: train=10,992,938 eval=2,435,982
+  0: train=2,997,939 eval=609,330
+  1: train=7,994,999 eval=1,826,652
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1320.43it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1313.82it/s]
+num_latents=16384
+  comentario/subsample: limite resampling=4,096 (~2.00 GiB de working set, budget=2.0 GiB)
+
+######################################################################
+# PASS A: Streaming datos de entrenamiento
+######################################################################
+  [TRAIN   0.0%] step 1/343530 (32/10,992,938) | batch=32
+  [TRAIN   6.8%] step 23200/343530 (742,400/10,992,938) | batch=32

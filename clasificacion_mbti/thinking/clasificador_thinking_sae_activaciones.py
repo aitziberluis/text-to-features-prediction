@@ -1,10 +1,10 @@
 """
 Clasificador de THINKING usando representaciones SAE sobre GPT-2.
 
-Extrae las activaciones de una capa intermedia de GPT-2, las codifica
-a traves de la SAE entrenada (representacion sparse), y entrena
-clasificadores lineales (SGD) en multiples configuraciones.
-Todo se mantiene en memoria (no se guardan activaciones ni modelos a disco).
+Modo STREAMING: extrae las activaciones de una capa intermedia de GPT-2,
+las codifica a traves de la SAE entrenada (representacion sparse), y entrena
+clasificadores lineales (SGD) de forma incremental sin almacenar las
+representaciones en disco.
 
 A nivel de COMENTARIO:
   - last_token: representacion SAE del ultimo token real del comentario
@@ -78,9 +78,6 @@ PATH_AUTORES = "data/author_profiles.csv"
 TEXT_COLUMN = "body"
 MAX_COMMENTS = None
 
-# Directorio donde se guardan las representaciones SAE extraidas (HDD)
-ACTIVATIONS_DIR = f"/hdd/aitziber.l/activaciones_sae_gpt2_{TRAIT_NAME}"
-
 # Clases binarias
 CLASS_NAMES = ["0", "1"]
 NUM_CLASSES = 2
@@ -101,7 +98,6 @@ SGD_ALPHA = 1e-5
 
 # Precision/limpieza para reducir uso de memoria
 SAE_DTYPE = torch.float16 if torch.cuda.is_available() else torch.float32
-FEATURES_DTYPE = np.float16
 CUDA_EMPTY_CACHE_EVERY = 200
 
 # Progreso: imprimir cada hora (3600 s)
@@ -213,7 +209,7 @@ def cargar_datos() -> pd.DataFrame:
 
 
 # =====================
-# EXTRACCION DE REPRESENTACIONES SAE
+# EXTRACCION STREAMING DE REPRESENTACIONES SAE
 # =====================
 
 
@@ -282,41 +278,35 @@ def _pool_sparse_to_dense(
     return last_pooled, mean_pooled
 
 
-def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
-    """Extrae representaciones SAE de GPT-2 con cache en disco (memmap)."""
-
-    n = len(df)
-    print(f"\nExtrayendo representaciones SAE para {n:,} comentarios...", flush=True)
-    print(f"SAE: {PATH_SAE}", flush=True)
-    print(f"Device: {DEVICE}", flush=True)
-    print(f"CUDA disponible: {torch.cuda.is_available()}", flush=True)
-    if torch.cuda.is_available():
-        print(f"GPU actual: {torch.cuda.current_device()}", flush=True)
-        print(f"Nombre GPU: {torch.cuda.get_device_name()}", flush=True)
-
-    # Cargar SAE
+def _setup_models():
+    """Carga tokenizer, GPT-2 y SAE. Devuelve los componentes para streaming."""
     sae = Sae.load_from_disk(PATH_SAE, device=DEVICE)
     if hasattr(sae, "to"):
         sae = sae.to(device=DEVICE, dtype=SAE_DTYPE)
     num_latents = sae.cfg.num_latents
     hookpoint_name = sae.cfg.hookpoint
     print(f"SAE cargada: {num_latents} latentes, k={sae.cfg.k}, hookpoint={hookpoint_name}", flush=True)
-    est_features_gb = (n * num_latents * np.dtype(FEATURES_DTYPE).itemsize * 2) / (1024 ** 3)
-    print(f"Features dtype: {FEATURES_DTYPE.__name__} | RAM estimada features: {est_features_gb:.1f} GiB", flush=True)
 
-    # Cargar modelo GPT-2
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     model = AutoModelForCausalLM.from_pretrained(
-        MODEL,
-        device_map={"": DEVICE},
-        dtype=SAE_DTYPE,
+        MODEL, device_map={"": DEVICE}, dtype=SAE_DTYPE,
     )
     model.eval()
 
     hookpoint_module = model.get_submodule(hookpoint_name)
+    return tokenizer, model, sae, hookpoint_module, num_latents
+
+
+def _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latents, pass_name=""):
+    """Generador que extrae representaciones SAE en streaming.
+
+    Yields: (start, end, last_pooled_f32, mean_pooled_f32) por cada batch.
+    No almacena nada en disco.
+    """
+    n = len(df)
     captured = {}
 
     def hook(module, inputs, outputs):
@@ -325,218 +315,84 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
         captured["act"] = outputs.detach()
 
     handle = hookpoint_module.register_forward_hook(hook)
-
-    total_steps = math.ceil(n / EXTRACT_BATCH_SIZE)
-
-    # Pre-allocate arrays en disco con memmap
-    os.makedirs(ACTIVATIONS_DIR, exist_ok=True)
-    last_token_arr = np.memmap(
-        os.path.join(ACTIVATIONS_DIR, "last_token.mmap"),
-        dtype=FEATURES_DTYPE, mode="w+", shape=(n, num_latents),
-    )
-    mean_token_arr = np.memmap(
-        os.path.join(ACTIVATIONS_DIR, "mean_token.mmap"),
-        dtype=FEATURES_DTYPE, mode="w+", shape=(n, num_latents),
-    )
-
     last_print = time.time()
+    step = 0
+    total_steps = math.ceil(n / EXTRACT_BATCH_SIZE)
+    current_bs = EXTRACT_BATCH_SIZE
 
-    ok = False
     try:
         with torch.inference_mode():
             start = 0
-            step = 0
-            current_batch_size = EXTRACT_BATCH_SIZE
-
             while start < n:
-                batch_size = current_batch_size
+                bs = current_bs
                 while True:
-                    end = min(start + batch_size, n)
-                    batch_texts = df["text"].iloc[start:end].tolist()
-
+                    end = min(start + bs, n)
+                    texts = df["text"].iloc[start:end].tolist()
                     try:
                         tokens = tokenizer(
-                            batch_texts,
-                            max_length=CONTEXT_LEN,
-                            truncation=True,
-                            padding="max_length",
-                            return_attention_mask=True,
+                            texts, max_length=CONTEXT_LEN, truncation=True,
+                            padding="max_length", return_attention_mask=True,
                             return_tensors="pt",
                         )
                         input_ids = tokens["input_ids"].to(model.device)
-                        attention_mask = tokens["attention_mask"].to(model.device)
+                        attn_mask = tokens["attention_mask"].to(model.device)
 
-                        model.transformer(input_ids=input_ids, attention_mask=attention_mask)
+                        model.transformer(input_ids=input_ids, attention_mask=attn_mask)
 
                         acts = captured["act"].to(sae.dtype).to(sae.device)
                         top_acts, top_indices = sae.encode(acts)
 
                         last_pooled, mean_pooled = _pool_sparse_to_dense(
-                            top_acts=top_acts,
-                            top_indices=top_indices,
-                            attention_mask=attention_mask,
-                            num_latents=num_latents,
+                            top_acts, top_indices, attn_mask, num_latents,
                         )
 
-                        last_token_arr[start:end] = last_pooled.float().cpu().numpy().astype(FEATURES_DTYPE, copy=False)
-                        mean_token_arr[start:end] = mean_pooled.float().cpu().numpy().astype(FEATURES_DTYPE, copy=False)
+                        last_np = last_pooled.float().cpu().numpy()
+                        mean_np = mean_pooled.float().cpu().numpy()
+
+                        del tokens, input_ids, attn_mask, acts
+                        del top_acts, top_indices, last_pooled, mean_pooled
+                        captured.clear()
                         break
                     except Exception as e:
                         if not _is_oom_error(e):
                             raise
-
                         captured.clear()
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
+                        if bs <= MIN_EXTRACT_BATCH_SIZE:
+                            raise
+                        new_bs = max(MIN_EXTRACT_BATCH_SIZE, bs // 2)
+                        print(f"  OOM: batch {bs} -> {new_bs}", flush=True)
+                        bs = new_bs
 
-                        if batch_size <= MIN_EXTRACT_BATCH_SIZE:
-                            raise RuntimeError(
-                                f"OOM incluso con batch_size={batch_size}. "
-                                f"Prueba menor CONTEXT_LEN o precision mas agresiva."
-                            ) from e
-
-                        new_batch_size = max(MIN_EXTRACT_BATCH_SIZE, batch_size // 2)
-                        print(
-                            f"  OOM detectado en step={step+1} ({start:,}:{end:,}). "
-                            f"Reduciendo batch_size {batch_size} -> {new_batch_size} y reintentando...",
-                            flush=True,
-                        )
-                        batch_size = new_batch_size
-
-                del batch_texts, tokens, input_ids, attention_mask, acts, top_acts, top_indices
-                del last_pooled, mean_pooled
-                captured.clear()
-                if torch.cuda.is_available() and ((step + 1) % CUDA_EMPTY_CACHE_EVERY == 0):
+                if torch.cuda.is_available() and (step + 1) % CUDA_EMPTY_CACHE_EVERY == 0:
                     torch.cuda.empty_cache()
 
-                start = end
                 step += 1
-                current_batch_size = batch_size
+                current_bs = bs
 
                 now = time.time()
-                if now - last_print >= PROGRESS_INTERVAL or step == 1 or start >= n:
-                    pct = 100.0 * start / n
+                if now - last_print >= PROGRESS_INTERVAL or step == 1 or end >= n:
+                    pct = 100.0 * end / n
                     print(
-                        f"  [{pct:5.1f}%] step {step}/{total_steps} "
-                        f"({start:,}/{n:,} comentarios) | batch={current_batch_size}",
+                        f"  [{pass_name} {pct:5.1f}%] step {step}/{total_steps} "
+                        f"({end:,}/{n:,}) | batch={current_bs}",
                         flush=True,
                     )
                     last_print = now
-        ok = True
 
+                yield start, end, last_np, mean_np
+                start = end
     finally:
         handle.remove()
+        captured.clear()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-        del model, tokenizer, sae
-        if ok:
-            print(f"Representaciones SAE extraidas y guardadas en {ACTIVATIONS_DIR}.", flush=True)
-
-    labels = df["label"].to_numpy().astype(np.int8)
-    authors = df["author"].to_numpy() if "author" in df.columns else None
-
-    last_token_arr.flush()
-    mean_token_arr.flush()
-    meta = {"n": n, "num_latents": num_latents}
-    with open(os.path.join(ACTIVATIONS_DIR, "meta.json"), "w") as f:
-        json.dump(meta, f)
-    np.save(os.path.join(ACTIVATIONS_DIR, "labels.npy"), labels)
-    if authors is not None:
-        np.save(os.path.join(ACTIVATIONS_DIR, "authors.npy"), authors)
-
-    return last_token_arr, mean_token_arr, labels, authors, num_latents
-
-
-def extraer_activaciones(
-    df: pd.DataFrame,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
-    """Extrae representaciones SAE con cache en disco (memmap).
-
-    Returns: (last_token, mean_token, labels, authors_array, num_latents)
-    """
-    meta_path = os.path.join(ACTIVATIONS_DIR, "meta.json")
-    if os.path.exists(meta_path):
-        print(f"\nCargando representaciones SAE desde cache: {ACTIVATIONS_DIR}")
-        with open(meta_path) as f:
-            meta = json.load(f)
-        n, num_latents = meta["n"], meta["num_latents"]
-
-        if n != len(df):
-            print(f"  AVISO: cache tiene {n} filas pero df tiene {len(df)}. Re-extrayendo...")
-            return _extraer_activaciones(df)
-
-        last_token = np.memmap(
-            os.path.join(ACTIVATIONS_DIR, "last_token.mmap"),
-            dtype=FEATURES_DTYPE, mode="r", shape=(n, num_latents),
-        )
-        mean_token = np.memmap(
-            os.path.join(ACTIVATIONS_DIR, "mean_token.mmap"),
-            dtype=FEATURES_DTYPE, mode="r", shape=(n, num_latents),
-        )
-        labels = np.load(os.path.join(ACTIVATIONS_DIR, "labels.npy"))
-        authors_path = os.path.join(ACTIVATIONS_DIR, "authors.npy")
-        authors = np.load(authors_path, allow_pickle=True) if os.path.exists(authors_path) else None
-        print(f"  Cache cargada: {n:,} comentarios, {num_latents} latentes")
-        return last_token, mean_token, labels, authors, num_latents
-
-    return _extraer_activaciones(df)
 
 
 # =====================
 # SPLITS
 # =====================
-
-
-def dividir_comentarios(
-    labels: np.ndarray, df: pd.DataFrame, authors: np.ndarray,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Train/eval/test a nivel comentario basado en split de usuarios.
-
-    Todos los comentarios de un mismo usuario van al mismo split para
-    evitar data leakage entre train/eval/test.
-    """
-    os.makedirs(SPLITS_DIR, exist_ok=True)
-    split_path = os.path.join(SPLITS_DIR, "split_comentarios_por_usuario.npz")
-
-    if os.path.exists(split_path):
-        data = np.load(split_path)
-        train_idx = data["train_idx"]
-        eval_idx = data["eval_idx"]
-        test_idx = data["test_idx"]
-
-        all_idx = np.concatenate([train_idx, eval_idx, test_idx])
-        if len(np.unique(all_idx)) == len(labels) and all_idx.min() >= 0 and all_idx.max() < len(labels):
-            print(f"Cargando split de comentarios (por usuario) desde {split_path}")
-            return train_idx, eval_idx, test_idx
-
-        print("Split de comentarios en cache invalido para este dataset. Regenerando...")
-
-    # Obtener split de usuarios
-    train_auth, eval_auth, test_auth = dividir_usuarios(df)
-    train_auth_set = set(train_auth)
-    eval_auth_set = set(eval_auth)
-    test_auth_set = set(test_auth)
-
-    # Asignar cada comentario al split de su usuario
-    train_idx = []
-    eval_idx = []
-    test_idx = []
-    for i, auth in enumerate(authors):
-        if auth in train_auth_set:
-            train_idx.append(i)
-        elif auth in eval_auth_set:
-            eval_idx.append(i)
-        elif auth in test_auth_set:
-            test_idx.append(i)
-
-    train_idx = np.array(train_idx, dtype=np.int64)
-    eval_idx = np.array(eval_idx, dtype=np.int64)
-    test_idx = np.array(test_idx, dtype=np.int64)
-
-    np.savez(split_path, train_idx=train_idx, eval_idx=eval_idx, test_idx=test_idx)
-    print(f"Split de comentarios (por usuario) guardado en {split_path}")
-    print(f"  Sin leakage: cada usuario aparece en un unico split.")
-    return train_idx, eval_idx, test_idx
 
 
 def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -624,141 +480,15 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
 
 
 # =====================
-# ENTRENAMIENTO NIVEL COMENTARIO
-# =====================
-
-
-def entrenar_comentario(
-    feats: np.ndarray, train_idx: np.ndarray, eval_idx: np.ndarray,
-    y_train: np.ndarray, y_eval: np.ndarray,
-    class_weights: Optional[np.ndarray],
-    pooling_name: str, balance_name: str,
-    scaler: StandardScaler = None,
-) -> Tuple[SGDClassifier, Dict]:
-    """Entrena SGD incremental a nivel comentario y evalua en eval.
-
-    Si se proporciona scaler, normaliza cada batch con el.
-    """
-    run_name = f"comentario_{pooling_name}_{balance_name}"
-    print(f"\n{'='*60}")
-    print(f"ENTRENANDO: {run_name}")
-    print(f"  Train: {len(y_train):,} | Eval: {len(y_eval):,}")
-    if class_weights is not None:
-        cw_str = ", ".join(f"{CLASS_NAMES[i]}={class_weights[i]:.3f}" for i in range(NUM_CLASSES))
-        print(f"  Pesos de clase: {cw_str}")
-    else:
-        print(f"  Pesos de clase: ninguno (todos 1.0)")
-    print(f"{'='*60}")
-
-    clf = SGDClassifier(
-        loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
-        random_state=RANDOM_STATE, average=True,
-    )
-
-    classes = np.arange(NUM_CLASSES, dtype=np.int64)
-    n = len(y_train)
-    batch_size = 4096
-    total_steps = math.ceil(n / batch_size)
-    last_print = time.time()
-
-    for epoch in range(TRAIN_EPOCHS):
-        perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(n)
-        for step, start in enumerate(range(0, n, batch_size)):
-            batch_perm = perm[start:start + batch_size]
-            xb = np.asarray(feats[train_idx[batch_perm]], dtype=np.float32)
-            if scaler is not None:
-                xb = scaler.transform(xb)
-            yb = y_train[batch_perm]
-            sw = sample_weights_from_class_weights(yb, class_weights)
-
-            if epoch == 0 and step == 0:
-                clf.partial_fit(xb, yb, classes=classes, sample_weight=sw)
-            else:
-                clf.partial_fit(xb, yb, sample_weight=sw)
-
-            now = time.time()
-            if now - last_print >= PROGRESS_INTERVAL or step == total_steps - 1:
-                pct = 100.0 * (step + 1) / total_steps
-                print(f"  [Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
-                last_print = now
-
-    # Eval por lotes
-    y_pred_parts = []
-    for ev_start in range(0, len(y_eval), batch_size):
-        ev_end = min(ev_start + batch_size, len(y_eval))
-        xb = np.asarray(feats[eval_idx[ev_start:ev_end]], dtype=np.float32)
-        if scaler is not None:
-            xb = scaler.transform(xb)
-        y_pred_parts.append(clf.predict(xb))
-    y_pred = np.concatenate(y_pred_parts)
-    metrics = evaluar(f"EVAL {run_name}", y_eval, y_pred)
-
-    return clf, metrics
-
-
-# =====================
-# ENTRENAMIENTO NIVEL USUARIO
-# =====================
-
-
-def _agregar_por_usuario(
-    authors: np.ndarray,
-    features: np.ndarray,
-    labels: np.ndarray,
-    author_set: set,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Agrega features por media de usuario para un subconjunto de autores.
-
-    Escanea features (puede ser memmap) por chunks secuenciales para evitar OOM.
-    """
-    num_latents = features.shape[1]
-
-    auth_list = sorted(author_set)
-    auth_to_idx = {a: i for i, a in enumerate(auth_list)}
-    n_users = len(auth_list)
-
-    user_sums = np.zeros((n_users, num_latents), dtype=np.float64)
-    user_counts = np.zeros(n_users, dtype=np.int64)
-    user_labels = np.full(n_users, -1, dtype=np.int64)
-
-    row_to_user = np.full(len(authors), -1, dtype=np.int64)
-    for i, auth in enumerate(authors):
-        if auth in auth_to_idx:
-            uidx = auth_to_idx[auth]
-            row_to_user[i] = uidx
-            if user_labels[uidx] == -1:
-                user_labels[uidx] = labels[i]
-
-    chunk_size = 8192
-    n = len(authors)
-    for start in range(0, n, chunk_size):
-        end = min(start + chunk_size, n)
-        chunk_user_ids = row_to_user[start:end]
-
-        valid_mask = chunk_user_ids >= 0
-        if not valid_mask.any():
-            continue
-
-        chunk_feats = np.asarray(features[start:end])
-        np.add.at(user_sums, chunk_user_ids[valid_mask], chunk_feats[valid_mask].astype(np.float64))
-        np.add.at(user_counts, chunk_user_ids[valid_mask], 1)
-
-    valid = user_counts > 0
-    user_sums[valid] /= user_counts[valid, np.newaxis]
-    return user_sums[valid].astype(np.float32), user_labels[valid]
-
-
-# =====================
 # MAIN
 # =====================
 
 
 def main():
     print("=" * 70)
-    print(f"CLASIFICADOR {TRAIT_NAME.upper()} - REPRESENTACIONES SAE SOBRE GPT-2")
+    print(f"CLASIFICADOR {TRAIT_NAME.upper()} - SAE SOBRE GPT-2 (STREAMING)")
     print("=" * 70)
 
-    # Verificar que la SAE existe
     if not Path(PATH_SAE).exists():
         raise FileNotFoundError(
             f"No se encuentra la SAE en {PATH_SAE}. "
@@ -768,243 +498,336 @@ def main():
     # 1. Cargar datos
     df = cargar_datos()
 
-    if "author" not in df.columns:
-        print("AVISO: No hay columna 'author', se omitiran predicciones a nivel usuario.")
-        has_author = False
-    else:
+    has_author = "author" in df.columns
+    if has_author:
         df["author"] = df["author"].astype(str).str.strip()
-        has_author = True
 
-    # 2. Extraer representaciones SAE (solo en memoria, sin guardar a disco)
-    last_token, mean_token, labels, authors, num_latents = extraer_activaciones(df)
-    print(f"\nRepresentaciones SAE: num_latents={num_latents}, comentarios={len(labels):,}")
+    # 2. Split de usuarios
+    train_auth, eval_auth, test_auth = dividir_usuarios(df)
+    train_auth_set = set(train_auth)
+    eval_auth_set = set(eval_auth)
 
-    # Distribucion de labels
+    # 3. Separar train y eval DataFrames (por usuario, sin leakage)
+    is_train = df["author"].isin(train_auth_set)
+    is_eval = df["author"].isin(eval_auth_set)
+
+    df_train = df[is_train].reset_index(drop=True)
+    df_eval = df[is_eval].reset_index(drop=True)
+    y_train = df_train["label"].values.astype(np.int8)
+    y_eval = df_eval["label"].values.astype(np.int8)
+    authors_train = df_train["author"].values if has_author else None
+    authors_eval = df_eval["author"].values if has_author else None
+
+    del df
+    gc.collect()
+
+    print(f"\nComentarios: train={len(df_train):,} eval={len(df_eval):,}")
     for i, cn in enumerate(CLASS_NAMES):
-        count = int((labels == i).sum())
-        print(f"  {cn}: {count:,} ({100*count/len(labels):.1f}%)")
+        print(f"  {cn}: train={int((y_train==i).sum()):,} eval={int((y_eval==i).sum()):,}")
 
-    all_results = {}
+    train_class_weights_manual = calcular_pesos_clase_manual(y_train)
 
-    # ==============================
-    # A) NIVEL COMENTARIO
-    # ==============================
-    print("\n" + "#" * 70)
-    print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
-    print("#" * 70)
+    # 4. Cargar modelos GPU
+    tokenizer, model, sae, hookpoint_module, num_latents = _setup_models()
+    print(f"num_latents={num_latents}")
 
-    train_idx, eval_idx, test_idx = dividir_comentarios(labels, df, authors)
-    y_train_c = labels[train_idx]
-    y_eval_c = labels[eval_idx]
+    # 5. Preparar acumuladores
+    classes = np.arange(NUM_CLASSES, dtype=np.int64)
 
-    print(f"\nSplit comentarios: train={len(train_idx):,} eval={len(eval_idx):,} test={len(test_idx):,}")
-    for i, cn in enumerate(CLASS_NAMES):
-        tr_n = int((y_train_c == i).sum())
-        ev_n = int((y_eval_c == i).sum())
-        print(f"  {cn}: train={tr_n:,} eval={ev_n:,}")
+    # Scalers (se ajustan online durante pass A)
+    scalers = {"last_token": StandardScaler(), "mean": StandardScaler()}
 
-    # Pre-calcular pesos de clase manuales sobre el train set
-    train_class_weights_manual = calcular_pesos_clase_manual(y_train_c)
-
-    comment_features = {
-        "last_token": (last_token, train_idx, eval_idx),
-        "mean": (mean_token, train_idx, eval_idx),
-    }
-
-    for pooling_name in COMMENT_POOLINGS:
-        feats, tr_idx, ev_idx = comment_features[pooling_name]
-
-        # Fit scaler incremental en train (memmap grande)
-        print(f"\n  Ajustando StandardScaler para {pooling_name} (incremental)...")
-        scaler = StandardScaler()
-        scaler_batch = 8192
-        n_tr = len(tr_idx)
-        for sc_start in range(0, n_tr, scaler_batch):
-            sc_end = min(sc_start + scaler_batch, n_tr)
-            chunk = np.asarray(feats[tr_idx[sc_start:sc_end]], dtype=np.float32)
-            scaler.partial_fit(chunk)
-        print(f"    Scaler ajustado sobre {n_tr:,} muestras")
-
-        # --- Configuraciones con pesos de clase (sin resampling) ---
+    # SGD classifiers (sin_balanceo + balanceo_manual, entrenados online)
+    clf_comment = {}
+    for pooling in COMMENT_POOLINGS:
         for bal_cfg in BALANCE_CONFIGS:
-            if not bal_cfg["use_class_weights"]:
-                cw = None
-            else:
-                cw = train_class_weights_manual
-
-            clf, metrics = entrenar_comentario(
-                feats=feats, train_idx=tr_idx, eval_idx=ev_idx,
-                y_train=y_train_c, y_eval=y_eval_c,
-                class_weights=cw,
-                pooling_name=pooling_name, balance_name=bal_cfg["name"],
-                scaler=scaler,
+            key = (pooling, bal_cfg["name"])
+            clf_comment[key] = SGDClassifier(
+                loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+                random_state=RANDOM_STATE, average=True,
             )
 
-            run_key = f"comentario_{pooling_name}_{bal_cfg['name']}"
-            all_results[run_key] = metrics
+    # Acumuladores de usuario (online: {author: [sum_vec, count, label]})
+    user_sums_train = {"last_token": {}, "mean": {}}
+    user_sums_eval = {"last_token": {}, "mean": {}}
 
-        # --- Configuraciones con resampling (SMOTE, ADASYN) ---
-        n_tr = len(y_train_c)
-        safe_resample_cap = _cap_resample_size(
-            MAX_RESAMPLE_TRAIN,
-            feats.shape[1],
-            f"comentario/{pooling_name}",
-        )
-        if n_tr > safe_resample_cap:
-            print(f"\n  Submuestreando {n_tr:,} -> {safe_resample_cap:,} para resampling...")
-            rng = np.random.RandomState(RANDOM_STATE)
-            counts = np.bincount(y_train_c, minlength=NUM_CLASSES)
-            fracs = counts / counts.sum()
-            sub_counts = np.round(fracs * safe_resample_cap).astype(int)
-            sub_idx_parts = []
-            for c in range(NUM_CLASSES):
-                c_idx = np.where(y_train_c == c)[0]
-                n_take = min(sub_counts[c], len(c_idx))
-                sub_idx_parts.append(rng.choice(c_idx, size=n_take, replace=False))
-            sub_idx = np.concatenate(sub_idx_parts)
-            X_tr_sub = np.asarray(feats[tr_idx[sub_idx]], dtype=np.float32)
-            y_tr_sub = y_train_c[sub_idx]
-        else:
-            X_tr_sub = np.asarray(feats[tr_idx], dtype=np.float32)
-            y_tr_sub = y_train_c
+    # Submuestra para SMOTE/ADASYN
+    rng = np.random.RandomState(RANDOM_STATE)
+    safe_resample_cap = _cap_resample_size(
+        MAX_RESAMPLE_TRAIN, num_latents, "comentario/subsample",
+    )
+    subsample = {}
+    per_class_cap = max(NUM_CLASSES, safe_resample_cap // NUM_CLASSES)
+    for pooling in COMMENT_POOLINGS:
+        subsample[pooling] = {"feats": [], "labels": [], "count": 0,
+                              "class_counts": np.zeros(NUM_CLASSES, dtype=np.int64)}
 
-        # Normalizar antes de resampling
-        X_tr_sub_norm = scaler.transform(X_tr_sub)
+    # ========================
+    # PASS A: Stream train -> scaler + SGD + user agg + subsample
+    # ========================
+    print("\n" + "#" * 70)
+    print("# PASS A: Streaming datos de entrenamiento")
+    print("#" * 70)
+
+    first_batch = True
+    for start, end, last_np, mean_np in _stream_sae_features(
+        df_train, tokenizer, model, sae, hookpoint_module, num_latents,
+        pass_name="TRAIN",
+    ):
+        bs = end - start
+        yb = y_train[start:end]
+        feats_by_pooling = {"last_token": last_np, "mean": mean_np}
+
+        # Ajustar scalers incrementalmente
+        scalers["last_token"].partial_fit(last_np)
+        scalers["mean"].partial_fit(mean_np)
+
+        # Escalar y entrenar SGD online
+        for pooling in COMMENT_POOLINGS:
+            feats_scaled = scalers[pooling].transform(
+                feats_by_pooling[pooling].astype(np.float32)
+            )
+            for bal_cfg in BALANCE_CONFIGS:
+                key = (pooling, bal_cfg["name"])
+                cw = train_class_weights_manual if bal_cfg["use_class_weights"] else None
+                sw = sample_weights_from_class_weights(yb, cw)
+                if first_batch:
+                    clf_comment[key].partial_fit(
+                        feats_scaled, yb, classes=classes, sample_weight=sw,
+                    )
+                else:
+                    clf_comment[key].partial_fit(feats_scaled, yb, sample_weight=sw)
+
+        # Colectar submuestra estratificada para SMOTE/ADASYN
+        for pooling in COMMENT_POOLINGS:
+            sub = subsample[pooling]
+            if sub["count"] >= safe_resample_cap:
+                continue
+            for cls_id in range(NUM_CLASSES):
+                cls_so_far = sub["class_counts"][cls_id]
+                if cls_so_far >= per_class_cap:
+                    continue
+                cls_mask = (yb == cls_id)
+                n_cls = int(cls_mask.sum())
+                if n_cls == 0:
+                    continue
+                take = min(n_cls, per_class_cap - cls_so_far)
+                cls_idx = np.where(cls_mask)[0][:take]
+                sub["feats"].append(feats_by_pooling[pooling][cls_idx].copy())
+                sub["labels"].append(yb[cls_idx].copy())
+                sub["class_counts"][cls_id] += take
+                sub["count"] += take
+
+        # Acumular features de usuario (train)
+        if has_author:
+            batch_auth = authors_train[start:end]
+            for pooling in COMMENT_POOLINGS:
+                d = user_sums_train[pooling]
+                feats = feats_by_pooling[pooling]
+                for i in range(bs):
+                    auth = batch_auth[i]
+                    if auth not in d:
+                        d[auth] = [
+                            np.zeros(num_latents, dtype=np.float64),
+                            0,
+                            int(yb[i]),
+                        ]
+                    entry = d[auth]
+                    entry[0] += feats[i].astype(np.float64)
+                    entry[1] += 1
+
+        first_batch = False
+        del last_np, mean_np
+
+    print(f"\nPass A completado: {len(y_train):,} muestras procesadas.")
+
+    # Entrenar SMOTE/ADASYN desde submuestra
+    clf_resample = {}
+    for pooling in COMMENT_POOLINGS:
+        sub = subsample[pooling]
+        if sub["count"] == 0:
+            continue
+        X_sub = np.concatenate(sub["feats"]).astype(np.float32)
+        y_sub = np.concatenate(sub["labels"])
+        del sub["feats"], sub["labels"]
+
+        X_sub_scaled = scalers[pooling].transform(X_sub)
 
         for resample_cfg in RESAMPLE_CONFIGS:
             resample_name = resample_cfg["name"]
-            print(f"\n  Aplicando {resample_name} sobre {len(y_tr_sub):,} muestras...")
+            key = (pooling, resample_name)
+            print(f"\n  Aplicando {resample_name} sobre {len(y_sub):,} muestras ({pooling})...")
             for i, cn in enumerate(CLASS_NAMES):
-                print(f"    Antes {cn}: {int((y_tr_sub==i).sum()):,}")
+                print(f"    Antes {cn}: {int((y_sub==i).sum()):,}")
 
             try:
                 sampler = resample_cfg["cls"](**resample_cfg["kwargs"])
-                X_resampled, y_resampled = sampler.fit_resample(X_tr_sub_norm, y_tr_sub)
+                X_res, y_res = sampler.fit_resample(X_sub_scaled, y_sub)
                 for i, cn in enumerate(CLASS_NAMES):
-                    print(f"    Despues {cn}: {int((y_resampled==i).sum()):,}")
+                    print(f"    Despues {cn}: {int((y_res==i).sum()):,}")
             except Exception as e:
                 print(f"    ERROR en {resample_name}: {e}")
                 continue
-
-            run_name = f"comentario_{pooling_name}_{resample_name}"
-            print(f"\n{'='*60}")
-            print(f"ENTRENANDO: {run_name}")
-            print(f"  Train: {len(y_resampled):,} | Eval: {len(y_eval_c):,}")
-            print(f"{'='*60}")
 
             clf = SGDClassifier(
                 loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
                 random_state=RANDOM_STATE, average=True,
             )
-
-            classes = np.arange(NUM_CLASSES, dtype=np.int64)
-            n_res = len(y_resampled)
+            n_res = len(y_res)
             batch_size = 4096
-            total_steps = math.ceil(n_res / batch_size)
-            last_print = time.time()
+            perm = rng.permutation(n_res)
+            for rs_start in range(0, n_res, batch_size):
+                idx = perm[rs_start:rs_start + batch_size]
+                if rs_start == 0:
+                    clf.partial_fit(X_res[idx], y_res[idx], classes=classes)
+                else:
+                    clf.partial_fit(X_res[idx], y_res[idx])
 
-            for epoch in range(TRAIN_EPOCHS):
-                perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(n_res)
-                for step, start_r in enumerate(range(0, n_res, batch_size)):
-                    idx = perm[start_r:start_r + batch_size]
-                    xb = X_resampled[idx]
-                    yb = y_resampled[idx]
-
-                    if epoch == 0 and step == 0:
-                        clf.partial_fit(xb, yb, classes=classes)
-                    else:
-                        clf.partial_fit(xb, yb)
-
-                    now = time.time()
-                    if now - last_print >= PROGRESS_INTERVAL or step == total_steps - 1:
-                        pct = 100.0 * (step + 1) / total_steps
-                        print(f"  [Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
-                        last_print = now
-
-            y_pred_parts = []
-            eval_bs = 4096
-            for ev_start in range(0, len(y_eval_c), eval_bs):
-                ev_end = min(ev_start + eval_bs, len(y_eval_c))
-                xb = np.asarray(feats[ev_idx[ev_start:ev_end]], dtype=np.float32)
-                xb = scaler.transform(xb)
-                y_pred_parts.append(clf.predict(xb))
-            y_pred = np.concatenate(y_pred_parts)
-            metrics = evaluar(f"EVAL {run_name}", y_eval_c, y_pred)
-
-            run_key = f"comentario_{pooling_name}_{resample_name}"
-            all_results[run_key] = metrics
-
-            del X_resampled, y_resampled
+            clf_resample[key] = clf
+            del X_res, y_res
             gc.collect()
 
-        # Liberar RAM de submuestra
-        del X_tr_sub, y_tr_sub
+        del X_sub, X_sub_scaled, y_sub
         gc.collect()
+
+    del subsample
+    gc.collect()
+
+    # Todos los clasificadores de nivel comentario
+    all_clf = {}
+    all_clf.update(clf_comment)
+    all_clf.update(clf_resample)
+
+    # ========================
+    # PASS B: Stream eval -> predicciones + user agg
+    # ========================
+    print("\n" + "#" * 70)
+    print("# PASS B: Streaming datos de evaluacion")
+    print("#" * 70)
+
+    eval_preds = {key: [] for key in all_clf}
+
+    for start, end, last_np, mean_np in _stream_sae_features(
+        df_eval, tokenizer, model, sae, hookpoint_module, num_latents,
+        pass_name="EVAL",
+    ):
+        bs = end - start
+        feats_by_pooling = {"last_token": last_np, "mean": mean_np}
+
+        for key, clf in all_clf.items():
+            pooling = key[0]
+            feats_scaled = scalers[pooling].transform(
+                feats_by_pooling[pooling].astype(np.float32)
+            )
+            eval_preds[key].append(clf.predict(feats_scaled))
+
+        # Acumular features de usuario (eval)
+        if has_author:
+            yb = y_eval[start:end]
+            batch_auth = authors_eval[start:end]
+            for pooling in COMMENT_POOLINGS:
+                d = user_sums_eval[pooling]
+                feats = feats_by_pooling[pooling]
+                for i in range(bs):
+                    auth = batch_auth[i]
+                    if auth not in d:
+                        d[auth] = [
+                            np.zeros(num_latents, dtype=np.float64),
+                            0,
+                            int(yb[i]),
+                        ]
+                    entry = d[auth]
+                    entry[0] += feats[i].astype(np.float64)
+                    entry[1] += 1
+
+        del last_np, mean_np
+
+    # Liberar GPU
+    del model, tokenizer, sae
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    gc.collect()
+
+    # ==============================
+    # A) RESULTADOS NIVEL COMENTARIO
+    # ==============================
+    all_results = {}
+    print("\n" + "#" * 70)
+    print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
+    print("#" * 70)
+
+    for key in all_clf:
+        pooling, balance = key
+        run_name = f"comentario_{pooling}_{balance}"
+        y_pred = np.concatenate(eval_preds[key])
+        metrics = evaluar(f"EVAL {run_name}", y_eval, y_pred)
+        all_results[run_name] = metrics
+
+    del eval_preds
+    gc.collect()
 
     # ==============================
     # B) NIVEL USUARIO
     # ==============================
-    if has_author and authors is not None:
+    if has_author:
         print("\n" + "#" * 70)
         print("# B) CLASIFICACION A NIVEL DE USUARIO")
         print("#" * 70)
 
-        train_auth, eval_auth, test_auth = dividir_usuarios(df)
-        print(f"\nSplit usuarios: train={len(train_auth):,} eval={len(eval_auth):,} test={len(test_auth):,}")
+        def _build_user_arrays(user_dict):
+            """Convierte dict {author: [sum, count, label]} a arrays (X, y)."""
+            users = sorted(user_dict.keys())
+            n_u = len(users)
+            X = np.zeros((n_u, num_latents), dtype=np.float32)
+            y = np.zeros(n_u, dtype=np.int64)
+            for i, auth in enumerate(users):
+                s, c, lab = user_dict[auth]
+                X[i] = (s / max(c, 1)).astype(np.float32)
+                y[i] = lab
+            return X, y
 
-        user_features = {
-            "mean_of_last": last_token,
-            "mean_of_mean": mean_token,
-        }
+        for user_pooling in USER_POOLINGS:
+            comment_pooling = "last_token" if user_pooling == "mean_of_last" else "mean"
 
-        for pooling_name in USER_POOLINGS:
-            feats = user_features[pooling_name]
+            X_u_train, y_u_train = _build_user_arrays(
+                user_sums_train[comment_pooling]
+            )
+            X_u_eval, y_u_eval = _build_user_arrays(
+                user_sums_eval[comment_pooling]
+            )
 
-            # Pre-agregar features por usuario (una sola vez por pooling)
-            print(f"\n  Agregando features por usuario para {pooling_name}...")
-            X_u_train, y_u_train = _agregar_por_usuario(authors, feats, labels, set(train_auth))
-            X_u_eval, y_u_eval = _agregar_por_usuario(authors, feats, labels, set(eval_auth))
-
-            print(f"  Usuarios train: {len(y_u_train):,}")
+            print(f"\n  Usuarios {user_pooling}: train={len(y_u_train):,} eval={len(y_u_eval):,}")
             for i, cn in enumerate(CLASS_NAMES):
-                print(f"    {cn}: {int((y_u_train==i).sum()):,}")
-            print(f"  Usuarios eval:  {len(y_u_eval):,}")
+                print(
+                    f"    {cn}: train={int((y_u_train==i).sum()):,} "
+                    f"eval={int((y_u_eval==i).sum()):,}"
+                )
 
-            # Fit scaler en train de usuarios
             u_scaler = StandardScaler()
             u_scaler.fit(X_u_train)
+            X_tr_n = u_scaler.transform(X_u_train)
+            X_ev_n = u_scaler.transform(X_u_eval)
 
-            # --- Configuraciones con pesos de clase ---
+            # Configuraciones con pesos de clase
             for bal_cfg in BALANCE_CONFIGS:
-                if not bal_cfg["use_class_weights"]:
-                    cw = None
-                else:
-                    cw = train_class_weights_manual
-
-                X_tr_n = u_scaler.transform(X_u_train)
-                X_ev_n = u_scaler.transform(X_u_eval)
-
-                run_name = f"usuario_{pooling_name}_{bal_cfg['name']}"
+                cw = train_class_weights_manual if bal_cfg["use_class_weights"] else None
+                run_name = f"usuario_{user_pooling}_{bal_cfg['name']}"
                 print(f"\n{'='*60}")
                 print(f"ENTRENANDO: {run_name}")
                 print(f"  Train users: {len(y_u_train):,} | Eval users: {len(y_u_eval):,}")
-                if cw is not None:
-                    cw_str = ", ".join(f"{CLASS_NAMES[i]}={cw[i]:.3f}" for i in range(NUM_CLASSES))
-                    print(f"  Pesos de clase: {cw_str}")
-                else:
-                    print(f"  Pesos de clase: ninguno (todos 1.0)")
                 print(f"{'='*60}")
 
                 clf = SGDClassifier(
                     loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
                     random_state=RANDOM_STATE, average=True,
                 )
-                classes = np.arange(NUM_CLASSES, dtype=np.int64)
                 sw = sample_weights_from_class_weights(y_u_train, cw)
                 clf.partial_fit(X_tr_n, y_u_train, classes=classes, sample_weight=sw)
 
                 for epoch in range(1, TRAIN_EPOCHS):
-                    perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(len(y_u_train))
+                    perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(
+                        len(y_u_train)
+                    )
                     sw_perm = sample_weights_from_class_weights(y_u_train[perm], cw)
                     clf.partial_fit(X_tr_n[perm], y_u_train[perm], sample_weight=sw_perm)
 
@@ -1012,29 +835,29 @@ def main():
                 metrics = evaluar(f"EVAL {run_name}", y_u_eval, y_pred)
                 all_results[run_name] = metrics
 
-            # --- Configuraciones con resampling (SMOTE, ADASYN) ---
-            X_tr_n = u_scaler.transform(X_u_train)
-            X_ev_n = u_scaler.transform(X_u_eval)
-
+            # SMOTE/ADASYN a nivel usuario
             for resample_cfg in RESAMPLE_CONFIGS:
                 resample_name = resample_cfg["name"]
-                print(f"\n  Aplicando {resample_name} a nivel usuario ({len(y_u_train):,} usuarios)...")
-
-                safe_user_resample_cap = _cap_resample_size(
-                    len(y_u_train),
-                    X_u_train.shape[1],
-                    f"usuario/{pooling_name}",
+                print(
+                    f"\n  Aplicando {resample_name} a nivel usuario "
+                    f"({len(y_u_train):,})..."
                 )
-                if len(y_u_train) > safe_user_resample_cap:
-                    rng = np.random.RandomState(RANDOM_STATE)
+
+                safe_cap = _cap_resample_size(
+                    len(y_u_train), X_u_train.shape[1], f"usuario/{user_pooling}",
+                )
+
+                if len(y_u_train) > safe_cap:
                     counts = np.bincount(y_u_train, minlength=NUM_CLASSES)
                     fracs = counts / counts.sum()
-                    sub_counts = np.round(fracs * safe_user_resample_cap).astype(int)
+                    sub_counts = np.round(fracs * safe_cap).astype(int)
                     sub_idx_parts = []
                     for c in range(NUM_CLASSES):
                         c_idx = np.where(y_u_train == c)[0]
                         n_take = min(sub_counts[c], len(c_idx))
-                        sub_idx_parts.append(rng.choice(c_idx, size=n_take, replace=False))
+                        sub_idx_parts.append(
+                            rng.choice(c_idx, size=n_take, replace=False)
+                        )
                     sub_idx = np.concatenate(sub_idx_parts)
                     X_resample_base = X_tr_n[sub_idx]
                     y_resample_base = y_u_train[sub_idx]
@@ -1044,28 +867,30 @@ def main():
 
                 try:
                     sampler = resample_cfg["cls"](**resample_cfg["kwargs"])
-                    X_resampled, y_resampled = sampler.fit_resample(X_resample_base, y_resample_base)
+                    X_resampled, y_resampled = sampler.fit_resample(
+                        X_resample_base, y_resample_base,
+                    )
                     for i, cn in enumerate(CLASS_NAMES):
                         print(f"    Despues {cn}: {int((y_resampled==i).sum()):,}")
                 except Exception as e:
                     print(f"    ERROR en {resample_name}: {e}")
                     continue
 
-                run_name = f"usuario_{pooling_name}_{resample_name}"
+                run_name = f"usuario_{user_pooling}_{resample_name}"
                 print(f"\n{'='*60}")
                 print(f"ENTRENANDO: {run_name}")
-                print(f"  Train users: {len(y_resampled):,} | Eval users: {len(y_u_eval):,}")
                 print(f"{'='*60}")
 
                 clf = SGDClassifier(
                     loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
                     random_state=RANDOM_STATE, average=True,
                 )
-                classes = np.arange(NUM_CLASSES, dtype=np.int64)
                 clf.partial_fit(X_resampled, y_resampled, classes=classes)
 
                 for epoch in range(1, TRAIN_EPOCHS):
-                    perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(len(y_resampled))
+                    perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(
+                        len(y_resampled)
+                    )
                     clf.partial_fit(X_resampled[perm], y_resampled[perm])
 
                 y_pred = clf.predict(X_ev_n)
@@ -1089,10 +914,10 @@ def main():
     print("-" * (45 + 6 + 7 + 6 + 8 * NUM_CLASSES + NUM_CLASSES + 3))
     for key, m in all_results.items():
         f1_vals = " ".join(f"{m.get(f'f1_{cn}', 0.0):8.4f}" for cn in CLASS_NAMES)
-        print(f"{key:<45} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
-              f"{m['f1_macro']:.4f} {f1_vals}")
-
-    # (No se guarda resumen a disco para ahorrar almacenamiento)
+        print(
+            f"{key:<45} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
+            f"{m['f1_macro']:.4f} {f1_vals}"
+        )
 
     print("\n" + "=" * 70)
     print("COMPLETADO - Test reservado para uso futuro")

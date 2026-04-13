@@ -1,0 +1,12 @@
+[2026-04-05 20:19:00] Launcher MBTI secuencial arrancado (sin introverted GPT)
+[2026-04-05 20:19:00] CUDA_VISIBLE_DEVICES=0
+[2026-04-05 20:19:00] Log maestro: /home/aitziber.l/TFM/logs/mbti_secuencial_20260405_201900.log
+[2026-04-05 20:19:00] Tareas pendientes: 7
+[2026-04-05 20:19:00] Limpiando contenido de /hdd/aitziber.l
+[2026-04-05 20:19:00] Limpieza completada en /hdd/aitziber.l
+[2026-04-05 20:19:00] Iniciando clasificacion_mbti/introverted/clasificador_introverted_sae_activaciones.py
+Traceback (most recent call last):
+  File "/home/aitziber.l/TFM/clasificacion_mbti/introverted/clasificador_introverted_sae_activaciones.py", line 32, in <module>
+    import dotenv
+ModuleNotFoundError: No module named 'dotenv'
+[2026-04-05 20:19:00] ERROR: clasificacion_mbti/introverted/clasificador_introverted_sae_activaciones.py fallo con exit code 1
