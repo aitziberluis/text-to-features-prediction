@@ -1,0 +1,5 @@
+[2026-04-17 11:26:09] PASO 0: Borrar splits antiguos para forzar regeneracion
+[2026-04-17 11:26:09] Splits borrados.
+[2026-04-17 11:26:09] PASO 1: Entrenamiento SAE (sae_gpt.py)
+[2026-04-17 11:26:09]   Device: cuda:0
+[2026-04-17 11:26:09]   Checkpoint dir: /hdd/aitziber.l/TFM/sae-ckpts/sae-gpt2-comments

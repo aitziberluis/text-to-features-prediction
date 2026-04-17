@@ -33,7 +33,6 @@ import dotenv
 import numpy as np
 import pandas as pd
 import torch
-from imblearn.over_sampling import SMOTE, ADASYN
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
@@ -109,17 +108,7 @@ USER_POOLINGS = ["mean_of_last", "mean_of_mean"]
 BALANCE_CONFIGS = [
     {"name": "sin_balanceo", "use_class_weights": False},
     {"name": "balanceo_manual", "use_class_weights": True},
-]
-
-# Resampling: submuestra maxima para SMOTE/ADASYN (RAM limitada, alta dim)
-MAX_RESAMPLE_TRAIN = 50_000
-RESAMPLE_MEMORY_BUDGET_GB = float(os.getenv("MBTI_RESAMPLE_MEMORY_BUDGET_GB", "2.0"))
-RESAMPLE_WORKINGSET_MULTIPLIER = float(os.getenv("MBTI_RESAMPLE_WORKINGSET_MULTIPLIER", "8.0"))
-
-# Tecnicas de resampling a probar
-RESAMPLE_CONFIGS = [
-    {"name": "SMOTE", "cls": SMOTE, "kwargs": {"random_state": RANDOM_STATE}},
-    {"name": "ADASYN", "cls": ADASYN, "kwargs": {"random_state": RANDOM_STATE}},
+    {"name": "undersampling", "use_class_weights": False},
 ]
 
 
@@ -153,34 +142,40 @@ def _is_oom_error(exc: BaseException) -> bool:
     return "out of memory" in str(exc).lower()
 
 
-def _estimar_memoria_gb(
-    n_rows: int,
-    n_cols: int,
-    dtype: np.dtype | type = np.float32,
-    multiplier: float = 1.0,
-) -> float:
-    return (n_rows * n_cols * np.dtype(dtype).itemsize * multiplier) / (1024 ** 3)
+def random_undersample(X: np.ndarray, y: np.ndarray, random_state: int = RANDOM_STATE):
+    """Submuestrea aleatoriamente cada clase al tamano de la clase minoritaria."""
+    rng = np.random.RandomState(random_state)
+    classes = np.arange(NUM_CLASSES)
+    counts = np.bincount(y, minlength=NUM_CLASSES)
+    min_count = counts[counts > 0].min()
+    print(f"    Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
+    indices = []
+    for c in classes:
+        c_idx = np.where(y == c)[0]
+        if len(c_idx) == 0:
+            continue
+        chosen = rng.choice(c_idx, size=min_count, replace=False)
+        indices.append(chosen)
+    indices = np.concatenate(indices)
+    rng.shuffle(indices)
+    return X[indices], y[indices]
 
 
-def _cap_resample_size(requested_rows: int, n_features: int, scope_name: str) -> int:
-    budget_bytes = RESAMPLE_MEMORY_BUDGET_GB * (1024 ** 3)
-    bytes_per_row = max(
-        1,
-        int(np.dtype(np.float32).itemsize * n_features * RESAMPLE_WORKINGSET_MULTIPLIER),
-    )
-    budget_cap = max(NUM_CLASSES * 2, int(budget_bytes // bytes_per_row))
-    safe_rows = max(NUM_CLASSES * 2, min(requested_rows, budget_cap))
-    est_gb = _estimar_memoria_gb(
-        safe_rows,
-        n_features,
-        dtype=np.float32,
-        multiplier=RESAMPLE_WORKINGSET_MULTIPLIER,
-    )
-    print(
-        f"  {scope_name}: limite resampling={safe_rows:,} "
-        f"(~{est_gb:.2f} GiB de working set, budget={RESAMPLE_MEMORY_BUDGET_GB:.1f} GiB)"
-    )
-    return safe_rows
+def random_undersample_mask(y: np.ndarray, random_state: int = RANDOM_STATE) -> np.ndarray:
+    """Devuelve mascara booleana con los indices submuestreados."""
+    rng = np.random.RandomState(random_state)
+    classes = np.arange(NUM_CLASSES)
+    counts = np.bincount(y, minlength=NUM_CLASSES)
+    min_count = counts[counts > 0].min()
+    print(f"    Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
+    mask = np.zeros(len(y), dtype=bool)
+    for c in classes:
+        c_idx = np.where(y == c)[0]
+        if len(c_idx) == 0:
+            continue
+        chosen = rng.choice(c_idx, size=min_count, replace=False)
+        mask[chosen] = True
+    return mask
 
 
 # =====================
@@ -537,7 +532,7 @@ def main():
     # Scalers (se ajustan online durante pass A)
     scalers = {"last_token": StandardScaler(), "mean": StandardScaler()}
 
-    # SGD classifiers (sin_balanceo + balanceo_manual, entrenados online)
+    # SGD classifiers (sin_balanceo + balanceo_manual + undersampling, entrenados online)
     clf_comment = {}
     for pooling in COMMENT_POOLINGS:
         for bal_cfg in BALANCE_CONFIGS:
@@ -551,21 +546,10 @@ def main():
     user_sums_train = {"last_token": {}, "mean": {}}
     user_sums_eval = {"last_token": {}, "mean": {}}
 
-    # Submuestra para SMOTE/ADASYN
-    rng = np.random.RandomState(RANDOM_STATE)
-    safe_resample_cap = _cap_resample_size(
-        MAX_RESAMPLE_TRAIN, num_latents, "comentario/subsample",
-    )
-    subsample = {}
-    # Caps proporcionales por clase para preservar la distribucion real
-    train_counts = np.bincount(y_train, minlength=NUM_CLASSES)
-    train_fracs = train_counts / train_counts.sum()
-    per_class_caps = np.maximum(1, np.round(train_fracs * safe_resample_cap).astype(int))
-    print(f"  Distribucion real: {dict(zip(CLASS_NAMES, train_counts.tolist()))}")
-    print(f"  Caps proporcionales submuestra: {dict(zip(CLASS_NAMES, per_class_caps.tolist()))}")
-    for pooling in COMMENT_POOLINGS:
-        subsample[pooling] = {"feats": [], "labels": [], "count": 0,
-                              "class_counts": np.zeros(NUM_CLASSES, dtype=np.int64)}
+    # Pre-computar mascara de undersampling para entrenamiento
+    us_mask = random_undersample_mask(y_train)
+    us_first_batch = True
+    print(f"  Undersampling: {int(us_mask.sum()):,} muestras seleccionadas de {len(y_train):,}")
 
     # ========================
     # PASS A: Stream train -> scaler + SGD + user agg + subsample
@@ -587,6 +571,9 @@ def main():
         scalers["last_token"].partial_fit(last_np)
         scalers["mean"].partial_fit(mean_np)
 
+        # Mascara de undersampling para este batch
+        batch_us_mask = us_mask[start:end]
+
         # Escalar y entrenar SGD online
         for pooling in COMMENT_POOLINGS:
             feats_scaled = scalers[pooling].transform(
@@ -594,34 +581,29 @@ def main():
             )
             for bal_cfg in BALANCE_CONFIGS:
                 key = (pooling, bal_cfg["name"])
-                cw = train_class_weights_manual if bal_cfg["use_class_weights"] else None
-                sw = sample_weights_from_class_weights(yb, cw)
-                if first_batch:
-                    clf_comment[key].partial_fit(
-                        feats_scaled, yb, classes=classes, sample_weight=sw,
-                    )
+                if bal_cfg["name"] == "undersampling":
+                    # Solo entrenar con filas undersampled
+                    if batch_us_mask.any():
+                        xb_us = feats_scaled[batch_us_mask]
+                        yb_us = yb[batch_us_mask]
+                        if us_first_batch:
+                            clf_comment[key].partial_fit(
+                                xb_us, yb_us, classes=classes,
+                            )
+                        else:
+                            clf_comment[key].partial_fit(xb_us, yb_us)
                 else:
-                    clf_comment[key].partial_fit(feats_scaled, yb, sample_weight=sw)
+                    cw = train_class_weights_manual if bal_cfg["use_class_weights"] else None
+                    sw = sample_weights_from_class_weights(yb, cw)
+                    if first_batch:
+                        clf_comment[key].partial_fit(
+                            feats_scaled, yb, classes=classes, sample_weight=sw,
+                        )
+                    else:
+                        clf_comment[key].partial_fit(feats_scaled, yb, sample_weight=sw)
 
-        # Colectar submuestra proporcional para SMOTE/ADASYN
-        for pooling in COMMENT_POOLINGS:
-            sub = subsample[pooling]
-            if sub["count"] >= safe_resample_cap:
-                continue
-            for cls_id in range(NUM_CLASSES):
-                cls_so_far = sub["class_counts"][cls_id]
-                if cls_so_far >= per_class_caps[cls_id]:
-                    continue
-                cls_mask = (yb == cls_id)
-                n_cls = int(cls_mask.sum())
-                if n_cls == 0:
-                    continue
-                take = min(n_cls, per_class_caps[cls_id] - cls_so_far)
-                cls_idx = np.where(cls_mask)[0][:take]
-                sub["feats"].append(feats_by_pooling[pooling][cls_idx].copy())
-                sub["labels"].append(yb[cls_idx].copy())
-                sub["class_counts"][cls_id] += take
-                sub["count"] += take
+        if batch_us_mask.any():
+            us_first_batch = False
 
         # Acumular features de usuario (train)
         if has_author:
@@ -646,88 +628,8 @@ def main():
 
     print(f"\nPass A completado: {len(y_train):,} muestras procesadas.")
 
-    # Entrenar SMOTE/ADASYN desde submuestra
-    clf_resample = {}
-    for pooling in COMMENT_POOLINGS:
-        sub = subsample[pooling]
-        if sub["count"] == 0:
-            continue
-        X_sub = np.concatenate(sub["feats"]).astype(np.float32)
-        y_sub = np.concatenate(sub["labels"])
-        del sub["feats"], sub["labels"]
-
-        X_sub_scaled = scalers[pooling].transform(X_sub)
-
-        for resample_cfg in RESAMPLE_CONFIGS:
-            resample_name = resample_cfg["name"]
-            key = (pooling, resample_name)
-            print(f"\n  Aplicando {resample_name} sobre {len(y_sub):,} muestras ({pooling})...")
-            for i, cn in enumerate(CLASS_NAMES):
-                print(f"    Antes {cn}: {int((y_sub==i).sum()):,}")
-
-            try:
-                sampler = resample_cfg["cls"](**resample_cfg["kwargs"])
-                X_res, y_res = sampler.fit_resample(X_sub_scaled, y_sub)
-                for i, cn in enumerate(CLASS_NAMES):
-                    print(f"    Despues {cn}: {int((y_res==i).sum()):,}")
-            except Exception as e:
-                print(f"    ERROR en {resample_name}: {e}")
-                continue
-
-            clf = SGDClassifier(
-                loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
-                random_state=RANDOM_STATE, average=True,
-            )
-            n_res = len(y_res)
-            batch_size = 4096
-            perm = rng.permutation(n_res)
-            for rs_start in range(0, n_res, batch_size):
-                idx = perm[rs_start:rs_start + batch_size]
-                if rs_start == 0:
-                    clf.partial_fit(X_res[idx], y_res[idx], classes=classes)
-                else:
-                    clf.partial_fit(X_res[idx], y_res[idx])
-
-            clf_resample[key] = clf
-            del X_res, y_res
-            gc.collect()
-
-        del X_sub, X_sub_scaled, y_sub
-        gc.collect()
-
-    del subsample
-    gc.collect()
-
-    # ========================
-    # PASS A_RESAMPLE: Entrenar clf_resample sobre TODOS los datos reales
-    # ========================
-    if clf_resample:
-        print("\n" + "#" * 70)
-        print("# PASS A_RESAMPLE: Streaming todos los datos para modelos SMOTE/ADASYN")
-        print("#" * 70)
-
-        for start, end, last_np, mean_np in _stream_sae_features(
-            df_train, tokenizer, model, sae, hookpoint_module, num_latents,
-            pass_name="TRAIN_RESAMPLE",
-        ):
-            yb = y_train[start:end]
-            feats_by_pooling_r = {"last_token": last_np, "mean": mean_np}
-
-            for key, clf in clf_resample.items():
-                pooling = key[0]
-                feats_scaled = scalers[pooling].transform(
-                    feats_by_pooling_r[pooling].astype(np.float32)
-                )
-                clf.partial_fit(feats_scaled, yb)
-
-            del last_np, mean_np
-
-        print(f"\nPass A_RESAMPLE completado: modelos SMOTE/ADASYN entrenados sobre {len(y_train):,} muestras reales.")
-
     # Todos los clasificadores de nivel comentario
-    all_clf = {}
-    all_clf.update(clf_comment)
-    all_clf.update(clf_resample)
+    all_clf = dict(clf_comment)
 
     # ========================
     # PASS B: Stream eval -> predicciones + user agg
@@ -839,97 +741,42 @@ def main():
             X_tr_n = u_scaler.transform(X_u_train)
             X_ev_n = u_scaler.transform(X_u_eval)
 
-            # Configuraciones con pesos de clase
+            # Configuraciones de balanceo
             for bal_cfg in BALANCE_CONFIGS:
-                cw = train_class_weights_manual if bal_cfg["use_class_weights"] else None
+                if bal_cfg["name"] == "undersampling":
+                    X_u_us, y_u_us = random_undersample(X_u_train, y_u_train)
+                    X_tr_n_cur = u_scaler.transform(X_u_us)
+                    cw = None
+                else:
+                    cw = train_class_weights_manual if bal_cfg["use_class_weights"] else None
+                    X_tr_n_cur = X_tr_n
+                    X_u_us, y_u_us = X_u_train, y_u_train
+
                 run_name = f"usuario_{user_pooling}_{bal_cfg['name']}"
                 print(f"\n{'='*60}")
                 print(f"ENTRENANDO: {run_name}")
-                print(f"  Train users: {len(y_u_train):,} | Eval users: {len(y_u_eval):,}")
+                print(f"  Train users: {len(y_u_us):,} | Eval users: {len(y_u_eval):,}")
                 print(f"{'='*60}")
 
                 clf = SGDClassifier(
                     loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
                     random_state=RANDOM_STATE, average=True,
                 )
-                sw = sample_weights_from_class_weights(y_u_train, cw)
-                clf.partial_fit(X_tr_n, y_u_train, classes=classes, sample_weight=sw)
+                sw = sample_weights_from_class_weights(y_u_us, cw)
+                clf.partial_fit(X_tr_n_cur, y_u_us, classes=classes, sample_weight=sw)
 
                 for epoch in range(1, TRAIN_EPOCHS):
                     perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(
-                        len(y_u_train)
+                        len(y_u_us)
                     )
-                    sw_perm = sample_weights_from_class_weights(y_u_train[perm], cw)
-                    clf.partial_fit(X_tr_n[perm], y_u_train[perm], sample_weight=sw_perm)
+                    sw_perm = sample_weights_from_class_weights(y_u_us[perm], cw)
+                    clf.partial_fit(X_tr_n_cur[perm], y_u_us[perm], sample_weight=sw_perm)
 
                 y_pred = clf.predict(X_ev_n)
                 metrics = evaluar(f"EVAL {run_name}", y_u_eval, y_pred)
                 all_results[run_name] = metrics
 
-            # SMOTE/ADASYN a nivel usuario
-            for resample_cfg in RESAMPLE_CONFIGS:
-                resample_name = resample_cfg["name"]
-                print(
-                    f"\n  Aplicando {resample_name} a nivel usuario "
-                    f"({len(y_u_train):,})..."
-                )
 
-                safe_cap = _cap_resample_size(
-                    len(y_u_train), X_u_train.shape[1], f"usuario/{user_pooling}",
-                )
-
-                if len(y_u_train) > safe_cap:
-                    counts = np.bincount(y_u_train, minlength=NUM_CLASSES)
-                    fracs = counts / counts.sum()
-                    sub_counts = np.round(fracs * safe_cap).astype(int)
-                    sub_idx_parts = []
-                    for c in range(NUM_CLASSES):
-                        c_idx = np.where(y_u_train == c)[0]
-                        n_take = min(sub_counts[c], len(c_idx))
-                        sub_idx_parts.append(
-                            rng.choice(c_idx, size=n_take, replace=False)
-                        )
-                    sub_idx = np.concatenate(sub_idx_parts)
-                    X_resample_base = X_tr_n[sub_idx]
-                    y_resample_base = y_u_train[sub_idx]
-                else:
-                    X_resample_base = X_tr_n
-                    y_resample_base = y_u_train
-
-                try:
-                    sampler = resample_cfg["cls"](**resample_cfg["kwargs"])
-                    X_resampled, y_resampled = sampler.fit_resample(
-                        X_resample_base, y_resample_base,
-                    )
-                    for i, cn in enumerate(CLASS_NAMES):
-                        print(f"    Despues {cn}: {int((y_resampled==i).sum()):,}")
-                except Exception as e:
-                    print(f"    ERROR en {resample_name}: {e}")
-                    continue
-
-                run_name = f"usuario_{user_pooling}_{resample_name}"
-                print(f"\n{'='*60}")
-                print(f"ENTRENANDO: {run_name}")
-                print(f"{'='*60}")
-
-                clf = SGDClassifier(
-                    loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
-                    random_state=RANDOM_STATE, average=True,
-                )
-                clf.partial_fit(X_resampled, y_resampled, classes=classes)
-
-                for epoch in range(1, TRAIN_EPOCHS):
-                    perm = np.random.RandomState(RANDOM_STATE + epoch).permutation(
-                        len(y_resampled)
-                    )
-                    clf.partial_fit(X_resampled[perm], y_resampled[perm])
-
-                y_pred = clf.predict(X_ev_n)
-                metrics = evaluar(f"EVAL {run_name}", y_u_eval, y_pred)
-                all_results[run_name] = metrics
-
-                del X_resampled, y_resampled
-                gc.collect()
 
             del X_u_train, y_u_train, X_u_eval, y_u_eval, X_tr_n, X_ev_n
             gc.collect()

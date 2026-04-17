@@ -12,9 +12,7 @@ from preprocesamiento import cargar_comentarios
 
 dotenv.load_dotenv()
 
-# =====================
 # CONFIGURACIÓN GENERAL
-# =====================
 
 MODEL = "openai-community/gpt2"  # puedes cambiar a otro modelo causal
 CONTEXT_LEN = int(os.getenv("SAE_CONTEXT_LEN", "512"))
@@ -171,9 +169,7 @@ def detectar_batch_size_optimo(
 		torch.cuda.empty_cache()
 
 
-# =====================
 # CARGA Y PREPARACIÓN DE DATOS
-# =====================
 
 
 def cargar_dataset_texto() -> Dataset:
@@ -200,9 +196,7 @@ def cargar_dataset_texto() -> Dataset:
 	return dataset
 
 
-# =====================
 # TOKENIZACIÓN Y MODELO
-# =====================
 
 
 def preparar_modelo_y_datos(dataset: Dataset):
@@ -253,9 +247,7 @@ def preparar_modelo_y_datos(dataset: Dataset):
 	return tokenizer, gpt, tokenized
 
 
-# =====================
 # CONFIGURACIÓN Y ENTRENAMIENTO DE LA SAE
-# =====================
 
 
 def entrenar_sae(dataset: Dataset):
@@ -330,7 +322,7 @@ def entrenar_sae(dataset: Dataset):
 		model=gpt,
 		token_iterator=tokenized,
 		train_cfg=train_cfg,
-		use_wandb=True,
+		use_wandb=False,
 	)
 
 	# Guardamos la SAE en disco para usarla luego como extractor de características
