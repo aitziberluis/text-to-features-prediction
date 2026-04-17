@@ -758,6 +758,28 @@ def main():
                 scaler=None,  # ya normalizado
             )
 
+            # Continuar entrenamiento sobre TODOS los datos reales
+            print(f"  Entrenando sobre todos los datos reales ({n_tr:,} muestras)...")
+            batch_size_all = 4096
+            total_steps_all = math.ceil(n_tr / batch_size_all)
+            last_print_t = time.time()
+            perm_all = np.random.RandomState(RANDOM_STATE + TRAIN_EPOCHS).permutation(n_tr)
+            for step, start_r in enumerate(range(0, n_tr, batch_size_all)):
+                idx_a = perm_all[start_r:start_r + batch_size_all]
+                xb = scaler.transform(X_tr[idx_a])
+                yb_a = y_train_c[idx_a]
+                clf.partial_fit(xb, yb_a)
+
+                now = time.time()
+                if now - last_print_t >= PROGRESS_INTERVAL or step == total_steps_all - 1:
+                    pct = 100.0 * (step + 1) / total_steps_all
+                    print(f"  [All data] {pct:5.1f}% ({step+1}/{total_steps_all})")
+                    last_print_t = now
+
+            # Re-evaluar tras entrenamiento completo
+            y_pred = clf.predict(X_ev_norm)
+            metrics = evaluar(f"EVAL comentario_{pooling_name}_{resample_name}", y_eval_c, y_pred)
+
             run_key = f"comentario_{pooling_name}_{resample_name}"
             all_results[run_key] = metrics
 

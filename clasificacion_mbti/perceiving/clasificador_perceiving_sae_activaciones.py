@@ -557,8 +557,15 @@ def main():
         MAX_RESAMPLE_TRAIN, num_latents, "comentario/subsample",
     )
     subsample = {}
+    # Caps proporcionales por clase para preservar la distribucion real
+    train_counts = np.bincount(y_train, minlength=NUM_CLASSES)
+    train_fracs = train_counts / train_counts.sum()
+    per_class_caps = np.maximum(1, np.round(train_fracs * safe_resample_cap).astype(int))
+    print(f"  Distribucion real: {dict(zip(CLASS_NAMES, train_counts.tolist()))}")
+    print(f"  Caps proporcionales submuestra: {dict(zip(CLASS_NAMES, per_class_caps.tolist()))}")
     for pooling in COMMENT_POOLINGS:
-        subsample[pooling] = {"feats": [], "labels": [], "count": 0}
+        subsample[pooling] = {"feats": [], "labels": [], "count": 0,
+                              "class_counts": np.zeros(NUM_CLASSES, dtype=np.int64)}
 
     # ========================
     # PASS A: Stream train -> scaler + SGD + user agg + subsample
@@ -596,13 +603,24 @@ def main():
                 else:
                     clf_comment[key].partial_fit(feats_scaled, yb, sample_weight=sw)
 
-        # Colectar submuestra para SMOTE/ADASYN
+        # Colectar submuestra proporcional para SMOTE/ADASYN
         for pooling in COMMENT_POOLINGS:
             sub = subsample[pooling]
-            if sub["count"] < safe_resample_cap:
-                take = min(bs, safe_resample_cap - sub["count"])
-                sub["feats"].append(feats_by_pooling[pooling][:take].copy())
-                sub["labels"].append(yb[:take].copy())
+            if sub["count"] >= safe_resample_cap:
+                continue
+            for cls_id in range(NUM_CLASSES):
+                cls_so_far = sub["class_counts"][cls_id]
+                if cls_so_far >= per_class_caps[cls_id]:
+                    continue
+                cls_mask = (yb == cls_id)
+                n_cls = int(cls_mask.sum())
+                if n_cls == 0:
+                    continue
+                take = min(n_cls, per_class_caps[cls_id] - cls_so_far)
+                cls_idx = np.where(cls_mask)[0][:take]
+                sub["feats"].append(feats_by_pooling[pooling][cls_idx].copy())
+                sub["labels"].append(yb[cls_idx].copy())
+                sub["class_counts"][cls_id] += take
                 sub["count"] += take
 
         # Acumular features de usuario (train)
@@ -679,6 +697,32 @@ def main():
 
     del subsample
     gc.collect()
+
+    # ========================
+    # PASS A_RESAMPLE: Entrenar clf_resample sobre TODOS los datos reales
+    # ========================
+    if clf_resample:
+        print("\n" + "#" * 70)
+        print("# PASS A_RESAMPLE: Streaming todos los datos para modelos SMOTE/ADASYN")
+        print("#" * 70)
+
+        for start, end, last_np, mean_np in _stream_sae_features(
+            df_train, tokenizer, model, sae, hookpoint_module, num_latents,
+            pass_name="TRAIN_RESAMPLE",
+        ):
+            yb = y_train[start:end]
+            feats_by_pooling_r = {"last_token": last_np, "mean": mean_np}
+
+            for key, clf in clf_resample.items():
+                pooling = key[0]
+                feats_scaled = scalers[pooling].transform(
+                    feats_by_pooling_r[pooling].astype(np.float32)
+                )
+                clf.partial_fit(feats_scaled, yb)
+
+            del last_np, mean_np
+
+        print(f"\nPass A_RESAMPLE completado: modelos SMOTE/ADASYN entrenados sobre {len(y_train):,} muestras reales.")
 
     # Todos los clasificadores de nivel comentario
     all_clf = {}

@@ -806,6 +806,24 @@ def main():
                         print(f"  [Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
                         last_print = now
 
+            # Continuar entrenamiento sobre TODOS los datos reales (memmap)
+            print(f"  Entrenando {run_name} sobre todos los datos reales ({n_tr:,} muestras)...")
+            total_steps_all = math.ceil(n_tr / batch_size)
+            last_print = time.time()
+            perm_all = np.random.RandomState(RANDOM_STATE + TRAIN_EPOCHS).permutation(n_tr)
+            for step, start_r in enumerate(range(0, n_tr, batch_size)):
+                idx_all = perm_all[start_r:start_r + batch_size]
+                xb = np.asarray(feats[tr_idx[idx_all]], dtype=np.float32)
+                xb = scaler.transform(xb)
+                yb_all = y_train_c[idx_all]
+                clf.partial_fit(xb, yb_all)
+
+                now = time.time()
+                if now - last_print >= PROGRESS_INTERVAL or step == total_steps_all - 1:
+                    pct = 100.0 * (step + 1) / total_steps_all
+                    print(f"  [All data] {pct:5.1f}% ({step+1}/{total_steps_all})")
+                    last_print = now
+
             # Eval en batches (memmap, normalizar)
             y_pred_parts = []
             eval_bs = 4096
