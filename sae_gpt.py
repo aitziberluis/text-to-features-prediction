@@ -16,7 +16,7 @@ dotenv.load_dotenv()
 
 MODEL = "openai-community/gpt2"  # puedes cambiar a otro modelo causal
 CONTEXT_LEN = int(os.getenv("SAE_CONTEXT_LEN", "512"))
-DEVICE = os.getenv("SAE_DEVICE", "cuda:1" if torch.cuda.is_available() else "cpu")
+DEVICE = os.getenv("SAE_DEVICE", "cuda:0" if torch.cuda.is_available() else "cpu")
 HOOKPOINT = os.getenv("SAE_HOOKPOINT", "transformer.h.8")
 
 # Ajustes de rendimiento (sobre-escribibles por variables de entorno)
@@ -314,7 +314,7 @@ def entrenar_sae(dataset: Dataset):
 	)
 
 	print(f"Representaciones SAE/GPT guardadas cada {SAVE_REPR_EVERY_N_STEPS} steps")
-	print(f"Checkpoint SAE guardado cada {SAVE_EVERY_N_TOKENS} tokens")
+	print(f"Checkpoint SAE guardado cada {save_every} tokens")
 
 	print("Iniciando entrenamiento de la SAE...")
 	train_sae(

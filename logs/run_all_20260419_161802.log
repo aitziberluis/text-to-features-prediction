@@ -1,0 +1,9 @@
+[2026-04-19 16:18:02] PASO 0: Borrar splits antiguos para forzar regeneracion
+[2026-04-19 16:18:02] Splits borrados.
+[2026-04-19 16:18:02] PASO 1: Entrenamiento SAE (sae_gpt.py)
+[2026-04-19 16:18:02]   Device: cuda:0
+[2026-04-19 16:18:02]   Checkpoint dir: /hdd/aitziber.l/TFM/sae-ckpts/sae-gpt2-comments
+Traceback (most recent call last):
+  File "/home/aitziber.l/TFM/sae_gpt.py", line 4, in <module>
+    import dotenv
+ModuleNotFoundError: No module named 'dotenv'

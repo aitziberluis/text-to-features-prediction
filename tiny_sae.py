@@ -240,7 +240,10 @@ def train_sae(
             if now - last_log_time >= 3600:  # cada hora
                 elapsed_h = (now - last_log_time) / 3600
                 pct = f"{step / total_examples * 100:.1f}%" if total_examples else "?"
-                print(f"[SAE] step={step} | progreso={pct} | loss={last_loss:.4f} | +{elapsed_h:.1f}h")
+                print(
+                    f"[SAE] step={step} | progreso={pct} | loss={last_loss:.4f} | +{elapsed_h:.1f}h",
+                    flush=True,
+                )
                 last_log_time = now
             batch = []
     finally:

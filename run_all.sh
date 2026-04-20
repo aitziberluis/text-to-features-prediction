@@ -4,10 +4,13 @@
 # Uso:
 #   nohup bash run_all.sh > /dev/null 2>&1 &
 
-set -eu
+set -euo pipefail
 
 export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export CUDA_VISIBLE_DEVICES=0
+export PYTHONUNBUFFERED=1
+export WANDB_DISABLED=true
+export WANDB_MODE=disabled
 
 ROOT_DIR="/home/aitziber.l/TFM"
 HDD_DIR="/hdd/aitziber.l"
@@ -54,8 +57,8 @@ export SAE_SAVE_REPR_EVERY_N_STEPS=0
 log "  Device: $SAE_DEVICE"
 log "  Checkpoint dir: $SAE_CHECKPOINT_DIR"
 
-python3 sae_gpt.py >> "$MASTER_LOG" 2>&1
-SAE_EXIT=$?
+stdbuf -oL -eL python3 -u sae_gpt.py 2>&1 | tee -a "$MASTER_LOG"
+SAE_EXIT=${PIPESTATUS[0]}
 SAE_ELAPSED=$(( SECONDS - SAE_START ))
 SAE_H=$(( SAE_ELAPSED / 3600 ))
 SAE_M=$(( (SAE_ELAPSED % 3600) / 60 ))
@@ -117,8 +120,8 @@ run_script() {
         done
     fi
 
-    python3 "$SCRIPT_PATH" >> "$MASTER_LOG" 2>&1
-    local EXIT_CODE=$?
+    stdbuf -oL -eL python3 -u "$SCRIPT_PATH" 2>&1 | tee -a "$MASTER_LOG"
+    local EXIT_CODE=${PIPESTATUS[0]}
     local ELAPSED=$(( SECONDS - START_SEC ))
     local HOURS=$(( ELAPSED / 3600 ))
     local MINS=$(( (ELAPSED % 3600) / 60 ))
