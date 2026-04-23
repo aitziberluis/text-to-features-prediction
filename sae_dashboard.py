@@ -46,9 +46,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tiny_sae import Sae
 
-# =====================
+
 # CONFIGURACION
-# =====================
 
 MODEL = "openai-community/gpt2"
 PATH_SAE = "sae-ckpts/sae-gpt2-comments"
@@ -75,9 +74,7 @@ BATCH_SIZE = 32
 CONTEXT_LEN = 512
 
 
-# =====================
 # CARGA GLOBAL (una sola vez)
-# =====================
 
 
 def load_sae():
@@ -123,9 +120,7 @@ def load_gender_activations():
     return last_token, labels, num_latents
 
 
-# =====================
 # INICIALIZACION
-# =====================
 
 print("=" * 60)
 print("INICIALIZANDO SAE DASHBOARD")
@@ -147,9 +142,7 @@ W_U = gpt2_model.lm_head.weight.data.detach()  # (vocab_size, d_model)
 print("Inicializacion completada.")
 
 
-# =====================
 # 1. FEATURE BROWSER - Top tokens por decoder weight
-# =====================
 
 
 def get_top_tokens_for_feature(feature_idx: int, top_k: int = TOP_K_TOKENS) -> str:
@@ -227,9 +220,7 @@ def plot_feature_decoder_histogram(feature_idx: int):
     return fig
 
 
-# =====================
 # 2. ANALISIS DE TEXTO - Activar SAE sobre un texto
-# =====================
 
 
 def analyze_text(text: str, top_k_features: int = 10) -> tuple:
@@ -324,9 +315,7 @@ def analyze_text(text: str, top_k_features: int = 10) -> tuple:
     return "\n".join(lines), fig
 
 
-# =====================
 # 3. ANALISIS GENERO - Features discriminativas
-# =====================
 
 
 def compute_gender_discriminative_features(n_sample: int = 200000, top_n: int = 50) -> tuple:
@@ -408,9 +397,7 @@ def get_gender_feature_tokens(feature_idx: int) -> str:
     return get_top_tokens_for_feature(feature_idx, top_k=15)
 
 
-# =====================
 # 3b. INTERPRETABILIDAD GENERO - Neuronas de genero
-# =====================
 
 # Cache global para no recalcular
 _gender_analysis_cache = {}
@@ -778,9 +765,7 @@ def inspect_gender_neuron(feature_idx: int, n_sample: int = 300000) -> tuple:
     return "\n".join(lines), fig
 
 
-# =====================
 # 4. ESTADISTICAS GLOBALES
-# =====================
 
 
 def compute_global_stats() -> tuple:
@@ -842,9 +827,8 @@ def compute_global_stats() -> tuple:
     return "\n".join(lines), fig1, fig2, fig3
 
 
-# =====================
 # 5. FEATURE SIMILARITY
-# =====================
+
 
 
 def find_similar_features(feature_idx: int, top_k: int = 10) -> str:
@@ -867,9 +851,7 @@ def find_similar_features(feature_idx: int, top_k: int = 10) -> str:
     return "\n".join(lines)
 
 
-# =====================
 # 6. TOKEN-LEVEL FEATURE ACTIVATION MAP
-# =====================
 
 
 def token_feature_heatmap(text: str, feature_idx: int):
@@ -942,9 +924,9 @@ def token_feature_heatmap(text: str, feature_idx: int):
     return "\n".join(lines), fig
 
 
-# =====================
+
 # GRADIO UI
-# =====================
+
 
 
 def build_app():

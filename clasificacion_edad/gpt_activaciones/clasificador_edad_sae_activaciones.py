@@ -21,13 +21,14 @@ Rangos de edad: 14_19, 20_29, 30_39, 40_plus
 Evaluacion solo en eval set (test reservado para uso futuro).
 """
 
+import gc
 import json
 import math
 import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import dotenv
 import numpy as np
@@ -183,6 +184,23 @@ def random_undersample_idx(y: np.ndarray, random_state: int = RANDOM_STATE) -> n
     return indices
 
 
+def random_undersample_mask(y: np.ndarray, random_state: int = RANDOM_STATE) -> np.ndarray:
+    """Devuelve mascara booleana con los indices submuestreados."""
+    rng = np.random.RandomState(random_state)
+    classes = np.arange(NUM_CLASSES)
+    counts = np.bincount(y, minlength=NUM_CLASSES)
+    min_count = counts[counts > 0].min()
+    print(f"    Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
+    mask = np.zeros(len(y), dtype=bool)
+    for c in classes:
+        c_idx = np.where(y == c)[0]
+        if len(c_idx) == 0:
+            continue
+        chosen = rng.choice(c_idx, size=min_count, replace=False)
+        mask[chosen] = True
+    return mask
+
+
 def _is_oom_error(exc: BaseException) -> bool:
     """Detecta OOM de CUDA lanzado como excepcion tipada o RuntimeError."""
     if isinstance(exc, torch.OutOfMemoryError):
@@ -286,6 +304,124 @@ def _pool_sparse_to_dense(
     mean_pooled = mean_pooled / valid_tokens
 
     return last_pooled, mean_pooled
+
+
+def _setup_models():
+    """Carga tokenizer, GPT-2 y SAE. Devuelve los componentes para streaming."""
+    sae = Sae.load_from_disk(PATH_SAE, device=DEVICE)
+    if hasattr(sae, "to"):
+        sae = sae.to(device=DEVICE, dtype=SAE_DTYPE)
+    num_latents = sae.cfg.num_latents
+    hookpoint_name = sae.cfg.hookpoint
+    print(f"SAE cargada: {num_latents} latentes, k={sae.cfg.k}, hookpoint={hookpoint_name}", flush=True)
+
+    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL,
+        device_map={"": DEVICE},
+        dtype=SAE_DTYPE,
+    )
+    model.eval()
+
+    hookpoint_module = model.get_submodule(hookpoint_name)
+    return tokenizer, model, sae, hookpoint_module, num_latents
+
+
+def _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latents, pass_name=""):
+    """Generador que extrae representaciones SAE en streaming."""
+    n = len(df)
+    captured = {}
+
+    def hook(module, inputs, outputs):
+        if isinstance(outputs, tuple):
+            outputs = outputs[0]
+        captured["act"] = outputs.detach()
+
+    handle = hookpoint_module.register_forward_hook(hook)
+    last_print = time.time()
+    step = 0
+    total_steps = max(1, math.ceil(n / EXTRACT_BATCH_SIZE))
+    current_bs = EXTRACT_BATCH_SIZE
+
+    try:
+        with torch.inference_mode():
+            start = 0
+            while start < n:
+                bs = current_bs
+                while True:
+                    end = min(start + bs, n)
+                    texts = df["text"].iloc[start:end].tolist()
+                    try:
+                        tokens = tokenizer(
+                            texts,
+                            max_length=CONTEXT_LEN,
+                            truncation=True,
+                            padding="max_length",
+                            return_attention_mask=True,
+                            return_tensors="pt",
+                        )
+                        input_ids = tokens["input_ids"].to(model.device)
+                        attn_mask = tokens["attention_mask"].to(model.device)
+
+                        model.transformer(input_ids=input_ids, attention_mask=attn_mask)
+
+                        acts = captured["act"].to(sae.dtype).to(sae.device)
+                        top_acts, top_indices = sae.encode(acts)
+
+                        last_pooled, mean_pooled = _pool_sparse_to_dense(
+                            top_acts=top_acts,
+                            top_indices=top_indices,
+                            attention_mask=attn_mask,
+                            num_latents=num_latents,
+                        )
+
+                        last_np = last_pooled.float().cpu().numpy()
+                        mean_np = mean_pooled.float().cpu().numpy()
+
+                        del tokens, input_ids, attn_mask, acts
+                        del top_acts, top_indices, last_pooled, mean_pooled
+                        captured.clear()
+                        break
+                    except Exception as exc:
+                        if not _is_oom_error(exc):
+                            raise
+                        captured.clear()
+                        if torch.cuda.is_available():
+                            torch.cuda.empty_cache()
+                        if bs <= MIN_EXTRACT_BATCH_SIZE:
+                            raise RuntimeError(
+                                f"OOM incluso con batch_size={bs}. Prueba menor CONTEXT_LEN o precision mas agresiva."
+                            ) from exc
+                        new_bs = max(MIN_EXTRACT_BATCH_SIZE, bs // 2)
+                        print(f"  OOM: batch {bs} -> {new_bs}", flush=True)
+                        bs = new_bs
+
+                if torch.cuda.is_available() and (step + 1) % CUDA_EMPTY_CACHE_EVERY == 0:
+                    torch.cuda.empty_cache()
+
+                step += 1
+                current_bs = bs
+
+                now = time.time()
+                if now - last_print >= PROGRESS_INTERVAL or step == 1 or end >= n:
+                    pct = 100.0 * end / max(1, n)
+                    print(
+                        f"  [{pass_name} {pct:5.1f}%] step {step}/{total_steps} "
+                        f"({end:,}/{n:,}) | batch={current_bs}",
+                        flush=True,
+                    )
+                    last_print = now
+
+                yield start, end, last_np, mean_np
+                start = end
+    finally:
+        handle.remove()
+        captured.clear()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
 
 def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
@@ -606,6 +742,8 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
     bal_acc = balanced_accuracy_score(y_true, y_pred)
     f1_mac = f1_score(y_true, y_pred, average="macro", zero_division=0)
     f1_w = f1_score(y_true, y_pred, average="weighted", zero_division=0)
+    prec_macro = precision_score(y_true, y_pred, average="macro", zero_division=0)
+    rec_macro = recall_score(y_true, y_pred, average="macro", zero_division=0)
 
     all_labels = list(range(NUM_CLASSES))
     prec_c = precision_score(y_true, y_pred, average=None, labels=all_labels, zero_division=0)
@@ -613,7 +751,11 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
     f1_c = f1_score(y_true, y_pred, average=None, labels=all_labels, zero_division=0)
 
     print(f"\n=== {nombre} ===")
-    print(f"Accuracy: {acc:.4f} | Balanced Acc: {bal_acc:.4f} | F1 macro: {f1_mac:.4f} | F1 weighted: {f1_w:.4f}")
+    print(
+        f"Accuracy: {acc:.4f} | Balanced Acc: {bal_acc:.4f} | "
+        f"Precision macro: {prec_macro:.4f} | Recall macro: {rec_macro:.4f} | "
+        f"F1 macro: {f1_mac:.4f} | F1 weighted: {f1_w:.4f}"
+    )
     for i, group in enumerate(AGE_GROUPS):
         print(f"  {group:>8s}: prec={prec_c[i]:.4f} rec={rec_c[i]:.4f} f1={f1_c[i]:.4f}")
     print(classification_report(y_true, y_pred, target_names=AGE_GROUPS, labels=all_labels, zero_division=0))
@@ -622,6 +764,7 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
 
     result = {
         "accuracy": float(acc), "balanced_accuracy": float(bal_acc),
+        "precision_macro": float(prec_macro), "recall_macro": float(rec_macro),
         "f1_macro": float(f1_mac), "f1_weighted": float(f1_w),
     }
     for i, group in enumerate(AGE_GROUPS):
@@ -630,6 +773,34 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
         result[f"f1_{group}"] = float(f1_c[i])
 
     return result
+
+
+def _selection_score(metrics: Dict[str, float]) -> Tuple[float, float, float]:
+    return (
+        float(metrics.get("f1_macro", float("-inf"))),
+        float(metrics.get("recall_macro", float("-inf"))),
+        float(metrics.get("precision_macro", float("-inf"))),
+    )
+
+
+def _select_best_run(all_results: Dict[str, Dict[str, float]]) -> Tuple[str, Dict[str, float]]:
+    best_name, best_metrics = max(
+        all_results.items(),
+        key=lambda item: (_selection_score(item[1]), item[0]),
+    )
+    return best_name, best_metrics
+
+
+def _build_user_arrays(user_dict: Dict[str, List[object]], num_latents: int) -> Tuple[np.ndarray, np.ndarray]:
+    users = sorted(user_dict.keys())
+    n_users = len(users)
+    X = np.zeros((n_users, num_latents), dtype=np.float32)
+    y = np.zeros(n_users, dtype=np.int64)
+    for i, auth in enumerate(users):
+        s, c, lab = user_dict[auth]
+        X[i] = (s / max(c, 1)).astype(np.float32)
+        y[i] = lab
+    return X, y
 
 
 # =====================
@@ -830,16 +1001,53 @@ def main():
         df["author"] = df["author"].astype(str).str.strip()
         has_author = True
 
-    # 2. Extraer representaciones SAE (solo en memoria, sin guardar a disco)
-    last_token, mean_token, labels, authors, num_latents = extraer_activaciones(df)
-    print(f"\nRepresentaciones SAE: num_latents={num_latents}, comentarios={len(labels):,}", flush=True)
+    train_auth, eval_auth, test_auth = dividir_usuarios(df)
+    train_auth_set = set(train_auth)
+    eval_auth_set = set(eval_auth)
+    test_auth_set = set(test_auth)
 
-    # Distribucion de labels
+    df_train = df[df["author"].isin(train_auth_set)].reset_index(drop=True)
+    df_eval = df[df["author"].isin(eval_auth_set)].reset_index(drop=True)
+    df_test = df[df["author"].isin(test_auth_set)].reset_index(drop=True)
+    y_train = np.array([LABEL_MAP[g] for g in df_train["age_group"]], dtype=np.int8)
+    y_eval = np.array([LABEL_MAP[g] for g in df_eval["age_group"]], dtype=np.int8)
+    y_test_comments = np.array([LABEL_MAP[g] for g in df_test["age_group"]], dtype=np.int8)
+    authors_train = df_train["author"].values if has_author else None
+    authors_eval = df_eval["author"].values if has_author else None
+    authors_test = df_test["author"].values if has_author else None
+
+    del df
+    gc.collect()
+
+    print(f"\nComentarios: train={len(df_train):,} eval={len(df_eval):,} test={len(df_test):,}", flush=True)
     for i, group in enumerate(AGE_GROUPS):
-        count = int((labels == i).sum())
-        print(f"  {group}: {count:,} ({100*count/len(labels):.1f}%)", flush=True)
+        print(
+            f"  {group}: train={int((y_train==i).sum()):,} "
+            f"eval={int((y_eval==i).sum()):,} test={int((y_test_comments==i).sum()):,}",
+            flush=True,
+        )
+
+    tokenizer, model, sae, hookpoint_module, num_latents = _setup_models()
+    print(f"\nRepresentaciones SAE en streaming: num_latents={num_latents}", flush=True)
 
     all_results = {}
+    trained_runs = {}
+    classes = np.arange(NUM_CLASSES, dtype=np.int64)
+    scalers = {"last_token": StandardScaler(), "mean": StandardScaler()}
+    clf_comment = {}
+    for pooling in COMMENT_POOLINGS:
+        for bal_cfg in BALANCE_CONFIGS:
+            key = (pooling, bal_cfg["name"])
+            clf_comment[key] = SGDClassifier(
+                loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
+                random_state=RANDOM_STATE, average=True,
+            )
+
+    user_sums_train = {"last_token": {}, "mean": {}}
+    user_sums_eval = {"last_token": {}, "mean": {}}
+    us_mask = random_undersample_mask(y_train)
+    us_first_batch = True
+    train_class_weights_manual = calcular_pesos_clase_manual(y_train)
 
     # ==============================
     # A) NIVEL COMENTARIO
@@ -848,90 +1056,120 @@ def main():
     print("# A) CLASIFICACION A NIVEL DE COMENTARIO", flush=True)
     print("#" * 70, flush=True)
 
-    train_idx, eval_idx, test_idx = dividir_comentarios(labels, df, authors)
-    y_train_c = labels[train_idx]
-    y_eval_c = labels[eval_idx]
+    first_batch = True
+    for start, end, last_np, mean_np in _stream_sae_features(
+        df_train, tokenizer, model, sae, hookpoint_module, num_latents, pass_name="TRAIN"
+    ):
+        bs = end - start
+        yb = y_train[start:end]
+        feats_by_pooling = {"last_token": last_np, "mean": mean_np}
 
-    print(f"\nSplit comentarios: train={len(train_idx):,} eval={len(eval_idx):,} test={len(test_idx):,}")
-    for i, group in enumerate(AGE_GROUPS):
-        tr_n = int((y_train_c == i).sum())
-        ev_n = int((y_eval_c == i).sum())
-        print(f"  {group}: train={tr_n:,} eval={ev_n:,}")
+        scalers["last_token"].partial_fit(last_np)
+        scalers["mean"].partial_fit(mean_np)
+        batch_us_mask = us_mask[start:end]
 
-    # Pre-calcular pesos de clase manuales sobre el train set
-    train_class_weights_manual = calcular_pesos_clase_manual(y_train_c)
-
-    comment_features = {
-        "last_token": (last_token, train_idx, eval_idx),
-        "mean": (mean_token, train_idx, eval_idx),
-    }
-
-    for pooling_name in COMMENT_POOLINGS:
-        feats, tr_idx, ev_idx = comment_features[pooling_name]
-
-        # Fit scaler incremental en train (memmap grande)
-        print(f"\n  Ajustando StandardScaler para {pooling_name} (incremental)...")
-        scaler = StandardScaler()
-        scaler_batch = 8192
-        n_tr = len(tr_idx)
-        for sc_start in range(0, n_tr, scaler_batch):
-            sc_end = min(sc_start + scaler_batch, n_tr)
-            chunk = np.asarray(feats[tr_idx[sc_start:sc_end]], dtype=np.float32)
-            scaler.partial_fit(chunk)
-        print(f"    Scaler ajustado sobre {n_tr:,} muestras")
-
-        # --- Configuraciones de balanceo ---
-        for bal_cfg in BALANCE_CONFIGS:
-            if bal_cfg["name"] == "undersampling":
-                # Submuestrear al tamaño de la clase minoritaria (via indices)
-                us_idx = random_undersample_idx(y_train_c)
-                clf, metrics = entrenar_comentario(
-                    feats=feats, train_idx=tr_idx[us_idx], eval_idx=ev_idx,
-                    y_train=y_train_c[us_idx], y_eval=y_eval_c,
-                    class_weights=None,
-                    pooling_name=pooling_name, balance_name=bal_cfg["name"],
-                    scaler=scaler,
-                )
-            else:
-                if not bal_cfg["use_class_weights"]:
-                    cw = None
+        for pooling in COMMENT_POOLINGS:
+            feats_scaled = scalers[pooling].transform(feats_by_pooling[pooling].astype(np.float32))
+            for bal_cfg in BALANCE_CONFIGS:
+                key = (pooling, bal_cfg["name"])
+                if bal_cfg["name"] == "undersampling":
+                    if batch_us_mask.any():
+                        xb_us = feats_scaled[batch_us_mask]
+                        yb_us = yb[batch_us_mask]
+                        if us_first_batch:
+                            clf_comment[key].partial_fit(xb_us, yb_us, classes=classes)
+                        else:
+                            clf_comment[key].partial_fit(xb_us, yb_us)
                 else:
-                    cw = train_class_weights_manual
+                    cw = train_class_weights_manual if bal_cfg["use_class_weights"] else None
+                    sw = sample_weights_from_class_weights(yb, cw)
+                    if first_batch:
+                        clf_comment[key].partial_fit(feats_scaled, yb, classes=classes, sample_weight=sw)
+                    else:
+                        clf_comment[key].partial_fit(feats_scaled, yb, sample_weight=sw)
 
-                clf, metrics = entrenar_comentario(
-                    feats=feats, train_idx=tr_idx, eval_idx=ev_idx,
-                    y_train=y_train_c, y_eval=y_eval_c,
-                    class_weights=cw,
-                    pooling_name=pooling_name, balance_name=bal_cfg["name"],
-                    scaler=scaler,
-                )
+            if has_author:
+                batch_auth = authors_train[start:end]
+                feats = feats_by_pooling[pooling]
+                user_dict = user_sums_train[pooling]
+                for i in range(bs):
+                    auth = batch_auth[i]
+                    if auth not in user_dict:
+                        user_dict[auth] = [np.zeros(num_latents, dtype=np.float64), 0, int(yb[i])]
+                    entry = user_dict[auth]
+                    entry[0] += feats[i].astype(np.float64)
+                    entry[1] += 1
 
-            run_key = f"comentario_{pooling_name}_{bal_cfg['name']}"
-            all_results[run_key] = metrics
+        if batch_us_mask.any():
+            us_first_batch = False
+        first_batch = False
+        del last_np, mean_np
+
+    print(f"\nPass A completado: {len(y_train):,} muestras procesadas.", flush=True)
+
+    eval_preds = {key: [] for key in clf_comment}
+    print("\n" + "#" * 70, flush=True)
+    print("# PASS B: Streaming datos de evaluacion", flush=True)
+    print("#" * 70, flush=True)
+
+    for start, end, last_np, mean_np in _stream_sae_features(
+        df_eval, tokenizer, model, sae, hookpoint_module, num_latents, pass_name="EVAL"
+    ):
+        bs = end - start
+        feats_by_pooling = {"last_token": last_np, "mean": mean_np}
+
+        for key, clf in clf_comment.items():
+            pooling = key[0]
+            feats_scaled = scalers[pooling].transform(feats_by_pooling[pooling].astype(np.float32))
+            eval_preds[key].append(clf.predict(feats_scaled))
+
+        if has_author:
+            yb = y_eval[start:end]
+            batch_auth = authors_eval[start:end]
+            for pooling in COMMENT_POOLINGS:
+                feats = feats_by_pooling[pooling]
+                user_dict = user_sums_eval[pooling]
+                for i in range(bs):
+                    auth = batch_auth[i]
+                    if auth not in user_dict:
+                        user_dict[auth] = [np.zeros(num_latents, dtype=np.float64), 0, int(yb[i])]
+                    entry = user_dict[auth]
+                    entry[0] += feats[i].astype(np.float64)
+                    entry[1] += 1
+
+        del last_np, mean_np
+
+    for key in clf_comment:
+        pooling, balance = key
+        run_name = f"comentario_{pooling}_{balance}"
+        y_pred = np.concatenate(eval_preds[key])
+        metrics = evaluar(f"EVAL {run_name}", y_eval, y_pred)
+        all_results[run_name] = metrics
+        trained_runs[run_name] = {
+            "level": "comentario",
+            "pooling": pooling,
+            "clf": clf_comment[key],
+            "scaler": scalers[pooling],
+        }
+
+    del eval_preds
+    gc.collect()
 
     # ==============================
     # B) NIVEL USUARIO
     # ==============================
-    if has_author and authors is not None:
+    if has_author:
         print("\n" + "#" * 70)
         print("# B) CLASIFICACION A NIVEL DE USUARIO")
         print("#" * 70)
 
-        train_auth, eval_auth, test_auth = dividir_usuarios(df)
         print(f"\nSplit usuarios: train={len(train_auth):,} eval={len(eval_auth):,} test={len(test_auth):,}")
 
-        user_features = {
-            "mean_of_last": last_token,
-            "mean_of_mean": mean_token,
-        }
-
         for pooling_name in USER_POOLINGS:
-            feats = user_features[pooling_name]
-
-            # Pre-agregar features por usuario (una sola vez por pooling)
+            comment_pooling = "last_token" if pooling_name == "mean_of_last" else "mean"
             print(f"\n  Agregando features por usuario para {pooling_name}...")
-            X_u_train, y_u_train = _agregar_por_usuario(authors, feats, labels, set(train_auth))
-            X_u_eval, y_u_eval = _agregar_por_usuario(authors, feats, labels, set(eval_auth))
+            X_u_train, y_u_train = _build_user_arrays(user_sums_train[comment_pooling], num_latents)
+            X_u_eval, y_u_eval = _build_user_arrays(user_sums_eval[comment_pooling], num_latents)
 
             print(f"  Usuarios train: {len(y_u_train):,}")
             for i, group in enumerate(AGE_GROUPS):
@@ -986,6 +1224,66 @@ def main():
                 y_pred = clf.predict(X_ev_n)
                 metrics = evaluar(f"EVAL {run_name}", y_u_eval, y_pred)
                 all_results[run_name] = metrics
+                trained_runs[run_name] = {
+                    "level": "usuario",
+                    "pooling": pooling_name,
+                    "comment_pooling": comment_pooling,
+                    "clf": clf,
+                    "scaler": u_scaler,
+                }
+
+    best_run, best_eval_metrics = _select_best_run(all_results)
+    best_artifact = trained_runs[best_run]
+
+    print("\n" + "=" * 70, flush=True)
+    print("MEJOR MODELO EN EVAL", flush=True)
+    print("=" * 70, flush=True)
+    print(
+        f"{best_run} | F1 macro={best_eval_metrics['f1_macro']:.4f} | "
+        f"Recall macro={best_eval_metrics['recall_macro']:.4f} | "
+        f"Precision macro={best_eval_metrics['precision_macro']:.4f}",
+        flush=True,
+    )
+
+    print("\n" + "#" * 70, flush=True)
+    print("# PASS C: Streaming datos de test del mejor modelo", flush=True)
+    print("#" * 70, flush=True)
+
+    if best_artifact["level"] == "comentario":
+        test_preds = []
+        for _start, _end, last_np, mean_np in _stream_sae_features(
+            df_test, tokenizer, model, sae, hookpoint_module, num_latents, pass_name="TEST"
+        ):
+            test_feats = last_np if best_artifact["pooling"] == "last_token" else mean_np
+            X_test = best_artifact["scaler"].transform(test_feats.astype(np.float32))
+            test_preds.append(best_artifact["clf"].predict(X_test))
+        y_test = y_test_comments
+        y_test_pred = np.concatenate(test_preds)
+    else:
+        user_sums_test = {}
+        for start, end, last_np, mean_np in _stream_sae_features(
+            df_test, tokenizer, model, sae, hookpoint_module, num_latents, pass_name="TEST"
+        ):
+            batch_auth = authors_test[start:end]
+            batch_labels = y_test_comments[start:end]
+            feats = last_np if best_artifact["comment_pooling"] == "last_token" else mean_np
+            for i in range(end - start):
+                auth = batch_auth[i]
+                if auth not in user_sums_test:
+                    user_sums_test[auth] = [np.zeros(num_latents, dtype=np.float64), 0, int(batch_labels[i])]
+                entry = user_sums_test[auth]
+                entry[0] += feats[i].astype(np.float64)
+                entry[1] += 1
+        X_u_test, y_test = _build_user_arrays(user_sums_test, num_latents)
+        X_u_test = best_artifact["scaler"].transform(X_u_test)
+        y_test_pred = best_artifact["clf"].predict(X_u_test)
+
+    best_test_metrics = evaluar(f"TEST {best_run}", y_test, y_test_pred)
+
+    del model, tokenizer, sae
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    gc.collect()
 
     # ==============================
     # RESUMEN FINAL
@@ -1001,10 +1299,23 @@ def main():
         print(f"{key:<45} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
               f"{m['f1_macro']:.4f} {f1_vals}")
 
-    # (No se guarda resumen a disco para ahorrar almacenamiento)
+    summary_path = os.path.join(OUTPUT_DIR, "resultados_resumen.json")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump({
+            "selection_metric_order": ["f1_macro", "recall_macro", "precision_macro"],
+            "eval_results": all_results,
+            "best_run_on_eval": {
+                "name": best_run,
+                "level": best_artifact["level"],
+                "pooling": best_artifact["pooling"],
+                "eval_metrics": best_eval_metrics,
+                "test_metrics": best_test_metrics,
+            },
+        }, f, ensure_ascii=False, indent=2)
+    print(f"\nResumen guardado en: {summary_path}")
 
     print("\n" + "=" * 70)
-    print("COMPLETADO - Test reservado para uso futuro")
+    print("COMPLETADO - Mejor modelo evaluado tambien en test")
     print("=" * 70)
 
 

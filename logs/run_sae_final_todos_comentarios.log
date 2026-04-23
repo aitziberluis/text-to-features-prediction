@@ -1,0 +1,118 @@
+[2026-04-19 16:37:22] PASO 0: Borrar splits antiguos para forzar regeneracion
+[2026-04-19 16:37:22] Splits borrados.
+[2026-04-19 16:37:22] PASO 1: Entrenamiento SAE (sae_gpt.py)
+[2026-04-19 16:37:22]   Device: cuda:0
+[2026-04-19 16:37:22]   Checkpoint dir: /hdd/aitziber.l/TFM/sae-ckpts/sae-gpt2-comments
+Cargando dataset de todos los comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+Tamaño del dataset (todos los comentarios): 17639864
+Cargando tokenizer y modelo...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+`torch_dtype` is deprecated! Use `dtype` instead!
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights:  96%|█████████▌| 142/148 [00:00<00:00, 1407.13it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1080.84it/s]
+Cargando dataset tokenizado desde data/tokenized_gpt2 ...
+Configurando SAE...
+Dimensión oculta detectada para GPT-2: d_in=768
+[autotune] batch=8 | pico VRAM(fwd)=0.74 GiB (1.6%) | est. train ~5%
+[autotune] batch=16 | pico VRAM(fwd)=1.26 GiB (2.7%) | est. train ~8%
+[autotune] batch=32 | pico VRAM(fwd)=2.30 GiB (4.9%) | est. train ~15%
+[autotune] batch=64 | pico VRAM(fwd)=4.39 GiB (9.3%) | est. train ~28%
+[autotune] batch=128 | pico VRAM(fwd)=8.56 GiB (18.1%) | est. train ~54%
+[autotune] batch=256 | pico VRAM(fwd)=16.91 GiB (35.8%) | est. train ~107%
+Batch size usado para entrenamiento SAE: 256
+Total tokens: 9,031,610,368 | checkpoint cada 20% = 1,806,322,073 tokens
+Checkpoints se guardarán en: /hdd/aitziber.l/TFM/sae-ckpts/sae-gpt2-comments
+Configurando entrenamiento de la SAE...
+Representaciones SAE/GPT guardadas cada 0 steps
+Checkpoint SAE guardado cada 1806322073 tokens
+Iniciando entrenamiento de la SAE...
+[SAE] step=214851 | progreso=1.2% | loss=0.0905 | +1.0h
+[SAE] step=407858 | progreso=2.3% | loss=0.0709 | +1.0h
+[SAE] step=608318 | progreso=3.4% | loss=0.0149 | +1.0h
+[SAE] step=816488 | progreso=4.6% | loss=0.0453 | +1.0h
+[SAE] step=1024658 | progreso=5.8% | loss=0.0505 | +1.0h
+[SAE] step=1217665 | progreso=6.9% | loss=0.0285 | +1.0h
+[SAE] step=1440227 | progreso=8.2% | loss=0.0454 | +1.0h
+[SAE] step=1663046 | progreso=9.4% | loss=0.0604 | +1.0h
+[SAE] step=1885608 | progreso=10.7% | loss=0.0443 | +1.0h
+[SAE] step=2108170 | progreso=12.0% | loss=0.0402 | +1.0h
+[SAE] step=2330732 | progreso=13.2% | loss=0.0448 | +1.0h
+[SAE] step=2553294 | progreso=14.5% | loss=0.0428 | +1.0h
+[SAE] step=2775856 | progreso=15.7% | loss=0.0345 | +1.0h
+[SAE] step=2998418 | progreso=17.0% | loss=0.0372 | +1.0h
+[SAE] step=3220980 | progreso=18.3% | loss=0.0403 | +1.0h
+[SAE] step=3443285 | progreso=19.5% | loss=0.0427 | +1.0h
+[SAE] step=3665333 | progreso=20.8% | loss=0.0402 | +1.0h
+[SAE] step=3887895 | progreso=22.0% | loss=0.0412 | +1.0h
+[SAE] step=4111228 | progreso=23.3% | loss=0.0383 | +1.0h
+[SAE] step=4335332 | progreso=24.6% | loss=0.0393 | +1.0h
+[SAE] step=4559179 | progreso=25.8% | loss=0.0237 | +1.0h
+[SAE] step=4782769 | progreso=27.1% | loss=0.0303 | +1.0h
+[SAE] step=4980145 | progreso=28.2% | loss=0.0353 | +1.0h
+[SAE] step=5187030 | progreso=29.4% | loss=0.0459 | +1.0h
+[SAE] step=5407022 | progreso=30.7% | loss=0.0302 | +1.0h
+[SAE] step=5626500 | progreso=31.9% | loss=0.0409 | +1.0h
+[SAE] step=5848805 | progreso=33.2% | loss=0.0421 | +1.0h
+[SAE] step=6072395 | progreso=34.4% | loss=0.0421 | +1.0h
+[SAE] step=6296242 | progreso=35.7% | loss=0.0343 | +1.0h
+[SAE] step=6517776 | progreso=36.9% | loss=0.0350 | +1.0h
+[SAE] step=6741623 | progreso=38.2% | loss=0.0519 | +1.0h
+[SAE] step=6964185 | progreso=39.5% | loss=0.0380 | +1.0h
+[SAE] step=7184177 | progreso=40.7% | loss=0.0447 | +1.0h
+[SAE] step=7404169 | progreso=42.0% | loss=0.0466 | +1.0h
+[SAE] step=7624161 | progreso=43.2% | loss=0.0433 | +1.0h
+[SAE] step=7844153 | progreso=44.5% | loss=0.0320 | +1.0h
+[SAE] step=8064145 | progreso=45.7% | loss=0.0572 | +1.0h
+[SAE] step=8284137 | progreso=47.0% | loss=0.0325 | +1.0h
+[SAE] step=8504129 | progreso=48.2% | loss=0.0371 | +1.0h
+[SAE] step=8723864 | progreso=49.5% | loss=0.0420 | +1.0h
+[SAE] step=8944113 | progreso=50.7% | loss=0.0358 | +1.0h
+[SAE] step=9163848 | progreso=51.9% | loss=0.0404 | +1.0h
+[SAE] step=9383326 | progreso=53.2% | loss=0.0312 | +1.0h
+[SAE] step=9602804 | progreso=54.4% | loss=0.0240 | +1.0h
+[SAE] step=9822796 | progreso=55.7% | loss=0.0527 | +1.0h
+[SAE] step=10042531 | progreso=56.9% | loss=0.0297 | +1.0h
+[SAE] step=10262009 | progreso=58.2% | loss=0.0380 | +1.0h
+[SAE] step=10481230 | progreso=59.4% | loss=0.0406 | +1.0h
+[SAE] step=10700451 | progreso=60.7% | loss=0.0372 | +1.0h
+[SAE] step=10919672 | progreso=61.9% | loss=0.0436 | +1.0h
+[SAE] step=11139150 | progreso=63.1% | loss=0.0410 | +1.0h
+[SAE] step=11358371 | progreso=64.4% | loss=0.0361 | +1.0h
+[SAE] step=11577592 | progreso=65.6% | loss=0.0387 | +1.0h
+[SAE] step=11798612 | progreso=66.9% | loss=0.0407 | +1.0h
+[SAE] step=12020660 | progreso=68.1% | loss=0.0389 | +1.0h
+[SAE] step=12242965 | progreso=69.4% | loss=0.0377 | +1.0h
+[SAE] step=12466041 | progreso=70.7% | loss=0.0401 | +1.0h
+[SAE] step=12689888 | progreso=71.9% | loss=0.0384 | +1.0h
+[SAE] step=12913735 | progreso=73.2% | loss=0.0372 | +1.0h
+[SAE] step=13137582 | progreso=74.5% | loss=0.0379 | +1.0h
+[SAE] step=13358859 | progreso=75.7% | loss=0.0395 | +1.0h
+[SAE] step=13578337 | progreso=77.0% | loss=0.0361 | +1.0h
+[SAE] step=13798329 | progreso=78.2% | loss=0.0384 | +1.0h
+[SAE] step=14018064 | progreso=79.5% | loss=0.0380 | +1.0h
+[SAE] step=14237799 | progreso=80.7% | loss=0.0360 | +1.0h
+[SAE] step=14457791 | progreso=82.0% | loss=0.0348 | +1.0h
+[SAE] step=14677526 | progreso=83.2% | loss=0.0342 | +1.0h
+[SAE] step=14898546 | progreso=84.5% | loss=0.0379 | +1.0h
+[SAE] step=15122393 | progreso=85.7% | loss=0.0387 | +1.0h
+[SAE] step=15345983 | progreso=87.0% | loss=0.0372 | +1.0h
+[SAE] step=15569830 | progreso=88.3% | loss=0.0390 | +1.0h
+[SAE] step=15793420 | progreso=89.5% | loss=0.0392 | +1.0h
+[SAE] step=16013926 | progreso=90.8% | loss=0.0380 | +1.0h
+[SAE] step=16233661 | progreso=92.0% | loss=0.0398 | +1.0h
+[SAE] step=16454681 | progreso=93.3% | loss=0.0330 | +1.0h
+[SAE] step=16677243 | progreso=94.5% | loss=0.0343 | +1.0h
+[SAE] step=16896464 | progreso=95.8% | loss=0.0381 | +1.0h
+[SAE] step=17115171 | progreso=97.0% | loss=0.0387 | +1.0h
+[SAE] step=17333621 | progreso=98.3% | loss=0.0398 | +1.0h
+[SAE] step=17552328 | progreso=99.5% | loss=0.0339 | +1.0h
+Guardando SAE final en /hdd/aitziber.l/TFM/sae-ckpts/sae-gpt2-comments ...
+Entrenamiento de SAE finalizado.
+
+A continuación, el siguiente paso será usar esta SAE para extraer
+características de los textos (códigos latentes) y entrenar un
+clasificador supervisado de género (por ejemplo, una regresión
+logística o una pequeña red neuronal) usando esas características.

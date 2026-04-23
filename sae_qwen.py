@@ -13,9 +13,7 @@ from preprocesamiento import cargar_comentarios
 dotenv.load_dotenv()
 
 
-# =====================
 # CONFIGURACIÓN GENERAL
-# =====================
 
 MODEL = "Qwen/Qwen3.5-2B"  # modelo base Qwen
 CONTEXT_LEN = int(os.getenv("SAE_CONTEXT_LEN", "512"))
@@ -170,9 +168,8 @@ def detectar_batch_size_optimo(
         torch.cuda.empty_cache()
 
 
-# =====================
+
 # CARGA Y PREPARACIÓN DE DATOS
-# =====================
 
 
 def cargar_dataset_texto() -> Dataset:
@@ -193,9 +190,7 @@ def cargar_dataset_texto() -> Dataset:
     return dataset
 
 
-# =====================
 # TOKENIZACIÓN Y MODELO
-# =====================
 
 
 def preparar_modelo_y_datos(dataset: Dataset):
@@ -258,9 +253,7 @@ def preparar_modelo_y_datos(dataset: Dataset):
     return tokenizer, model, tokenized
 
 
-# =====================
 # CONFIGURACIÓN Y ENTRENAMIENTO DE LA SAE
-# =====================
 
 
 def entrenar_sae(dataset: Dataset):

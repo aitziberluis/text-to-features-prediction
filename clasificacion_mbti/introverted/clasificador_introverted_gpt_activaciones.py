@@ -461,6 +461,8 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
     bal_acc = balanced_accuracy_score(y_true, y_pred)
     f1_mac = f1_score(y_true, y_pred, average="macro", zero_division=0)
     f1_w = f1_score(y_true, y_pred, average="weighted", zero_division=0)
+    prec_macro = precision_score(y_true, y_pred, average="macro", zero_division=0)
+    rec_macro = recall_score(y_true, y_pred, average="macro", zero_division=0)
 
     all_labels = list(range(NUM_CLASSES))
     prec_c = precision_score(y_true, y_pred, average=None, labels=all_labels, zero_division=0)
@@ -468,7 +470,11 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
     f1_c = f1_score(y_true, y_pred, average=None, labels=all_labels, zero_division=0)
 
     print(f"\n=== {nombre} ===")
-    print(f"Accuracy: {acc:.4f} | Balanced Acc: {bal_acc:.4f} | F1 macro: {f1_mac:.4f} | F1 weighted: {f1_w:.4f}")
+    print(
+        f"Accuracy: {acc:.4f} | Balanced Acc: {bal_acc:.4f} | "
+        f"Precision macro: {prec_macro:.4f} | Recall macro: {rec_macro:.4f} | "
+        f"F1 macro: {f1_mac:.4f} | F1 weighted: {f1_w:.4f}"
+    )
     for i, cn in enumerate(CLASS_NAMES):
         print(f"  {cn:>8s}: prec={prec_c[i]:.4f} rec={rec_c[i]:.4f} f1={f1_c[i]:.4f}")
     print(classification_report(y_true, y_pred, target_names=CLASS_NAMES, labels=all_labels, zero_division=0))
@@ -477,6 +483,7 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
 
     result = {
         "accuracy": float(acc), "balanced_accuracy": float(bal_acc),
+        "precision_macro": float(prec_macro), "recall_macro": float(rec_macro),
         "f1_macro": float(f1_mac), "f1_weighted": float(f1_w),
     }
     for i, cn in enumerate(CLASS_NAMES):
@@ -485,6 +492,22 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
         result[f"f1_{cn}"] = float(f1_c[i])
 
     return result
+
+
+def _selection_score(metrics: Dict[str, float]) -> Tuple[float, float, float]:
+    return (
+        float(metrics.get("f1_macro", float("-inf"))),
+        float(metrics.get("recall_macro", float("-inf"))),
+        float(metrics.get("precision_macro", float("-inf"))),
+    )
+
+
+def _select_best_run(all_results: Dict[str, Dict[str, float]]) -> Tuple[str, Dict[str, float]]:
+    best_name, best_metrics = max(
+        all_results.items(),
+        key=lambda item: (_selection_score(item[1]), item[0]),
+    )
+    return best_name, best_metrics
 
 
 # =====================
@@ -642,6 +665,8 @@ def main():
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     all_results = {}
+    trained_runs = {}
+    train_auth = eval_auth = test_auth = None
 
     # ==============================
     # A) NIVEL COMENTARIO
@@ -708,6 +733,12 @@ def main():
 
             run_key = f"comentario_{pooling_name}_{bal_cfg['name']}"
             all_results[run_key] = metrics
+            trained_runs[run_key] = {
+                "level": "comentario",
+                "pooling": pooling_name,
+                "clf": clf,
+                "scaler": scaler,
+            }
 
     # ==============================
     # B) NIVEL USUARIO
@@ -785,6 +816,12 @@ def main():
 
                 run_key = run_name
                 all_results[run_key] = metrics
+                trained_runs[run_key] = {
+                    "level": "usuario",
+                    "pooling": pooling_name,
+                    "clf": clf,
+                    "scaler": u_scaler,
+                }
 
 
             del X_u_train, y_u_train, X_u_eval, y_u_eval, X_tr_n, X_ev_n
@@ -804,14 +841,54 @@ def main():
         print(f"{key:<45} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
               f"{m['f1_macro']:.4f} {f1_vals}")
 
+    best_run, best_eval_metrics = _select_best_run(all_results)
+    best_artifact = trained_runs[best_run]
+
+    print("\n" + "=" * 70)
+    print("MEJOR MODELO EN EVAL")
+    print("=" * 70)
+    print(
+        f"{best_run} | F1 macro={best_eval_metrics['f1_macro']:.4f} | "
+        f"Recall macro={best_eval_metrics['recall_macro']:.4f} | "
+        f"Precision macro={best_eval_metrics['precision_macro']:.4f}"
+    )
+
+    if best_artifact["level"] == "comentario":
+        test_feats = last_token if best_artifact["pooling"] == "last_token" else mean_token
+        y_test = labels[test_idx]
+        test_preds = []
+        for start in range(0, len(test_idx), SCALER_BATCH_SIZE):
+            end = min(start + SCALER_BATCH_SIZE, len(test_idx))
+            X_test = np.asarray(test_feats[test_idx[start:end]], dtype=np.float32)
+            X_test = best_artifact["scaler"].transform(X_test)
+            test_preds.append(best_artifact["clf"].predict(X_test))
+        y_test_pred = np.concatenate(test_preds)
+    else:
+        test_feats = last_token if best_artifact["pooling"] == "mean_of_last" else mean_token
+        X_u_test, y_test = _agregar_por_usuario(authors, test_feats, labels, set(test_auth))
+        X_u_test = best_artifact["scaler"].transform(X_u_test)
+        y_test_pred = best_artifact["clf"].predict(X_u_test)
+
+    best_test_metrics = evaluar(f"TEST {best_run}", y_test, y_test_pred)
+
     # Guardar resumen JSON
     summary_path = os.path.join(OUTPUT_DIR, "resultados_resumen.json")
     with open(summary_path, "w", encoding="utf-8") as f:
-        json.dump(all_results, f, ensure_ascii=False, indent=2)
+        json.dump({
+            "selection_metric_order": ["f1_macro", "recall_macro", "precision_macro"],
+            "eval_results": all_results,
+            "best_run_on_eval": {
+                "name": best_run,
+                "level": best_artifact["level"],
+                "pooling": best_artifact["pooling"],
+                "eval_metrics": best_eval_metrics,
+                "test_metrics": best_test_metrics,
+            },
+        }, f, ensure_ascii=False, indent=2)
     print(f"\nResumen guardado en: {summary_path}")
 
     print("\n" + "=" * 70)
-    print("COMPLETADO - Test reservado para uso futuro")
+    print("COMPLETADO - Mejor modelo evaluado tambien en test")
     print("=" * 70)
 
 

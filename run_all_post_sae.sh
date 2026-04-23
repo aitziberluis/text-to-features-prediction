@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Pipeline completo: entrenar SAE + clasificadores + postanalisis SAE.
+# Pipeline secuencial posterior al entrenamiento de la SAE.
+# Ejecuta clasificadores SAE/GPT e interpretabilidad, pero no reentrena la SAE.
 #
 # Uso:
-#   nohup bash run_all.sh > /dev/null 2>&1 &
+#   nohup bash run_all_post_sae.sh > /dev/null 2>&1 &
 
 set -euo pipefail
 
@@ -15,22 +16,20 @@ export WANDB_MODE=disabled
 ROOT_DIR="/home/aitziber.l/TFM"
 HDD_DIR="/hdd/aitziber.l"
 LOG_DIR="$ROOT_DIR/logs"
-MASTER_LOG="$LOG_DIR/run_all_$(date +%Y%m%d_%H%M%S).log"
-LATEST_LINK="$LOG_DIR/run_all_latest.log"
+MASTER_LOG="$LOG_DIR/run_all_post_sae_$(date +%Y%m%d_%H%M%S).log"
+LATEST_LINK="$LOG_DIR/run_all_post_sae_latest.log"
 
 mkdir -p "$LOG_DIR" "$HDD_DIR"
 
 cd "$ROOT_DIR"
 
 ln -sfn "$MASTER_LOG" "$LATEST_LINK"
-printf '%s\n' "$$" > "$LOG_DIR/run_all.pid"
+printf '%s\n' "$$" > "$LOG_DIR/run_all_post_sae.pid"
 
 timestamp() { date '+%Y-%m-%d %H:%M:%S'; }
 log() { printf '[%s] %s\n' "$(timestamp)" "$*" | tee -a "$MASTER_LOG"; }
 
-# PASO 0: BORRAR SPLITS ANTIGUOS
 log "PASO 0: Borrar splits antiguos para forzar regeneracion"
-
 for SPLIT_DIR in data/splits_*; do
     if [[ -d "$SPLIT_DIR" ]]; then
         rm -rf "$SPLIT_DIR"
@@ -39,50 +38,14 @@ for SPLIT_DIR in data/splits_*; do
 done
 log "Splits borrados."
 
-# PASO 1: ENTRENAR SAE
-log "PASO 1: Entrenamiento SAE (sae_gpt.py)"
-
-SAE_HDD_DIR="/hdd/aitziber.l/TFM/sae-ckpts/sae-gpt2-comments"
-SAE_LOCAL_DIR="$ROOT_DIR/sae-ckpts/sae-gpt2-comments"
-
-rm -rf "$SAE_HDD_DIR" "$SAE_LOCAL_DIR"
-mkdir -p "$SAE_LOCAL_DIR"
-
-SAE_START=$SECONDS
-
-export SAE_DEVICE="cuda:0"
-export SAE_CHECKPOINT_DIR="$SAE_HDD_DIR"
-export SAE_SAVE_REPR_EVERY_N_STEPS=0
-
-log "  Device: $SAE_DEVICE"
-log "  Checkpoint dir: $SAE_CHECKPOINT_DIR"
-
-stdbuf -oL -eL python3 -u sae_gpt.py 2>&1 | tee -a "$MASTER_LOG"
-SAE_EXIT=${PIPESTATUS[0]}
-SAE_ELAPSED=$(( SECONDS - SAE_START ))
-SAE_H=$(( SAE_ELAPSED / 3600 ))
-SAE_M=$(( (SAE_ELAPSED % 3600) / 60 ))
-
-if [[ $SAE_EXIT -ne 0 ]]; then
-    log "ERROR: sae_gpt.py fallo con exit code $SAE_EXIT (${SAE_H}h ${SAE_M}m)"
-    exit 1
-fi
-log "SAE entrenada OK (${SAE_H}h ${SAE_M}m)"
-
-if [[ -f "$SAE_HDD_DIR/sae.safetensors" ]]; then
-    cp "$SAE_HDD_DIR/sae.safetensors" "$SAE_LOCAL_DIR/"
-    cp "$SAE_HDD_DIR/cfg.json" "$SAE_LOCAL_DIR/"
-    log "  Checkpoint copiado a $SAE_LOCAL_DIR"
-    rm -f "$SAE_HDD_DIR"/repr_step*.pt 2>/dev/null
-    rm -rf "$SAE_HDD_DIR"
-    log "  Checkpoint HDD limpiado"
-else
-    log "ERROR: No se encontro sae.safetensors en $SAE_HDD_DIR"
-    exit 1
-fi
-
-# PASO 2: CLASIFICADORES + INTERPRETABILIDAD SAE
-log "PASO 2: clasificadores + interpretabilidad SAE"
+log "PASO 1: Limpiar residuos antiguos de caches SAE en disco"
+for TRAIT in genero edad introverted intuitive thinking perceiving; do
+    SAE_CACHE_DIR="$HDD_DIR/activaciones_sae_gpt2_${TRAIT}"
+    if [[ -e "$SAE_CACHE_DIR" ]]; then
+        rm -rf "$SAE_CACHE_DIR"
+        log "  Eliminado: $SAE_CACHE_DIR"
+    fi
+done
 
 run_script() {
     local SCRIPT_PATH="$1"
@@ -113,11 +76,13 @@ run_script() {
         if [[ -n "$TRAIT" ]]; then
             local SAE_CACHE_DIR="$HDD_DIR/activaciones_sae_gpt2_${TRAIT}"
             rm -rf "$SAE_CACHE_DIR"
-            log "  Cache SAE previa eliminada: $SAE_CACHE_DIR"
+            log "  Ejecucion SAE en streaming; cache antigua eliminada: $SAE_CACHE_DIR"
         fi
     elif [[ "$SCRIPT_PATH" == *"interpretabilidad_"*"_sae.py" ]]; then
         if [[ -n "$TRAIT" ]]; then
-            CLEANUP_DIRS+=("$HDD_DIR/activaciones_sae_gpt2_${TRAIT}")
+            local SAE_CACHE_DIR="$HDD_DIR/activaciones_sae_gpt2_${TRAIT}"
+            rm -rf "$SAE_CACHE_DIR"
+            log "  Interpretabilidad SAE en streaming; cache antigua eliminada: $SAE_CACHE_DIR"
         fi
     fi
 
@@ -168,6 +133,7 @@ OK=0
 FAIL=0
 GLOBAL_START=$SECONDS
 
+log "PASO 2: Clasificadores + interpretabilidad SAE/GPT (sin entrenar SAE)"
 for i in "${!SCRIPTS[@]}"; do
     IDX=$(( i + 1 ))
     log "[$IDX/$TOTAL] ${SCRIPTS[$i]}"
@@ -183,4 +149,4 @@ GLOBAL_ELAPSED=$(( SECONDS - GLOBAL_START ))
 GLOBAL_H=$(( GLOBAL_ELAPSED / 3600 ))
 GLOBAL_M=$(( (GLOBAL_ELAPSED % 3600) / 60 ))
 
-log "COMPLETADO: $OK/$TOTAL exitosos, $FAIL fallidos (${GLOBAL_H}h ${GLOBAL_M}m clasificadores)"
+log "COMPLETADO: $OK/$TOTAL exitosos, $FAIL fallidos (${GLOBAL_H}h ${GLOBAL_M}m pipeline post-SAE)"
