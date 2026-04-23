@@ -1,0 +1,1 @@
+{"d_in": 768, "num_latents": 16384, "hookpoint": "transformer.h.8", "k": 64, "transcode": false}

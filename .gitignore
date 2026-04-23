@@ -7,5 +7,4 @@ __pycache__/
 # Training artifacts and logs
 #logs/
 wandb/
-sae-ckpts/
 modelos/
