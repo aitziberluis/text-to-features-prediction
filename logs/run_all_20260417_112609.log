@@ -1,12 +1,0 @@
-[2026-04-17 11:26:09] PASO 0: Borrar splits antiguos para forzar regeneracion
-[2026-04-17 11:26:09] Splits borrados.
-[2026-04-17 11:26:09] PASO 1: Entrenamiento SAE (sae_gpt.py)
-[2026-04-17 11:26:09]   Device: cuda:0
-[2026-04-17 11:26:09]   Checkpoint dir: /hdd/aitziber.l/TFM/sae-ckpts/sae-gpt2-comments
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-`torch_dtype` is deprecated! Use `dtype` instead!
-Cargando dataset de todos los comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-Tamaño del dataset (todos los comentarios): 17639864
-Cargando tokenizer y modelo...
-Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  39%|███▉      | 58/148 [00:00<00:00, 546.84it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 570.42it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 566.34it/s]
