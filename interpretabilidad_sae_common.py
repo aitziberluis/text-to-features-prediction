@@ -173,9 +173,61 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
     with open(md_path, "w", encoding="utf-8") as handle:
         handle.write(_render_markdown(results))
 
-    print(f"Resumen JSON guardado en: {json_path}")
-    print(f"Resumen Markdown guardado en: {md_path}")
+    # Imprimir resultados completos al stdout (queda en el log)
+    _print_interpretabilidad_results(results)
+    print(f"\nResumen JSON guardado en: {json_path}", flush=True)
+    print(f"Resumen Markdown guardado en: {md_path}", flush=True)
     return results
+
+
+def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
+    """Imprime al stdout un resumen legible de la interpretabilidad SAE."""
+    print("\n" + "=" * 70, flush=True)
+    print(f"INTERPRETABILIDAD SAE - {results['task_name']}", flush=True)
+    print("=" * 70, flush=True)
+    print(f"Modo de almacenamiento : {results['storage_mode']}")
+    print(f"Pooling analizado      : {results['pooling']}")
+    print(f"Comentarios train/eval : {results['num_comments_train']:,} / {results['num_comments_eval']:,}")
+    print(f"Usuarios train/eval    : {results['num_users_train']:,} / {results['num_users_eval']:,}")
+    print(f"Latentes SAE           : {results['num_latents']:,}")
+
+    metrics = results.get("metrics", {}) or {}
+    print("\n--- Metricas en EVAL (nivel usuario, mean_of_mean) ---")
+    print(
+        f"Accuracy={metrics.get('accuracy', float('nan')):.4f} | "
+        f"BalancedAcc={metrics.get('balanced_accuracy', float('nan')):.4f} | "
+        f"F1 macro={metrics.get('f1_macro', float('nan')):.4f} | "
+        f"F1 weighted={metrics.get('f1_weighted', float('nan')):.4f}"
+    )
+    for class_name in results.get("class_names", []):
+        p = metrics.get(f"precision_{class_name}", float("nan"))
+        r = metrics.get(f"recall_{class_name}", float("nan"))
+        f = metrics.get(f"f1_{class_name}", float("nan"))
+        print(f"  {class_name:>10}: precision={p:.4f} recall={r:.4f} f1={f:.4f}")
+
+    ablation = (results.get("ablation") or {}).get("ablations") or {}
+    if ablation:
+        print("\n--- Ablacion (drops vs baseline) ---")
+        print(f"{'Top':>5} {'BalAccDrop':>12} {'F1macDrop':>12} {'BalAccDropRnd':>15} {'F1macDropRnd':>14}")
+        for size, info in ablation.items():
+            print(
+                f"{size:>5} {info.get('balanced_accuracy_drop', float('nan')):>12.4f} "
+                f"{info.get('f1_macro_drop', float('nan')):>12.4f} "
+                f"{info.get('balanced_accuracy_drop_random', float('nan')):>15.4f} "
+                f"{info.get('f1_macro_drop_random', float('nan')):>14.4f}"
+            )
+
+    top_by_class = results.get("top_latents_by_class") or {}
+    if top_by_class:
+        print("\n--- Top latentes por clase ---")
+        for class_name, entries in top_by_class.items():
+            print(f"\n[Clase {class_name}] top {min(len(entries), 10)} latentes:")
+            for entry in entries[:10]:
+                words = ", ".join(w["token"] for w in entry.get("top_words", [])[:8])
+                print(
+                    f"  L{entry['latent_id']:>6}  score={entry['class_score']:+.4f}  "
+                    f"coef={entry['raw_coefficient']:+.4f}  palabras=[{words}]"
+                )
 
 
 def _load_dataframe(config: SaeInterpretabilityConfig) -> pd.DataFrame:

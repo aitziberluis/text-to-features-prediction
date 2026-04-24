@@ -1,0 +1,569 @@
+[2026-04-23 12:17:51] PASO 0: Borrar splits antiguos para forzar regeneracion
+[2026-04-23 12:17:51] Splits borrados.
+[2026-04-23 12:17:51] PASO 1: Limpiar residuos antiguos de caches SAE en disco
+[2026-04-23 12:17:51] PASO 2: Clasificadores + interpretabilidad SAE/GPT (sin entrenar SAE)
+[2026-04-23 12:17:51] [1/18] clasificacion_genero/gpt_activaciones/clasificador_genero_sae_activaciones.py
+[2026-04-23 12:17:51] --- Iniciando clasificacion_genero/gpt_activaciones/clasificador_genero_sae_activaciones.py ---
+[2026-04-23 12:17:51]   Ejecucion SAE en streaming; cache antigua eliminada: /hdd/aitziber.l/activaciones_sae_gpt2_genero
+======================================================================
+CLASIFICADOR GENERO - REPRESENTACIONES SAE SOBRE GPT-2
+======================================================================
+
+============================================================
+PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con género por autor...
+   ✓ 17,639,863 comentarios con info de género
+
+4. Filtrando solo género conocido (m/f)...
+   ✓ 7,379,659 comentarios con género m/f
+   (Eliminados 10,260,204 con género unknown)
+
+5. Distribución por género:
+   m: 4,920,137 comentarios (66.7%)
+   f: 2,459,522 comentarios (33.3%)
+
+============================================================
+✓ Dataset preparado y listo para usar
+============================================================
+Generos presentes: {'m': 4920137, 'f': 2459522}
+Split de usuarios guardado en data/splits_genero_70_15_15/split_usuarios.npz
+
+Comentarios: train=5,264,573 eval=1,116,308 test=998,778
+  female: train=1,751,645 eval=394,212 test=313,665
+  male:   train=3,512,928 eval=722,096 test=685,113
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1308.29it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1302.28it/s]
+
+Representaciones SAE en streaming: num_latents=16384
+    Undersampling: min_count=1,751,645 (de {0: 1751645, 1: 3512928})
+
+######################################################################
+# A) CLASIFICACION A NIVEL DE COMENTARIO
+######################################################################
+  [TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32
+  [TRAIN  12.3%] step 20169/164518 (645,408/5,264,573) | batch=32
+  [TRAIN  24.5%] step 40231/164518 (1,287,392/5,264,573) | batch=32
+  [TRAIN  36.5%] step 60119/164518 (1,923,808/5,264,573) | batch=32
+  [TRAIN  48.6%] step 79897/164518 (2,556,704/5,264,573) | batch=32
+  [TRAIN  60.5%] step 99592/164518 (3,186,944/5,264,573) | batch=32
+  [TRAIN  72.4%] step 119145/164518 (3,812,640/5,264,573) | batch=32
+  [TRAIN  84.3%] step 138699/164518 (4,438,368/5,264,573) | batch=32
+  [TRAIN  96.2%] step 158322/164518 (5,066,304/5,264,573) | batch=32
+  [TRAIN 100.0%] step 164518/164518 (5,264,573/5,264,573) | batch=32
+
+Pass A completado: 5,264,573 muestras procesadas.
+
+######################################################################
+# PASS B: Streaming datos de evaluacion
+######################################################################
+  [EVAL   0.0%] step 1/34885 (32/1,116,308) | batch=32
+  [EVAL  70.7%] step 24677/34885 (789,664/1,116,308) | batch=32
+  [EVAL 100.0%] step 34885/34885 (1,116,308/1,116,308) | batch=32
+
+=== EVAL comentario_last_token_sin_balanceo ===
+Accuracy: 0.5270 | Balanced Acc: 0.5867 | Precision macro: 0.5906 | Recall macro: 0.5867 | F1 macro: 0.5266 | F1 weighted: 0.5223
+  female: prec=0.4116 rec=0.7897 f1=0.5411
+  male:   prec=0.7696 rec=0.3837 f1=0.5121
+              precision    recall  f1-score   support
+
+      female       0.41      0.79      0.54    394212
+        male       0.77      0.38      0.51    722096
+
+    accuracy                           0.53   1116308
+   macro avg       0.59      0.59      0.53   1116308
+weighted avg       0.64      0.53      0.52   1116308
+
+Confusion matrix:
+[[311290  82922]
+ [445050 277046]]
+
+=== EVAL comentario_last_token_balanceado ===
+Accuracy: 0.5396 | Balanced Acc: 0.5941 | Precision macro: 0.5956 | Recall macro: 0.5941 | F1 macro: 0.5395 | F1 weighted: 0.5380
+  female: prec=0.4185 rec=0.7800 f1=0.5447
+  male:   prec=0.7727 rec=0.4083 f1=0.5343
+              precision    recall  f1-score   support
+
+      female       0.42      0.78      0.54    394212
+        male       0.77      0.41      0.53    722096
+
+    accuracy                           0.54   1116308
+   macro avg       0.60      0.59      0.54   1116308
+weighted avg       0.65      0.54      0.54   1116308
+
+Confusion matrix:
+[[307471  86741]
+ [427239 294857]]
+
+=== EVAL comentario_last_token_undersampling ===
+Accuracy: 0.5616 | Balanced Acc: 0.6062 | Precision macro: 0.6030 | Recall macro: 0.6062 | F1 macro: 0.5613 | F1 weighted: 0.5646
+  female: prec=0.4313 rec=0.7582 f1=0.5498
+  male:   prec=0.7748 rec=0.4542 f1=0.5727
+              precision    recall  f1-score   support
+
+      female       0.43      0.76      0.55    394212
+        male       0.77      0.45      0.57    722096
+
+    accuracy                           0.56   1116308
+   macro avg       0.60      0.61      0.56   1116308
+weighted avg       0.65      0.56      0.56   1116308
+
+Confusion matrix:
+[[298872  95340]
+ [394101 327995]]
+
+=== EVAL comentario_mean_sin_balanceo ===
+Accuracy: 0.6359 | Balanced Acc: 0.6367 | Precision macro: 0.6256 | Recall macro: 0.6367 | F1 macro: 0.6231 | F1 weighted: 0.6435
+  female: prec=0.4881 rec=0.6395 f1=0.5536
+  male:   prec=0.7631 rec=0.6339 f1=0.6925
+              precision    recall  f1-score   support
+
+      female       0.49      0.64      0.55    394212
+        male       0.76      0.63      0.69    722096
+
+    accuracy                           0.64   1116308
+   macro avg       0.63      0.64      0.62   1116308
+weighted avg       0.67      0.64      0.64   1116308
+
+Confusion matrix:
+[[252086 142126]
+ [264371 457725]]
+
+=== EVAL comentario_mean_balanceado ===
+Accuracy: 0.6370 | Balanced Acc: 0.6431 | Precision macro: 0.6310 | Recall macro: 0.6431 | F1 macro: 0.6264 | F1 weighted: 0.6449
+  female: prec=0.4897 rec=0.6638 f1=0.5636
+  male:   prec=0.7722 rec=0.6223 f1=0.6892
+              precision    recall  f1-score   support
+
+      female       0.49      0.66      0.56    394212
+        male       0.77      0.62      0.69    722096
+
+    accuracy                           0.64   1116308
+   macro avg       0.63      0.64      0.63   1116308
+weighted avg       0.67      0.64      0.64   1116308
+
+Confusion matrix:
+[[261672 132540]
+ [272715 449381]]
+
+=== EVAL comentario_mean_undersampling ===
+Accuracy: 0.6232 | Balanced Acc: 0.6453 | Precision macro: 0.6333 | Recall macro: 0.6453 | F1 macro: 0.6182 | F1 weighted: 0.6310
+  female: prec=0.4778 rec=0.7205 f1=0.5746
+  male:   prec=0.7889 rec=0.5700 f1=0.6618
+              precision    recall  f1-score   support
+
+      female       0.48      0.72      0.57    394212
+        male       0.79      0.57      0.66    722096
+
+    accuracy                           0.62   1116308
+   macro avg       0.63      0.65      0.62   1116308
+weighted avg       0.68      0.62      0.63   1116308
+
+Confusion matrix:
+[[284041 110171]
+ [310479 411617]]
+
+######################################################################
+# B) CLASIFICACION A NIVEL DE USUARIO
+######################################################################
+
+Split usuarios: train=2,158 eval=463 test=463
+
+  Agregando features por usuario para mean_of_last...
+  Usuarios train: 2,158 (f=922 m=1,236)
+  Usuarios eval:  463
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_sin_balanceo
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_last_sin_balanceo ===
+Accuracy: 0.7473 | Balanced Acc: 0.7582 | Precision macro: 0.7639 | Recall macro: 0.7582 | F1 macro: 0.7469 | F1 weighted: 0.7460
+  female: prec=0.6691 rec=0.8708 f1=0.7568
+  male:   prec=0.8586 rec=0.6457 f1=0.7371
+              precision    recall  f1-score   support
+
+      female       0.67      0.87      0.76       209
+        male       0.86      0.65      0.74       254
+
+    accuracy                           0.75       463
+   macro avg       0.76      0.76      0.75       463
+weighted avg       0.77      0.75      0.75       463
+
+Confusion matrix:
+[[182  27]
+ [ 90 164]]
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_balanceado
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.1, male=0.9
+============================================================
+
+=== EVAL usuario_mean_of_last_balanceado ===
+Accuracy: 0.7473 | Balanced Acc: 0.7544 | Precision macro: 0.7544 | Recall macro: 0.7544 | F1 macro: 0.7473 | F1 weighted: 0.7473
+  female: prec=0.6811 rec=0.8278 f1=0.7473
+  male:   prec=0.8278 rec=0.6811 f1=0.7473
+              precision    recall  f1-score   support
+
+      female       0.68      0.83      0.75       209
+        male       0.83      0.68      0.75       254
+
+    accuracy                           0.75       463
+   macro avg       0.75      0.75      0.75       463
+weighted avg       0.76      0.75      0.75       463
+
+Confusion matrix:
+[[173  36]
+ [ 81 173]]
+    Undersampling: min_count=922 (de {0: 922, 1: 1236})
+
+============================================================
+ENTRENANDO: usuario_mean_of_last_undersampling
+  Train users: 1,844 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_last_undersampling ===
+Accuracy: 0.7754 | Balanced Acc: 0.7821 | Precision macro: 0.7815 | Recall macro: 0.7821 | F1 macro: 0.7754 | F1 weighted: 0.7755
+  female: prec=0.7092 rec=0.8517 f1=0.7739
+  male:   prec=0.8538 rec=0.7126 f1=0.7768
+              precision    recall  f1-score   support
+
+      female       0.71      0.85      0.77       209
+        male       0.85      0.71      0.78       254
+
+    accuracy                           0.78       463
+   macro avg       0.78      0.78      0.78       463
+weighted avg       0.79      0.78      0.78       463
+
+Confusion matrix:
+[[178  31]
+ [ 73 181]]
+
+  Agregando features por usuario para mean_of_mean...
+  Usuarios train: 2,158 (f=922 m=1,236)
+  Usuarios eval:  463
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_sin_balanceo
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_mean_sin_balanceo ===
+Accuracy: 0.8704 | Balanced Acc: 0.8704 | Precision macro: 0.8688 | Recall macro: 0.8704 | F1 macro: 0.8695 | F1 weighted: 0.8706
+  female: prec=0.8465 rec=0.8708 f1=0.8585
+  male:   prec=0.8911 rec=0.8701 f1=0.8805
+              precision    recall  f1-score   support
+
+      female       0.85      0.87      0.86       209
+        male       0.89      0.87      0.88       254
+
+    accuracy                           0.87       463
+   macro avg       0.87      0.87      0.87       463
+weighted avg       0.87      0.87      0.87       463
+
+Confusion matrix:
+[[182  27]
+ [ 33 221]]
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_balanceado
+  Train users: 2,158 | Eval users: 463
+  Pesos: female=1.1, male=0.9
+============================================================
+
+=== EVAL usuario_mean_of_mean_balanceado ===
+Accuracy: 0.8747 | Balanced Acc: 0.8765 | Precision macro: 0.8734 | Recall macro: 0.8765 | F1 macro: 0.8742 | F1 weighted: 0.8750
+  female: prec=0.8386 rec=0.8947 f1=0.8657
+  male:   prec=0.9083 rec=0.8583 f1=0.8826
+              precision    recall  f1-score   support
+
+      female       0.84      0.89      0.87       209
+        male       0.91      0.86      0.88       254
+
+    accuracy                           0.87       463
+   macro avg       0.87      0.88      0.87       463
+weighted avg       0.88      0.87      0.87       463
+
+Confusion matrix:
+[[187  22]
+ [ 36 218]]
+    Undersampling: min_count=922 (de {0: 922, 1: 1236})
+
+============================================================
+ENTRENANDO: usuario_mean_of_mean_undersampling
+  Train users: 1,844 | Eval users: 463
+  Pesos: female=1.0, male=1.0
+============================================================
+
+=== EVAL usuario_mean_of_mean_undersampling ===
+Accuracy: 0.8683 | Balanced Acc: 0.8710 | Precision macro: 0.8676 | Recall macro: 0.8710 | F1 macro: 0.8678 | F1 weighted: 0.8686
+  female: prec=0.8246 rec=0.8995 f1=0.8604
+  male:   prec=0.9106 rec=0.8425 f1=0.8753
+              precision    recall  f1-score   support
+
+      female       0.82      0.90      0.86       209
+        male       0.91      0.84      0.88       254
+
+    accuracy                           0.87       463
+   macro avg       0.87      0.87      0.87       463
+weighted avg       0.87      0.87      0.87       463
+
+Confusion matrix:
+[[188  21]
+ [ 40 214]]
+
+======================================================================
+MEJOR MODELO EN EVAL
+======================================================================
+usuario_mean_of_mean_balanceado | F1 macro=0.8742 | Recall macro=0.8765 | Precision macro=0.8734
+
+######################################################################
+# PASS C: Streaming datos de test del mejor modelo
+######################################################################
+  [TEST   0.0%] step 1/31212 (32/998,778) | batch=32
+  [TEST  89.4%] step 27898/31212 (892,736/998,778) | batch=32
+  [TEST 100.0%] step 31212/31212 (998,778/998,778) | batch=32
+
+=== TEST usuario_mean_of_mean_balanceado ===
+Accuracy: 0.8942 | Balanced Acc: 0.8937 | Precision macro: 0.8915 | Recall macro: 0.8937 | F1 macro: 0.8925 | F1 weighted: 0.8943
+  female: prec=0.8683 rec=0.8900 f1=0.8790
+  male:   prec=0.9147 rec=0.8973 f1=0.9060
+              precision    recall  f1-score   support
+
+      female       0.87      0.89      0.88       200
+        male       0.91      0.90      0.91       263
+
+    accuracy                           0.89       463
+   macro avg       0.89      0.89      0.89       463
+weighted avg       0.89      0.89      0.89       463
+
+Confusion matrix:
+[[178  22]
+ [ 27 236]]
+
+
+======================================================================
+RESUMEN DE RESULTADOS (EVAL)
+======================================================================
+Config                                                Acc  BalAcc  F1mac   F1_f   F1_m
+-------------------------------------------------------------------------------------
+comentario_last_token_sin_balanceo                 0.5270 0.58666 0.5266 0.5411 0.5121
+comentario_last_token_balanceado                   0.5396 0.59415 0.5395 0.5447 0.5343
+comentario_last_token_undersampling                0.5616 0.60619 0.5613 0.5498 0.5727
+comentario_mean_sin_balanceo                       0.6359 0.63668 0.6231 0.5536 0.6925
+comentario_mean_balanceado                         0.6370 0.64306 0.6264 0.5636 0.6892
+comentario_mean_undersampling                      0.6232 0.64528 0.6182 0.5746 0.6618
+usuario_mean_of_last_sin_balanceo                  0.7473 0.75824 0.7469 0.7568 0.7371
+usuario_mean_of_last_balanceado                    0.7473 0.75443 0.7473 0.7473 0.7473
+usuario_mean_of_last_undersampling                 0.7754 0.78214 0.7754 0.7739 0.7768
+usuario_mean_of_mean_sin_balanceo                  0.8704 0.87045 0.8695 0.8585 0.8805
+usuario_mean_of_mean_balanceado                    0.8747 0.87650 0.8742 0.8657 0.8826
+usuario_mean_of_mean_undersampling                 0.8683 0.87102 0.8678 0.8604 0.8753
+Traceback (most recent call last):
+  File "/home/aitziber.l/TFM/clasificacion_genero/gpt_activaciones/clasificador_genero_sae_activaciones.py", line 1191, in <module>
+    main()
+  File "/home/aitziber.l/TFM/clasificacion_genero/gpt_activaciones/clasificador_genero_sae_activaciones.py", line 1170, in main
+    summary_path = os.path.join(OUTPUT_DIR, "resultados_resumen.json")
+NameError: name 'OUTPUT_DIR' is not defined
+[2026-04-23 23:11:33] ERROR: clasificacion_genero/gpt_activaciones/clasificador_genero_sae_activaciones.py fallo con exit code 1 (10h 53m)
+[2026-04-23 23:11:33] CONTINUANDO con el siguiente script pese al error...
+[2026-04-23 23:11:33] [2/18] clasificacion_genero/gpt_activaciones/interpretabilidad_genero_sae.py
+[2026-04-23 23:11:33] --- Iniciando clasificacion_genero/gpt_activaciones/interpretabilidad_genero_sae.py ---
+[2026-04-23 23:11:33]   Interpretabilidad SAE en streaming; cache antigua eliminada: /hdd/aitziber.l/activaciones_sae_gpt2_genero
+
+============================================================
+PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con género por autor...
+   ✓ 17,639,863 comentarios con info de género
+
+4. Filtrando solo género conocido (m/f)...
+   ✓ 7,379,659 comentarios con género m/f
+   (Eliminados 10,260,204 con género unknown)
+
+5. Distribución por género:
+   m: 4,920,137 comentarios (66.7%)
+   f: 2,459,522 comentarios (33.3%)
+
+============================================================
+✓ Dataset preparado y listo para usar
+============================================================
+Train comments: 5,264,573 | Eval comments: 1,116,308
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1144.22it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1139.22it/s]
+num_latents=16384
+  [TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32
+  [TRAIN  16.7%] step 27554/164518 (881,728/5,264,573) | batch=32
+  [TRAIN  33.5%] step 55091/164518 (1,762,912/5,264,573) | batch=32
+  [TRAIN  50.2%] step 82665/164518 (2,645,280/5,264,573) | batch=32
+  [TRAIN  67.0%] step 110177/164518 (3,525,664/5,264,573) | batch=32
+  [TRAIN  83.7%] step 137686/164518 (4,405,952/5,264,573) | batch=32
+  [TRAIN 100.0%] step 164518/164518 (5,264,573/5,264,573) | batch=32
+  [EVAL   0.0%] step 1/34885 (32/1,116,308) | batch=32
+  [EVAL  78.2%] step 27283/34885 (873,056/1,116,308) | batch=32
+  [EVAL 100.0%] step 34885/34885 (1,116,308/1,116,308) | batch=32
+Resumen JSON guardado en: modelos/genero_sae_interpretabilidad/interpretabilidad_sae_resumen.json
+Resumen Markdown guardado en: modelos/genero_sae_interpretabilidad/interpretabilidad_sae_resumen.md
+[2026-04-24 06:29:35] OK: clasificacion_genero/gpt_activaciones/interpretabilidad_genero_sae.py completado (7h 18m)
+[2026-04-24 06:29:35] [3/18] clasificacion_genero/gpt_activaciones/clasificador_genero_gpt_activaciones.py
+[2026-04-24 06:29:35] --- Iniciando clasificacion_genero/gpt_activaciones/clasificador_genero_gpt_activaciones.py ---
+[2026-04-24 06:29:35]   Activaciones GPT redirigidas a /hdd/aitziber.l/activaciones_gpt2_genero
+======================================================================
+CLASIFICADOR GENERO - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
+======================================================================
+
+============================================================
+PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con género por autor...
+   ✓ 17,639,863 comentarios con info de género
+
+4. Filtrando solo género conocido (m/f)...
+   ✓ 7,379,659 comentarios con género m/f
+   (Eliminados 10,260,204 con género unknown)
+
+5. Distribución por género:
+   m: 4,920,137 comentarios (66.7%)
+   f: 2,459,522 comentarios (33.3%)
+
+============================================================
+✓ Dataset preparado y listo para usar
+============================================================
+Generos presentes: {'m': 4920137, 'f': 2459522}
+
+Extrayendo activaciones de GPT-2 para 7,379,659 comentarios...
+Hookpoint: transformer.h.8, batch_size: 32
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  86%|████████▋ | 128/148 [00:00<00:00, 1262.99it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1026.05it/s]
+  [  0.0%] step 1/230615 (32/7,379,659 comentarios)
+  [  2.1%] step 4789/230615 (153,248/7,379,659 comentarios)
+  [  4.1%] step 9568/230615 (306,176/7,379,659 comentarios)
+[2026-04-24 09:00:55]   Activaciones temporales eliminadas: /hdd/aitziber.l/activaciones_gpt2_genero
+[2026-04-24 09:00:55] ERROR: clasificacion_genero/gpt_activaciones/clasificador_genero_gpt_activaciones.py fallo con exit code 143 (2h 31m)
+[2026-04-24 09:00:55] CONTINUANDO con el siguiente script pese al error...
+[2026-04-24 09:00:55] [4/18] clasificacion_edad/gpt_activaciones/clasificador_edad_sae_activaciones.py
+[2026-04-24 09:00:55] --- Iniciando clasificacion_edad/gpt_activaciones/clasificador_edad_sae_activaciones.py ---
+[2026-04-24 09:00:55]   Ejecucion SAE en streaming; cache antigua eliminada: /hdd/aitziber.l/activaciones_sae_gpt2_edad
+  File "/home/aitziber.l/TFM/clasificacion_edad/gpt_activaciones/clasificador_edad_sae_activaciones.py", line 293
+    flat_batch = batch_ids.reshape(-1).to(mean_pooled.device)
+IndentationError: unexpected indent
+[2026-04-24 09:00:55] ERROR: clasificacion_edad/gpt_activaciones/clasificador_edad_sae_activaciones.py fallo con exit code 1 (0h 0m)
+[2026-04-24 09:00:55] CONTINUANDO con el siguiente script pese al error...
+[2026-04-24 09:00:55] [5/18] clasificacion_edad/gpt_activaciones/interpretabilidad_edad_sae.py
+[2026-04-24 09:00:55] --- Iniciando clasificacion_edad/gpt_activaciones/interpretabilidad_edad_sae.py ---
+[2026-04-24 09:00:55]   Interpretabilidad SAE en streaming; cache antigua eliminada: /hdd/aitziber.l/activaciones_sae_gpt2_edad
+
+============================================================
+PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE EDAD
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con edad por autor...
+   ✓ 17,639,863 comentarios con info de edad
+
+4. Filtrando solo edad conocida (rangos válidos)...
+   ✓ 5,538,809 comentarios con rango de edad válido
+   (Eliminados 12,101,054 comentarios con edad nula/fuera de rango)
+
+5. Distribución por rango de edad:
+   20_29: 2,811,112 comentarios (50.8%)
+   30_39: 1,422,075 comentarios (25.7%)
+   14_19: 877,575 comentarios (15.8%)
+   40_plus: 428,047 comentarios (7.7%)
+
+============================================================
+✓ Dataset de edad preparado y listo para usar
+============================================================
+Traceback (most recent call last):
+  File "/home/aitziber.l/TFM/clasificacion_edad/gpt_activaciones/interpretabilidad_edad_sae.py", line 23, in <module>
+    main()
+  File "/home/aitziber.l/TFM/clasificacion_edad/gpt_activaciones/interpretabilidad_edad_sae.py", line 19, in main
+    run_posthoc_analysis(config)
+  File "/home/aitziber.l/TFM/interpretabilidad_sae_common.py", line 84, in run_posthoc_analysis
+    train_auth, eval_auth, _test_auth = _load_user_splits(config)
+  File "/home/aitziber.l/TFM/interpretabilidad_sae_common.py", line 246, in _load_user_splits
+    raise FileNotFoundError(f"No se encontraron splits de usuario reutilizables en {config.splits_dir}")
+FileNotFoundError: No se encontraron splits de usuario reutilizables en data/splits_edad
+[2026-04-24 09:03:15] ERROR: clasificacion_edad/gpt_activaciones/interpretabilidad_edad_sae.py fallo con exit code 1 (0h 2m)
+[2026-04-24 09:03:15] CONTINUANDO con el siguiente script pese al error...
+[2026-04-24 09:03:15] [6/18] clasificacion_edad/gpt_activaciones/clasificador_edad_gpt_activaciones.py
+[2026-04-24 09:03:15] --- Iniciando clasificacion_edad/gpt_activaciones/clasificador_edad_gpt_activaciones.py ---
+[2026-04-24 09:03:15]   Activaciones GPT redirigidas a /hdd/aitziber.l/activaciones_gpt2_edad
+======================================================================
+CLASIFICADOR EDAD - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
+======================================================================
+
+============================================================
+PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE EDAD
+============================================================
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con edad por autor...
+   ✓ 17,639,863 comentarios con info de edad
+
+4. Filtrando solo edad conocida (rangos válidos)...
+   ✓ 5,538,809 comentarios con rango de edad válido
+   (Eliminados 12,101,054 comentarios con edad nula/fuera de rango)
+
+5. Distribución por rango de edad:
+   20_29: 2,811,112 comentarios (50.8%)
+   30_39: 1,422,075 comentarios (25.7%)
+   14_19: 877,575 comentarios (15.8%)
+   40_plus: 428,047 comentarios (7.7%)
+
+============================================================
+✓ Dataset de edad preparado y listo para usar
+============================================================
+Rangos de edad presentes: {'20_29': 2811112, '30_39': 1422075, '14_19': 877575, '40_plus': 428047}
+
+Extrayendo activaciones de GPT-2 para 5,538,809 comentarios...
+Hookpoint: transformer.h.8, batch_size: 32
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  88%|████████▊ | 130/148 [00:00<00:00, 1277.45it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1045.88it/s]
+  [  0.0%] step 1/173088 (32/5,538,809 comentarios)
+  [  2.8%] step 4795/173088 (153,440/5,538,809 comentarios)

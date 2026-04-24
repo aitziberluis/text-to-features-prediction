@@ -279,9 +279,7 @@ def analizar_dataset_general(
 
 	os.makedirs(output_dir, exist_ok=True)
 
-	print("\n" + "=" * 60)
 	print(f"ANÁLISIS GENERAL INICIAL - {nombre_dataset.upper()}")
-	print("=" * 60)
 	print(f"Dimensiones: {df.shape[0]:,} filas x {df.shape[1]:,} columnas")
 
 	# 1) Valores nulos por columna
@@ -687,9 +685,7 @@ def analisis_exploratorio_por_genero(df_merged: pd.DataFrame, con_graficos: bool
 		.reset_index()
 	)
 
-	print("\n" + "="*60)
 	print("ANÁLISIS EXPLORATORIO DE DATOS - GÉNERO")
-	print("="*60)
 	print("\n===== RESUMEN POR GÉNERO (a nivel de autor) =====")
 	print(resumen_genero.to_string(index=False))
 
@@ -742,9 +738,7 @@ def preparar_dataset_para_sae(
 		DataFrame de autores con género normalizado
 	"""
 	
-	print("\n" + "="*60)
 	print("PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR")
-	print("="*60)
 	
 	# Cargar datos
 	print("\n1. Cargando comentarios...")
@@ -782,9 +776,7 @@ def preparar_dataset_para_sae(
 		pct = 100 * count / len(df_comentarios_con_genero)
 		print(f"   {gender}: {count:,} comentarios ({pct:.1f}%)")
 	
-	print("\n" + "="*60)
 	print("✓ Dataset preparado y listo para usar")
-	print("="*60)
 	
 	return df_comentarios_con_genero, df_autores
 
@@ -804,9 +796,7 @@ def preparar_dataset_para_edad(
 	if age_labels is None:
 		age_labels = DEFAULT_AGE_GROUP_LABELS
 
-	print("\n" + "=" * 60)
 	print("PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE EDAD")
-	print("=" * 60)
 
 	print("\n1. Cargando comentarios...")
 	df_comentarios = cargar_comentarios(path_comentarios, nrows=max_comments)
@@ -846,9 +836,7 @@ def preparar_dataset_para_edad(
 		pct = 100 * count / len(df_comentarios_con_edad)
 		print(f"   {age_group}: {count:,} comentarios ({pct:.1f}%)")
 
-	print("\n" + "=" * 60)
 	print("✓ Dataset de edad preparado y listo para usar")
-	print("=" * 60)
 
 	return df_comentarios_con_edad, df_autores
 
@@ -870,9 +858,7 @@ def preparar_dataset_para_mbti(
 	comentarios con la etiqueta binaria (0/1).
 	"""
 
-	print("\n" + "=" * 60)
 	print(f"PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE {columna_mbti.upper()}")
-	print("=" * 60)
 
 	print("\n1. Cargando comentarios...")
 	df_comentarios = cargar_comentarios(path_comentarios, nrows=max_comments)
@@ -910,9 +896,7 @@ def preparar_dataset_para_mbti(
 		pct = 100 * count / len(df_merged)
 		print(f"   {int(val)}: {count:,} comentarios ({pct:.1f}%)")
 
-	print("\n" + "=" * 60)
 	print(f"✓ Dataset de {columna_mbti} preparado y listo para usar")
-	print("=" * 60)
 
 	return df_merged, df_autores_filtrado
 
@@ -932,9 +916,7 @@ def analizar_columnas_experimento(
 
 	os.makedirs(output_dir, exist_ok=True)
 
-	print("\n" + "=" * 70)
 	print("ANÁLISIS DE COLUMNAS DEL EXPERIMENTO")
-	print("=" * 70)
 
 	cols_presentes = [c for c in COLUMNAS_EXPERIMENTO if c in df_autores.columns]
 	cols_faltantes = [c for c in COLUMNAS_EXPERIMENTO if c not in df_autores.columns]

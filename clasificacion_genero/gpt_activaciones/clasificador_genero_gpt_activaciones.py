@@ -464,11 +464,9 @@ def entrenar_comentario(
     Si se proporciona scaler, normaliza cada batch con el.
     """
     run_name = f"comentario_{pooling_name}_{balance_name}"
-    print(f"\n{'='*60}")
     print(f"ENTRENANDO: {run_name}")
     print(f"  Train: {len(y_train):,} | Eval: {len(y_eval):,}")
     print(f"  Pesos: female={female_w}, male={male_w}")
-    print(f"{'='*60}")
 
     clf = SGDClassifier(
         loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
@@ -566,11 +564,9 @@ def entrenar_usuario(
         X_train = scaler.transform(X_train)
         X_eval = scaler.transform(X_eval)
 
-    print(f"\n{'='*60}")
     print(f"ENTRENANDO: {run_name}")
     print(f"  Train users: {len(y_train):,} | Eval users: {len(y_eval):,}")
     print(f"  Pesos: female={female_w}, male={male_w}")
-    print(f"{'='*60}")
 
     clf = SGDClassifier(
         loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
@@ -601,9 +597,7 @@ def entrenar_usuario(
 
 
 def main():
-    print("=" * 70)
     print("CLASIFICADOR GENERO - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)")
-    print("=" * 70)
 
     # 1. Cargar datos
     df = cargar_datos_genero()
@@ -729,11 +723,9 @@ def main():
                     X_u_us, y_u_us = X_u_train, y_u_train
 
                 run_name = f"usuario_{pooling_name}_{bal_cfg['name']}"
-                print(f"\n{'='*60}")
                 print(f"ENTRENANDO: {run_name}")
                 print(f"  Train users: {len(y_u_us):,} | Eval users: {len(y_u_eval):,}")
                 print(f"  Pesos: female={bal_cfg['female_w']}, male={bal_cfg['male_w']}")
-                print(f"{'='*60}")
 
                 clf = SGDClassifier(
                     loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
@@ -763,9 +755,7 @@ def main():
     # ==============================
     # RESUMEN FINAL
     # ==============================
-    print("\n\n" + "=" * 70)
     print("RESUMEN DE RESULTADOS (EVAL)")
-    print("=" * 70)
     print(f"{'Config':<50} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {'F1_f':>6} {'F1_m':>6}")
     print("-" * 85)
     for key, m in all_results.items():
@@ -775,28 +765,57 @@ def main():
     best_run, best_eval_metrics = _select_best_run(all_results)
     best_artifact = trained_runs[best_run]
 
-    print("\n" + "=" * 70)
     print("MEJOR MODELO EN EVAL")
-    print("=" * 70)
     print(
         f"{best_run} | F1 macro={best_eval_metrics['f1_macro']:.4f} | "
         f"Recall macro={best_eval_metrics['recall_macro']:.4f} | "
         f"Precision macro={best_eval_metrics['precision_macro']:.4f}"
     )
 
-    if best_artifact["level"] == "comentario":
-        test_feats = last_token if best_artifact["pooling"] == "last_token" else mean_token
-        X_test = np.asarray(test_feats[test_idx], dtype=np.float32)
-        X_test = best_artifact["scaler"].transform(X_test)
-        y_test = labels[test_idx]
-        y_test_pred = best_artifact["clf"].predict(X_test)
-    else:
-        test_feats = last_token if best_artifact["pooling"] == "mean_of_last" else mean_token
-        X_u_test, y_test = _agregar_por_usuario(authors, test_feats, labels, set(test_auth))
-        X_u_test = best_artifact["scaler"].transform(X_u_test)
-        y_test_pred = best_artifact["clf"].predict(X_u_test)
+    # Mejor por nivel + evaluacion en test de cada uno
+    from _clasificador_utils import (
+        select_best_per_level,
+        print_best_per_level_eval,
+        print_best_per_level_test,
+    )
+    best_per_level = select_best_per_level(all_results)
+    print_best_per_level_eval(best_per_level)
 
-    best_test_metrics = evaluar(f"TEST {best_run}", y_test, y_test_pred)
+    def _eval_test_for_run(run_name: str, artifact: Dict) -> Dict[str, float]:
+        if artifact["level"] == "comentario":
+            test_feats = last_token if artifact["pooling"] == "last_token" else mean_token
+            X_test_ = np.asarray(test_feats[test_idx], dtype=np.float32)
+            X_test_ = artifact["scaler"].transform(X_test_)
+            y_test_ = labels[test_idx]
+            y_test_pred_ = artifact["clf"].predict(X_test_)
+        else:
+            test_feats = last_token if artifact["pooling"] == "mean_of_last" else mean_token
+            X_u_test_, y_test_ = _agregar_por_usuario(authors, test_feats, labels, set(test_auth))
+            X_u_test_ = artifact["scaler"].transform(X_u_test_)
+            y_test_pred_ = artifact["clf"].predict(X_u_test_)
+        return evaluar(f"TEST {run_name}", y_test_, y_test_pred_)
+
+    best_per_level_test: Dict[str, Optional[Tuple[str, Dict[str, float]]]] = {
+        "comentario": None,
+        "usuario": None,
+    }
+    for level in ("comentario", "usuario"):
+        entry = best_per_level.get(level)
+        if entry is None:
+            continue
+        run_name_lvl, _eval_m = entry
+        artifact_lvl = trained_runs[run_name_lvl]
+        m_test = _eval_test_for_run(run_name_lvl, artifact_lvl)
+        best_per_level_test[level] = (run_name_lvl, m_test)
+
+    print_best_per_level_test(best_per_level_test)
+
+    # Mejor global (compatibilidad)
+    best_test_metrics = (
+        best_per_level_test.get(best_artifact["level"])[1]
+        if best_per_level_test.get(best_artifact["level"]) is not None
+        else _eval_test_for_run(best_run, best_artifact)
+    )
 
     # Guardar resumen JSON
     summary_path = os.path.join(OUTPUT_DIR, "resultados_resumen.json")
@@ -811,12 +830,26 @@ def main():
                 "eval_metrics": best_eval_metrics,
                 "test_metrics": best_test_metrics,
             },
+            "best_per_level": {
+                level: (
+                    None
+                    if best_per_level.get(level) is None
+                    else {
+                        "name": best_per_level[level][0],
+                        "eval_metrics": best_per_level[level][1],
+                        "test_metrics": (
+                            best_per_level_test[level][1]
+                            if best_per_level_test.get(level) is not None
+                            else None
+                        ),
+                    }
+                )
+                for level in ("comentario", "usuario")
+            },
         }, f, ensure_ascii=False, indent=2)
     print(f"\nResumen guardado en: {summary_path}")
 
-    print("\n" + "=" * 70)
     print("COMPLETADO - Mejor modelo evaluado tambien en test")
-    print("=" * 70)
 
 
 if __name__ == "__main__":

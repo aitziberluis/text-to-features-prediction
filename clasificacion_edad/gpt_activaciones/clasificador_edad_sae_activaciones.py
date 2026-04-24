@@ -290,9 +290,9 @@ def _pool_sparse_to_dense(
     batch_ids = torch.arange(batch_size, device=device).view(-1, 1, 1).expand(-1, seq_len, k)
 
     # Flatten todo y hacer scatter_add
-    flat_batch = batch_ids.reshape(-1)
-    flat_indices = top_indices.reshape(-1).long()
-    flat_acts = masked_acts.reshape(-1).to(mean_pooled.dtype)
+    flat_batch = batch_ids.reshape(-1).to(mean_pooled.device)
+    flat_indices = top_indices.reshape(-1).long().to(mean_pooled.device)
+    flat_acts = masked_acts.reshape(-1).to(mean_pooled.dtype).to(mean_pooled.device)
 
     mean_pooled.index_put_(
         (flat_batch, flat_indices),
@@ -820,7 +820,6 @@ def entrenar_comentario(
     Si se proporciona scaler, normaliza cada batch con el.
     """
     run_name = f"comentario_{pooling_name}_{balance_name}"
-    print(f"\n{'='*60}")
     print(f"ENTRENANDO: {run_name}")
     print(f"  Train: {len(y_train):,} | Eval: {len(y_eval):,}")
     if class_weights is not None:
@@ -828,7 +827,6 @@ def entrenar_comentario(
         print(f"  Pesos de clase: {cw_str}")
     else:
         print(f"  Pesos de clase: ninguno (todos 1.0)")
-    print(f"{'='*60}")
 
     clf = SGDClassifier(
         loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
@@ -943,7 +941,6 @@ def entrenar_usuario(
     X_train, y_train = _agregar_por_usuario(authors, features, labels, set(train_auth))
     X_eval, y_eval = _agregar_por_usuario(authors, features, labels, set(eval_auth))
 
-    print(f"\n{'='*60}")
     print(f"ENTRENANDO: {run_name}")
     print(f"  Train users: {len(y_train):,} | Eval users: {len(y_eval):,}")
     if class_weights is not None:
@@ -951,7 +948,6 @@ def entrenar_usuario(
         print(f"  Pesos de clase: {cw_str}")
     else:
         print(f"  Pesos de clase: ninguno (todos 1.0)")
-    print(f"{'='*60}")
 
     clf = SGDClassifier(
         loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
@@ -1198,7 +1194,6 @@ def main():
                     X_u_us, y_u_us = X_u_train, y_u_train
 
                 run_name = f"usuario_{pooling_name}_{bal_cfg['name']}"
-                print(f"\n{'='*60}")
                 print(f"ENTRENANDO: {run_name}")
                 print(f"  Train users: {len(y_u_us):,} | Eval users: {len(y_u_eval):,}")
                 if cw is not None:
@@ -1206,7 +1201,6 @@ def main():
                     print(f"  Pesos de clase: {cw_str}")
                 else:
                     print(f"  Pesos de clase: ninguno (todos 1.0)")
-                print(f"{'='*60}")
 
                 clf = SGDClassifier(
                     loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
@@ -1245,28 +1239,40 @@ def main():
         flush=True,
     )
 
+    from _clasificador_utils import (
+        select_best_per_level,
+        print_best_per_level_eval,
+        print_best_per_level_test,
+    )
+    best_per_level = select_best_per_level(all_results)
+    print_best_per_level_eval(best_per_level)
+
     print("\n" + "#" * 70, flush=True)
-    print("# PASS C: Streaming datos de test del mejor modelo", flush=True)
+    print("# PASS C: Streaming datos de test (mejor por nivel)", flush=True)
     print("#" * 70, flush=True)
 
-    if best_artifact["level"] == "comentario":
-        test_preds = []
-        for _start, _end, last_np, mean_np in _stream_sae_features(
-            df_test, tokenizer, model, sae, hookpoint_module, num_latents, pass_name="TEST"
-        ):
-            test_feats = last_np if best_artifact["pooling"] == "last_token" else mean_np
-            X_test = best_artifact["scaler"].transform(test_feats.astype(np.float32))
-            test_preds.append(best_artifact["clf"].predict(X_test))
-        y_test = y_test_comments
-        y_test_pred = np.concatenate(test_preds)
-    else:
-        user_sums_test = {}
-        for start, end, last_np, mean_np in _stream_sae_features(
-            df_test, tokenizer, model, sae, hookpoint_module, num_latents, pass_name="TEST"
-        ):
+    best_comment_entry = best_per_level.get("comentario")
+    best_user_entry = best_per_level.get("usuario")
+    comment_artifact = trained_runs[best_comment_entry[0]] if best_comment_entry is not None else None
+    user_artifact = trained_runs[best_user_entry[0]] if best_user_entry is not None else None
+    user_comment_pooling = user_artifact.get("comment_pooling") if user_artifact is not None else None
+
+    comment_test_preds: List[np.ndarray] = []
+    user_sums_test: Dict[str, List[object]] = {}
+    for start, end, last_np, mean_np in _stream_sae_features(
+        df_test, tokenizer, model, sae, hookpoint_module, num_latents, pass_name="TEST"
+    ):
+        feats_by_pooling = {"last_token": last_np, "mean": mean_np}
+
+        if comment_artifact is not None:
+            pooling = comment_artifact["pooling"]
+            X_test = comment_artifact["scaler"].transform(feats_by_pooling[pooling].astype(np.float32))
+            comment_test_preds.append(comment_artifact["clf"].predict(X_test))
+
+        if user_artifact is not None:
             batch_auth = authors_test[start:end]
             batch_labels = y_test_comments[start:end]
-            feats = last_np if best_artifact["comment_pooling"] == "last_token" else mean_np
+            feats = feats_by_pooling[user_comment_pooling]
             for i in range(end - start):
                 auth = batch_auth[i]
                 if auth not in user_sums_test:
@@ -1274,11 +1280,33 @@ def main():
                 entry = user_sums_test[auth]
                 entry[0] += feats[i].astype(np.float64)
                 entry[1] += 1
-        X_u_test, y_test = _build_user_arrays(user_sums_test, num_latents)
-        X_u_test = best_artifact["scaler"].transform(X_u_test)
-        y_test_pred = best_artifact["clf"].predict(X_u_test)
 
-    best_test_metrics = evaluar(f"TEST {best_run}", y_test, y_test_pred)
+    best_per_level_test: Dict[str, Optional[Tuple[str, Dict[str, float]]]] = {
+        "comentario": None,
+        "usuario": None,
+    }
+
+    if comment_artifact is not None:
+        y_test_pred_c = np.concatenate(comment_test_preds)
+        m_c = evaluar(f"TEST {best_comment_entry[0]}", y_test_comments, y_test_pred_c)
+        best_per_level_test["comentario"] = (best_comment_entry[0], m_c)
+        all_results[f"test_{best_comment_entry[0]}"] = m_c
+
+    if user_artifact is not None:
+        X_u_test, y_u_test = _build_user_arrays(user_sums_test, num_latents)
+        X_u_test = user_artifact["scaler"].transform(X_u_test)
+        y_u_pred = user_artifact["clf"].predict(X_u_test)
+        m_u = evaluar(f"TEST {best_user_entry[0]}", y_u_test, y_u_pred)
+        best_per_level_test["usuario"] = (best_user_entry[0], m_u)
+        all_results[f"test_{best_user_entry[0]}"] = m_u
+
+    print_best_per_level_test(best_per_level_test)
+
+    best_test_metrics = (
+        best_per_level_test.get(best_artifact["level"])[1]
+        if best_per_level_test.get(best_artifact["level"]) is not None
+        else None
+    )
 
     del model, tokenizer, sae
     if torch.cuda.is_available():
@@ -1288,9 +1316,7 @@ def main():
     # ==============================
     # RESUMEN FINAL
     # ==============================
-    print("\n\n" + "=" * 70)
     print("RESUMEN DE RESULTADOS (EVAL)")
-    print("=" * 70)
     header_f1 = " ".join(f"{'F1_'+g:>8s}" for g in AGE_GROUPS)
     print(f"{'Config':<45} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {header_f1}")
     print("-" * (45 + 6 + 7 + 6 + 8 * NUM_CLASSES + NUM_CLASSES + 3))
@@ -1311,12 +1337,26 @@ def main():
                 "eval_metrics": best_eval_metrics,
                 "test_metrics": best_test_metrics,
             },
+            "best_per_level": {
+                level: (
+                    None
+                    if best_per_level.get(level) is None
+                    else {
+                        "name": best_per_level[level][0],
+                        "eval_metrics": best_per_level[level][1],
+                        "test_metrics": (
+                            best_per_level_test[level][1]
+                            if best_per_level_test.get(level) is not None
+                            else None
+                        ),
+                    }
+                )
+                for level in ("comentario", "usuario")
+            },
         }, f, ensure_ascii=False, indent=2)
     print(f"\nResumen guardado en: {summary_path}")
 
-    print("\n" + "=" * 70)
     print("COMPLETADO - Mejor modelo evaluado tambien en test")
-    print("=" * 70)
 
 
 if __name__ == "__main__":

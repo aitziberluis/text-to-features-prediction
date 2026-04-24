@@ -1,0 +1,11 @@
+[2026-04-24 10:46:10] PASO 0: Borrar splits antiguos de genero para forzar regeneracion
+[2026-04-24 10:46:10] PASO 1: Limpiar caches SAE/GPT antiguas de genero
+[2026-04-24 10:46:11]   Caches limpiadas
+[2026-04-24 10:46:11] PASO 2: Pipeline GENERO secuencial (3 scripts)
+[2026-04-24 10:46:11] [1/3] clasificacion_genero/gpt_activaciones/clasificador_genero_gpt_activaciones.py
+[2026-04-24 10:46:11] --- Iniciando clasificacion_genero/gpt_activaciones/clasificador_genero_gpt_activaciones.py ---
+[2026-04-24 10:46:11]   Activaciones GPT redirigidas a /hdd/aitziber.l/activaciones_gpt2_genero
+CLASIFICADOR GENERO - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
+PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
+
+1. Cargando comentarios...
