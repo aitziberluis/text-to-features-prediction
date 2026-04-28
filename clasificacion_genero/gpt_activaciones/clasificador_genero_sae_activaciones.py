@@ -59,10 +59,7 @@ from tiny_sae import Sae
 
 dotenv.load_dotenv()
 
-# =====================
 # CONFIGURACION
-# =====================
-
 MODEL = "openai-community/gpt2"
 CONTEXT_LEN = 512
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -115,7 +112,6 @@ BALANCE_CONFIGS = [
 
 NUM_CLASSES = 2
 
-
 def random_undersample(X: np.ndarray, y: np.ndarray, random_state: int = RANDOM_STATE) -> Tuple[np.ndarray, np.ndarray]:
     """Submuestrea aleatoriamente cada clase al tamaño de la clase minoritaria."""
     rng = np.random.RandomState(random_state)
@@ -133,7 +129,6 @@ def random_undersample(X: np.ndarray, y: np.ndarray, random_state: int = RANDOM_
     indices = np.concatenate(indices)
     rng.shuffle(indices)
     return X[indices], y[indices]
-
 
 def random_undersample_idx(y: np.ndarray, random_state: int = RANDOM_STATE) -> np.ndarray:
     """Devuelve indices submuestreados al tamaño de la clase minoritaria."""
@@ -153,7 +148,6 @@ def random_undersample_idx(y: np.ndarray, random_state: int = RANDOM_STATE) -> n
     rng.shuffle(indices)
     return indices
 
-
 def random_undersample_mask(y: np.ndarray, random_state: int = RANDOM_STATE) -> np.ndarray:
     """Devuelve mascara booleana con los indices submuestreados."""
     rng = np.random.RandomState(random_state)
@@ -170,18 +164,12 @@ def random_undersample_mask(y: np.ndarray, random_state: int = RANDOM_STATE) -> 
         mask[chosen] = True
     return mask
 
-
 def _is_oom_error(exc: BaseException) -> bool:
     if isinstance(exc, torch.OutOfMemoryError):
         return True
     return "out of memory" in str(exc).lower()
 
-
-# =====================
 # CARGA DE DATOS
-# =====================
-
-
 def cargar_datos_genero() -> pd.DataFrame:
     """Carga comentarios con genero m/f usando preprocesamiento centralizado."""
     df, _ = preparar_dataset_para_sae(
@@ -203,12 +191,7 @@ def cargar_datos_genero() -> pd.DataFrame:
     print(f"Generos presentes: {dist}")
     return df
 
-
-# =====================
 # EXTRACCION DE REPRESENTACIONES SAE
-# =====================
-
-
 def _pool_sparse_to_dense(
     top_acts: torch.Tensor,
     top_indices: torch.Tensor,
@@ -275,7 +258,6 @@ def _pool_sparse_to_dense(
 
     return last_pooled, mean_pooled
 
-
 def _setup_models():
     """Carga tokenizer, GPT-2 y SAE. Devuelve los componentes para streaming."""
     sae = Sae.load_from_disk(PATH_SAE, device=DEVICE)
@@ -298,7 +280,6 @@ def _setup_models():
 
     hookpoint_module = model.get_submodule(hookpoint_name)
     return tokenizer, model, sae, hookpoint_module, num_latents
-
 
 def _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latents, pass_name=""):
     """Generador que extrae representaciones SAE en streaming."""
@@ -388,7 +369,6 @@ def _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latent
         captured.clear()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-
 
 def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
     """Extrae representaciones SAE de GPT-2 en memoria (sin guardar a disco)."""
@@ -501,7 +481,6 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
     print(f"Representaciones SAE extraidas y guardadas en {ACTIVATIONS_DIR}.")
     return last_token_arr, mean_token_arr, labels, authors, num_latents
 
-
 def extraer_activaciones(
     df: pd.DataFrame,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
@@ -539,12 +518,7 @@ def extraer_activaciones(
 
     return _extraer_activaciones(df)
 
-
-# =====================
 # SPLITS
-# =====================
-
-
 def dividir_comentarios(
     labels: np.ndarray, df: pd.DataFrame, authors: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -596,7 +570,6 @@ def dividir_comentarios(
     print(f"  Sin leakage: cada usuario aparece en un unico split.")
     return train_idx, eval_idx, test_idx
 
-
 def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Train/eval/test estratificado a nivel usuario con cache compartido."""
     os.makedirs(SPLITS_DIR, exist_ok=True)
@@ -635,12 +608,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
     print(f"Split de usuarios guardado en {split_path}")
     return train_auth, eval_auth, test_auth
 
-
-# =====================
 # EVALUACION
-# =====================
-
-
 def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
     """Imprime y devuelve metricas de evaluacion."""
     acc = accuracy_score(y_true, y_pred)
@@ -653,7 +621,7 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
     rec_c = recall_score(y_true, y_pred, average=None, labels=[0, 1], zero_division=0)
     f1_c = f1_score(y_true, y_pred, average=None, labels=[0, 1], zero_division=0)
 
-    print(f"\n=== {nombre} ===")
+    print(f"\n{nombre}")
     print(
         f"Accuracy: {acc:.4f} | Balanced Acc: {bal_acc:.4f} | "
         f"Precision macro: {prec_macro:.4f} | Recall macro: {rec_macro:.4f} | "
@@ -673,7 +641,6 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
         "precision_male": float(prec_c[1]), "recall_male": float(rec_c[1]), "f1_male": float(f1_c[1]),
     }
 
-
 def _selection_score(metrics: Dict[str, float]) -> Tuple[float, float, float]:
     return (
         float(metrics.get("f1_macro", float("-inf"))),
@@ -681,14 +648,12 @@ def _selection_score(metrics: Dict[str, float]) -> Tuple[float, float, float]:
         float(metrics.get("precision_macro", float("-inf"))),
     )
 
-
 def _select_best_run(all_results: Dict[str, Dict[str, float]]) -> Tuple[str, Dict[str, float]]:
     best_name, best_metrics = max(
         all_results.items(),
         key=lambda item: (_selection_score(item[1]), item[0]),
     )
     return best_name, best_metrics
-
 
 def _build_user_arrays(user_dict: Dict[str, List[object]], num_latents: int) -> Tuple[np.ndarray, np.ndarray]:
     users = sorted(user_dict.keys())
@@ -701,12 +666,7 @@ def _build_user_arrays(user_dict: Dict[str, List[object]], num_latents: int) -> 
         y[i] = lab
     return X, y
 
-
-# =====================
 # ENTRENAMIENTO NIVEL COMENTARIO
-# =====================
-
-
 def entrenar_comentario(
     feats: np.ndarray, train_idx: np.ndarray, eval_idx: np.ndarray,
     y_train: np.ndarray, y_eval: np.ndarray,
@@ -769,12 +729,7 @@ def entrenar_comentario(
 
     return clf, metrics
 
-
-# =====================
 # ENTRENAMIENTO NIVEL USUARIO
-# =====================
-
-
 def _agregar_por_usuario(
     authors: np.ndarray,
     features: np.ndarray,
@@ -824,7 +779,6 @@ def _agregar_por_usuario(
 
     return user_sums[valid].astype(np.float32), user_labels[valid]
 
-
 def entrenar_usuario(
     authors: np.ndarray,
     features: np.ndarray,
@@ -864,12 +818,7 @@ def entrenar_usuario(
 
     return clf, metrics
 
-
-# =====================
 # MAIN
-# =====================
-
-
 def main():
     print("CLASIFICADOR GENERO - REPRESENTACIONES SAE SOBRE GPT-2")
 
@@ -933,9 +882,7 @@ def main():
     us_mask = random_undersample_mask(y_train)
     us_first_batch = True
 
-    # ==============================
     # A) NIVEL COMENTARIO
-    # ==============================
     print("\n" + "#" * 70)
     print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
     print("#" * 70)
@@ -1038,9 +985,7 @@ def main():
     del eval_preds
     gc.collect()
 
-    # ==============================
     # B) NIVEL USUARIO
-    # ==============================
     if has_author:
         print("\n" + "#" * 70)
         print("# B) CLASIFICACION A NIVEL DE USUARIO")
@@ -1197,9 +1142,7 @@ def main():
         torch.cuda.empty_cache()
     gc.collect()
 
-    # ==============================
     # RESUMEN FINAL
-    # ==============================
     print("RESUMEN DE RESULTADOS (EVAL)")
     print(f"{'Config':<50} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {'F1_f':>6} {'F1_m':>6}")
     print("-" * 85)
@@ -1239,7 +1182,6 @@ def main():
     print(f"\nResumen guardado en: {summary_path}")
 
     print("COMPLETADO - Mejor modelo evaluado tambien en test")
-
 
 if __name__ == "__main__":
     main()

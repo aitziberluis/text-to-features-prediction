@@ -74,6 +74,8 @@ class SaeInterpretabilityConfig:
     top_k_latents: int = TOP_K_LATENTS
     top_examples_per_latent: int = TOP_EXAMPLES_PER_LATENT
     ablation_sizes: Tuple[int, ...] = ABLATION_SIZES
+    sae_results_path: Optional[str] = None
+    manual_balance_weights: Optional[Tuple[float, ...]] = None
 
 
 def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]:
@@ -98,7 +100,15 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
     tokenizer, model, sae, hookpoint_module, num_latents = _setup_models()
     print(f"num_latents={num_latents}")
 
-    train_users = _aggregate_user_features(
+    best_pooling, best_balance, sae_selection_info = _select_best_user_config_from_sae(config)
+    manual_weights = _resolve_manual_weights(config)
+    print(
+        f"[SAE-best] pooling='{best_pooling}' balance='{best_balance}' "
+        f"(source={sae_selection_info.get('source')}, run='{sae_selection_info.get('run_name')}')",
+        flush=True,
+    )
+
+    train_users, class_act_stats = _aggregate_user_features(
         df=df_train,
         tokenizer=tokenizer,
         model=model,
@@ -106,10 +116,18 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
         hookpoint_module=hookpoint_module,
         num_latents=num_latents,
         pass_name="TRAIN",
+        pooling=best_pooling,
+        num_classes=len(config.class_names),
     )
 
     X_train, y_train = _build_user_arrays(train_users, num_latents)
-    scaler, clf = _fit_user_model(X_train, y_train, len(config.class_names))
+    scaler, clf = _fit_user_model(
+        X_train,
+        y_train,
+        len(config.class_names),
+        balance_name=best_balance,
+        manual_weights=manual_weights,
+    )
     top_latents = _select_top_latents(clf, config.class_names, config.top_k_latents)
     latent_stats = _compute_latent_stats(X_train, y_train, top_latents, config.class_names, clf.coef_)
 
@@ -123,6 +141,7 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
         top_latents=top_latents,
         class_names=config.class_names,
         top_examples=config.top_examples_per_latent,
+        pooling=best_pooling,
     )
 
     del model, tokenizer, sae
@@ -152,7 +171,9 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
         "num_users_train": int(len(X_train)),
         "num_users_eval": int(len(X_eval)),
         "num_latents": int(num_latents),
-        "pooling": "mean_of_mean",
+        "pooling": best_pooling,
+        "balance": best_balance,
+        "sae_selection": sae_selection_info,
         "metrics": metrics,
         "ablation": ablation,
         "top_latents_by_class": _format_top_latents(
@@ -160,6 +181,11 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
             top_latents,
             latent_stats,
             examples,
+        ),
+        "top_latents_by_activation": _compute_top_activation_per_class(
+            class_act_stats,
+            config.class_names,
+            top_k=config.top_k_latents,
         ),
         "num_eval_predictions": int(len(y_pred)),
     }
@@ -187,12 +213,16 @@ def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
     print("=" * 70, flush=True)
     print(f"Modo de almacenamiento : {results['storage_mode']}")
     print(f"Pooling analizado      : {results['pooling']}")
+    print(f"Balance analizado      : {results.get('balance', '?')}")
+    sae_sel = results.get("sae_selection") or {}
+    if sae_sel:
+        print(f"Fuente seleccion SAE   : {sae_sel.get('source')} (run='{sae_sel.get('run_name')}')")
     print(f"Comentarios train/eval : {results['num_comments_train']:,} / {results['num_comments_eval']:,}")
     print(f"Usuarios train/eval    : {results['num_users_train']:,} / {results['num_users_eval']:,}")
     print(f"Latentes SAE           : {results['num_latents']:,}")
 
     metrics = results.get("metrics", {}) or {}
-    print("\n--- Metricas en EVAL (nivel usuario, mean_of_mean) ---")
+    print(f"\n--- Metricas en EVAL (nivel usuario, {results['pooling']}, {results.get('balance', '?')}) ---")
     print(
         f"Accuracy={metrics.get('accuracy', float('nan')):.4f} | "
         f"BalancedAcc={metrics.get('balanced_accuracy', float('nan')):.4f} | "
@@ -227,6 +257,19 @@ def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
                 print(
                     f"  L{entry['latent_id']:>6}  score={entry['class_score']:+.4f}  "
                     f"coef={entry['raw_coefficient']:+.4f}  palabras=[{words}]"
+                )
+
+    top_by_act = results.get("top_latents_by_activation") or {}
+    if top_by_act:
+        print("\n--- Top latentes mas activos por clase (independiente del clasificador) ---")
+        for class_name, entries in top_by_act.items():
+            print(f"\n[Clase {class_name}] top {min(len(entries), 10)} latentes por activacion media:")
+            for entry in entries[:10]:
+                contrast = entry.get("mean_contrast")
+                contrast_str = f" contrast={contrast:+.4f}" if contrast is not None else ""
+                print(
+                    f"  L{entry['latent_id']:>6}  mean_act={entry['mean_activation']:+.4f}  "
+                    f"nonzero_rate={entry['nonzero_rate']:.4f}{contrast_str}"
                 )
 
 
@@ -400,14 +443,15 @@ def _stream_sae_features(
 
                         acts = captured["act"].to(sae.dtype).to(sae.device)
                         top_acts, top_indices = sae.encode(acts)
-                        _last_pooled, mean_pooled = _pool_sparse_to_dense(
+                        last_pooled, mean_pooled = _pool_sparse_to_dense(
                             top_acts=top_acts,
                             top_indices=top_indices,
                             attention_mask=attention_mask,
                             num_latents=num_latents,
                         )
+                        last_np = last_pooled.float().cpu().numpy()
                         mean_np = mean_pooled.float().cpu().numpy()
-                        del tokens, input_ids, attention_mask, acts, top_acts, top_indices, _last_pooled, mean_pooled
+                        del tokens, input_ids, attention_mask, acts, top_acts, top_indices, last_pooled, mean_pooled
                         captured.clear()
                         break
                     except Exception as exc:
@@ -432,7 +476,7 @@ def _stream_sae_features(
                     print(f"  [{pass_name} {pct:5.1f}%] step {step}/{total_steps} ({end:,}/{n:,}) | batch={current_batch_size}")
                     last_print = now
 
-                yield start, end, mean_np
+                yield start, end, last_np, mean_np
                 start = end
     finally:
         handle.remove()
@@ -449,18 +493,46 @@ def _aggregate_user_features(
     hookpoint_module: torch.nn.Module,
     num_latents: int,
     pass_name: str,
-) -> Dict[str, List[object]]:
+    pooling: str = "mean_of_mean",
+    num_classes: Optional[int] = None,
+) -> Tuple[Dict[str, List[object]], Optional[Dict[str, np.ndarray]]]:
     user_dict: Dict[str, List[object]] = {}
-    for start, end, mean_np in _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latents, pass_name):
+    class_sum: Optional[np.ndarray] = None
+    class_nonzero: Optional[np.ndarray] = None
+    class_count: Optional[np.ndarray] = None
+    if num_classes is not None and num_classes > 0:
+        class_sum = np.zeros((num_classes, num_latents), dtype=np.float64)
+        class_nonzero = np.zeros((num_classes, num_latents), dtype=np.int64)
+        class_count = np.zeros(num_classes, dtype=np.int64)
+
+    for start, end, last_np, mean_np in _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latents, pass_name):
+        feats_np = last_np if pooling == "mean_of_last" else mean_np
         authors = df["author"].iloc[start:end].tolist()
         labels = df["label"].iloc[start:end].to_numpy(dtype=np.int64)
         for idx, author in enumerate(authors):
             if author not in user_dict:
                 user_dict[author] = [np.zeros(num_latents, dtype=np.float32), 0, int(labels[idx])]
             entry = user_dict[author]
-            entry[0] += mean_np[idx].astype(np.float32, copy=False)
+            entry[0] += feats_np[idx].astype(np.float32, copy=False)
             entry[1] += 1
-    return user_dict
+
+        if class_sum is not None:
+            nonzero_mask = (feats_np > 0).astype(np.int64)
+            for c in range(class_sum.shape[0]):
+                rows = np.where(labels == c)[0]
+                if rows.size == 0:
+                    continue
+                class_sum[c] += feats_np[rows].astype(np.float64).sum(axis=0)
+                class_nonzero[c] += nonzero_mask[rows].sum(axis=0)
+                class_count[c] += int(rows.size)
+
+    if class_sum is None:
+        return user_dict, None
+    return user_dict, {
+        "sum": class_sum,
+        "nonzero": class_nonzero,
+        "count": class_count,
+    }
 
 
 def _aggregate_eval_and_collect_examples(
@@ -473,6 +545,7 @@ def _aggregate_eval_and_collect_examples(
     top_latents: Dict[int, List[int]],
     class_names: Sequence[str],
     top_examples: int,
+    pooling: str = "mean_of_mean",
 ) -> Tuple[Dict[str, List[object]], Dict[int, Dict[int, Dict[str, object]]]]:
     user_dict: Dict[str, List[object]] = {}
     heaps: Dict[int, Dict[int, List[Tuple[float, str]]]] = {
@@ -480,7 +553,8 @@ def _aggregate_eval_and_collect_examples(
         for class_idx, latents in top_latents.items()
     }
 
-    for start, end, mean_np in _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latents, "EVAL"):
+    for start, end, last_np, mean_np in _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latents, "EVAL"):
+        feats_np = last_np if pooling == "mean_of_last" else mean_np
         authors = df["author"].iloc[start:end].tolist()
         labels = df["label"].iloc[start:end].to_numpy(dtype=np.int64)
         texts = df["text"].iloc[start:end].astype(str).tolist()
@@ -489,14 +563,14 @@ def _aggregate_eval_and_collect_examples(
             if author not in user_dict:
                 user_dict[author] = [np.zeros(num_latents, dtype=np.float32), 0, int(labels[idx])]
             entry = user_dict[author]
-            entry[0] += mean_np[idx].astype(np.float32, copy=False)
+            entry[0] += feats_np[idx].astype(np.float32, copy=False)
             entry[1] += 1
 
         for class_idx, latents in top_latents.items():
             class_rows = np.where(labels == class_idx)[0]
             if class_rows.size == 0:
                 continue
-            class_values = mean_np[class_rows][:, latents]
+            class_values = feats_np[class_rows][:, latents]
             for latent_pos, latent in enumerate(latents):
                 latent_values = class_values[:, latent_pos]
                 if latent_values.size == 0:
@@ -541,11 +615,52 @@ def _build_user_arrays(user_dict: Dict[str, List[object]], num_latents: int) -> 
     return X, y
 
 
-def _fit_user_model(X_train: np.ndarray, y_train: np.ndarray, num_classes: int) -> Tuple[StandardScaler, SGDClassifier]:
+def _fit_user_model(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    num_classes: int,
+    balance_name: str = "balanceado",
+    manual_weights: Optional[Sequence[float]] = None,
+) -> Tuple[StandardScaler, SGDClassifier]:
+    """Replica el entrenamiento del clasificador SAE a nivel usuario.
+
+    balance_name: 'sin_balanceo', 'balanceado' / 'balanceo_manual', 'undersampling'.
+    manual_weights: pesos por rango de frecuencia (de menos a mas frecuente).
+        Si None y se requiere balanceo, se usa inverso-frecuencia clasico.
+    """
+    X_used = X_train
+    y_used = y_train
+    sample_weights: Optional[np.ndarray] = None
+
+    name = (balance_name or "").strip().lower()
+    if name == "undersampling":
+        rng = np.random.RandomState(RANDOM_STATE)
+        counts = np.bincount(y_train, minlength=num_classes)
+        positive = counts[counts > 0]
+        if positive.size > 0:
+            min_count = int(positive.min())
+            keep_idx_list = []
+            for c in range(num_classes):
+                idx_c = np.where(y_train == c)[0]
+                if idx_c.size == 0:
+                    continue
+                if idx_c.size > min_count:
+                    idx_c = rng.choice(idx_c, size=min_count, replace=False)
+                keep_idx_list.append(idx_c)
+            keep_idx = np.concatenate(keep_idx_list)
+            rng.shuffle(keep_idx)
+            X_used = X_train[keep_idx]
+            y_used = y_train[keep_idx]
+    elif name in ("balanceado", "balanceo_manual"):
+        if manual_weights is not None and len(manual_weights) == num_classes:
+            cw = _rank_based_weights(y_train, num_classes, manual_weights)
+        else:
+            cw = _balanced_class_weights(y_train, num_classes)
+        sample_weights = cw[y_used]
+    # 'sin_balanceo' u otros: sin sample_weight
+
     scaler = StandardScaler()
-    X_train_n = scaler.fit_transform(X_train)
-    class_weights = _balanced_class_weights(y_train, num_classes)
-    sample_weights = class_weights[y_train]
+    X_train_n = scaler.fit_transform(X_used)
 
     clf = SGDClassifier(
         loss="log_loss",
@@ -555,8 +670,106 @@ def _fit_user_model(X_train: np.ndarray, y_train: np.ndarray, num_classes: int) 
         random_state=RANDOM_STATE,
         average=True,
     )
-    clf.fit(X_train_n, y_train, sample_weight=sample_weights)
+    if sample_weights is not None:
+        clf.fit(X_train_n, y_used, sample_weight=sample_weights)
+    else:
+        clf.fit(X_train_n, y_used)
     return scaler, clf
+
+
+def _rank_based_weights(
+    y: np.ndarray, num_classes: int, weights_by_rank: Sequence[float],
+) -> np.ndarray:
+    """Pesos por ranking de frecuencia: menos frecuente -> primer peso."""
+    counts = np.bincount(y, minlength=num_classes)
+    rank_order = np.argsort(counts)  # asc: menos frecuente primero
+    weights = np.ones(num_classes, dtype=np.float32)
+    for rank, class_idx in enumerate(rank_order):
+        if rank < len(weights_by_rank):
+            weights[class_idx] = float(weights_by_rank[rank])
+    return weights
+
+
+def _resolve_manual_weights(config: SaeInterpretabilityConfig) -> Tuple[float, ...]:
+    if config.manual_balance_weights is not None:
+        return tuple(config.manual_balance_weights)
+    n = len(config.class_names)
+    if n == 2:
+        return (1.1, 0.9)
+    if n == 4:
+        return (1.3, 1.1, 0.95, 0.85)
+    return tuple([1.0] * n)
+
+
+def _select_best_user_config_from_sae(
+    config: SaeInterpretabilityConfig,
+) -> Tuple[str, str, Dict[str, object]]:
+    """Determina (pooling, balance) del mejor modelo SAE a nivel usuario.
+
+    Criterio: f1_macro -> recall_macro -> precision_macro (descendente).
+    Si no hay JSON disponible, devuelve el default ('mean_of_mean', 'balanceado').
+    """
+    json_path = config.sae_results_path or os.path.join(
+        "modelos", f"{config.task_name}_sae_activaciones", "resultados_resumen.json"
+    )
+    info: Dict[str, object] = {"path": json_path, "run_name": None}
+    if not os.path.exists(json_path):
+        info["source"] = "default_no_json"
+        return "mean_of_mean", "balanceado", info
+
+    try:
+        with open(json_path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except Exception as exc:
+        info["source"] = f"default_json_error:{type(exc).__name__}"
+        return "mean_of_mean", "balanceado", info
+
+    run_name: Optional[str] = None
+    best_per_level = (data.get("best_per_level") or {}).get("usuario")
+    if isinstance(best_per_level, dict):
+        run_name = best_per_level.get("name")
+        if run_name:
+            info["source"] = "best_per_level.usuario"
+
+    if run_name is None:
+        eval_results = data.get("eval_results") or {}
+        user_runs = {
+            k: v for k, v in eval_results.items()
+            if isinstance(k, str) and k.startswith("usuario_") and isinstance(v, dict)
+        }
+        if user_runs:
+            def _score(item):
+                _, m = item
+                return (
+                    float(m.get("f1_macro", float("-inf"))),
+                    float(m.get("recall_macro", float("-inf"))),
+                    float(m.get("precision_macro", float("-inf"))),
+                )
+            run_name = max(user_runs.items(), key=lambda kv: (_score(kv), kv[0]))[0]
+            info["source"] = "ranked_eval_results"
+
+    if run_name is None:
+        info["source"] = "default_no_user_runs"
+        return "mean_of_mean", "balanceado", info
+
+    info["run_name"] = run_name
+    pooling, balance = _parse_user_run_name(run_name)
+    return pooling, balance, info
+
+
+def _parse_user_run_name(run_name: str) -> Tuple[str, str]:
+    """Parsea 'usuario_<pooling>_<balance>' -> (pooling, balance).
+
+    pooling esperado: 'mean_of_last' | 'mean_of_mean'.
+    balance esperado: 'sin_balanceo' | 'balanceado' | 'balanceo_manual' | 'undersampling'.
+    """
+    name = run_name
+    if name.startswith("usuario_"):
+        name = name[len("usuario_"):]
+    for pool in ("mean_of_last", "mean_of_mean"):
+        if name.startswith(pool + "_"):
+            return pool, name[len(pool) + 1:]
+    return "mean_of_mean", "balanceado"
 
 
 def _evaluate_user_model(
@@ -720,6 +933,56 @@ def _format_top_latents(
     return formatted
 
 
+def _compute_top_activation_per_class(
+    class_act_stats: Optional[Dict[str, np.ndarray]],
+    class_names: Sequence[str],
+    top_k: int,
+) -> Dict[str, List[Dict[str, object]]]:
+    """Para cada clase, devuelve los `top_k` latentes con mayor activacion media en TRAIN.
+
+    Independiente del clasificador: solo mira la activacion bruta agregada por clase.
+    Tambien aporta `mean_contrast` = mean(clase) - mean(otras clases) para indicar
+    cuan especifico es ese latente de la clase.
+    """
+    if not class_act_stats:
+        return {}
+
+    sums = class_act_stats.get("sum")
+    counts = class_act_stats.get("count")
+    nonzero = class_act_stats.get("nonzero")
+    if sums is None or counts is None or nonzero is None:
+        return {}
+
+    safe_counts = np.where(counts > 0, counts, 1).astype(np.float64)
+    mean_by_class = sums / safe_counts[:, None]
+    nonzero_rate_by_class = nonzero.astype(np.float64) / safe_counts[:, None]
+    total_count = float(counts.sum())
+
+    formatted: Dict[str, List[Dict[str, object]]] = {}
+    for class_idx, class_name in enumerate(class_names):
+        if class_idx >= mean_by_class.shape[0]:
+            continue
+        class_mean = mean_by_class[class_idx]
+        other_mass = sums.sum(axis=0) - sums[class_idx]
+        other_count = max(total_count - float(counts[class_idx]), 1.0)
+        other_mean = other_mass / other_count
+
+        order = np.argsort(class_mean)[::-1][:top_k]
+        entries: List[Dict[str, object]] = []
+        for latent in order.tolist():
+            entries.append(
+                {
+                    "latent_id": int(latent),
+                    "mean_activation": float(class_mean[latent]),
+                    "nonzero_rate": float(nonzero_rate_by_class[class_idx, latent]),
+                    "mean_activation_other_classes": float(other_mean[latent]),
+                    "mean_contrast": float(class_mean[latent] - other_mean[latent]),
+                }
+            )
+        formatted[class_name] = entries
+    return formatted
+
+
 def _render_markdown(results: Dict[str, object]) -> str:
     lines = []
     lines.append(f"# Interpretabilidad SAE - {results['task_name']}")
@@ -760,6 +1023,22 @@ def _render_markdown(results: Dict[str, object]) -> str:
                 f"drop aleatorio bal_acc={ablation['balanced_accuracy_drop_random']:.4f}"
             )
         lines.append("")
+
+    top_by_act = results.get("top_latents_by_activation") or {}
+    if top_by_act:
+        lines.append("## Top latentes mas activos por clase (independiente del clasificador)")
+        lines.append("")
+        for class_name, entries in top_by_act.items():
+            lines.append(f"### Clase {class_name}")
+            lines.append("")
+            for entry in entries[:10]:
+                contrast = entry.get("mean_contrast")
+                contrast_str = f", contrast={contrast:.4f}" if contrast is not None else ""
+                lines.append(
+                    f"- Latente {entry['latent_id']}: mean_act={entry['mean_activation']:.4f}, "
+                    f"nonzero_rate={entry['nonzero_rate']:.4f}{contrast_str}"
+                )
+            lines.append("")
 
     return "\n".join(lines) + "\n"
 

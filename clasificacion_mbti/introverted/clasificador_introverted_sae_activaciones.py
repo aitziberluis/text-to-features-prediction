@@ -54,10 +54,7 @@ from tiny_sae import Sae
 
 dotenv.load_dotenv()
 
-# =====================
 # CONFIGURACION
-# =====================
-
 TRAIT_NAME = "introverted"
 
 MODEL = "openai-community/gpt2"
@@ -111,12 +108,7 @@ BALANCE_CONFIGS = [
     {"name": "undersampling", "use_class_weights": False},
 ]
 
-
-# =====================
 # UTILIDADES
-# =====================
-
-
 def calcular_pesos_clase_manual(y: np.ndarray) -> np.ndarray:
     """Asigna pesos manuales: clase menos frecuente -> 1.1, mas frecuente -> 0.9."""
     PESOS_POR_RANGO = [1.1, 0.9]  # de menos a mas frecuente
@@ -127,20 +119,17 @@ def calcular_pesos_clase_manual(y: np.ndarray) -> np.ndarray:
         weights[class_idx] = PESOS_POR_RANGO[rank]
     return weights
 
-
 def sample_weights_from_class_weights(y: np.ndarray, class_weights: Optional[np.ndarray]) -> np.ndarray:
     """Devuelve vector de sample weights; 1.0 si class_weights es None."""
     if class_weights is None:
         return np.ones(len(y), dtype=np.float32)
     return class_weights[y]
 
-
 def _is_oom_error(exc: BaseException) -> bool:
     """Detecta OOM de CUDA lanzado como excepcion tipada o RuntimeError."""
     if isinstance(exc, torch.OutOfMemoryError):
         return True
     return "out of memory" in str(exc).lower()
-
 
 def random_undersample(X: np.ndarray, y: np.ndarray, random_state: int = RANDOM_STATE):
     """Submuestrea aleatoriamente cada clase al tamano de la clase minoritaria."""
@@ -160,7 +149,6 @@ def random_undersample(X: np.ndarray, y: np.ndarray, random_state: int = RANDOM_
     rng.shuffle(indices)
     return X[indices], y[indices]
 
-
 def random_undersample_mask(y: np.ndarray, random_state: int = RANDOM_STATE) -> np.ndarray:
     """Devuelve mascara booleana con los indices submuestreados."""
     rng = np.random.RandomState(random_state)
@@ -177,12 +165,7 @@ def random_undersample_mask(y: np.ndarray, random_state: int = RANDOM_STATE) -> 
         mask[chosen] = True
     return mask
 
-
-# =====================
 # CARGA DE DATOS
-# =====================
-
-
 def cargar_datos() -> pd.DataFrame:
     """Carga comentarios con TRAIT_NAME conocido usando preprocesamiento centralizado."""
     df, _ = preparar_dataset_para_mbti(
@@ -202,12 +185,7 @@ def cargar_datos() -> pd.DataFrame:
     print(f"Distribucion de {TRAIT_NAME}: {dist}")
     return df
 
-
-# =====================
 # EXTRACCION STREAMING DE REPRESENTACIONES SAE
-# =====================
-
-
 def _pool_sparse_to_dense(
     top_acts: torch.Tensor,
     top_indices: torch.Tensor,
@@ -272,7 +250,6 @@ def _pool_sparse_to_dense(
 
     return last_pooled, mean_pooled
 
-
 def _setup_models():
     """Carga tokenizer, GPT-2 y SAE. Devuelve los componentes para streaming."""
     sae = Sae.load_from_disk(PATH_SAE, device=DEVICE)
@@ -293,7 +270,6 @@ def _setup_models():
 
     hookpoint_module = model.get_submodule(hookpoint_name)
     return tokenizer, model, sae, hookpoint_module, num_latents
-
 
 def _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latents, pass_name=""):
     """Generador que extrae representaciones SAE en streaming.
@@ -384,12 +360,7 @@ def _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latent
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-
-# =====================
 # SPLITS
-# =====================
-
-
 def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Train/eval/test estratificado a nivel de usuario."""
     os.makedirs(SPLITS_DIR, exist_ok=True)
@@ -436,12 +407,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
 
     return train_auth, eval_auth, test_auth
 
-
-# =====================
 # EVALUACION
-# =====================
-
-
 def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
     """Imprime y devuelve metricas de evaluacion (binario)."""
     acc = accuracy_score(y_true, y_pred)
@@ -456,7 +422,7 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
     rec_c = recall_score(y_true, y_pred, average=None, labels=all_labels, zero_division=0)
     f1_c = f1_score(y_true, y_pred, average=None, labels=all_labels, zero_division=0)
 
-    print(f"\n=== {nombre} ===")
+    print(f"\n{nombre}")
     print(
         f"Accuracy: {acc:.4f} | Balanced Acc: {bal_acc:.4f} | "
         f"Precision macro: {prec_macro:.4f} | Recall macro: {rec_macro:.4f} | "
@@ -480,7 +446,6 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
 
     return result
 
-
 def _selection_score(metrics: Dict[str, float]) -> Tuple[float, float, float]:
     return (
         float(metrics.get("f1_macro", float("-inf"))),
@@ -488,14 +453,12 @@ def _selection_score(metrics: Dict[str, float]) -> Tuple[float, float, float]:
         float(metrics.get("precision_macro", float("-inf"))),
     )
 
-
 def _select_best_run(all_results: Dict[str, Dict[str, float]]) -> Tuple[str, Dict[str, float]]:
     best_name, best_metrics = max(
         all_results.items(),
         key=lambda item: (_selection_score(item[1]), item[0]),
     )
     return best_name, best_metrics
-
 
 def _build_user_arrays(user_dict: Dict[str, List[object]], num_latents: int) -> Tuple[np.ndarray, np.ndarray]:
     users = sorted(user_dict.keys())
@@ -508,12 +471,7 @@ def _build_user_arrays(user_dict: Dict[str, List[object]], num_latents: int) -> 
         y[i] = lab
     return X, y
 
-
-# =====================
 # MAIN
-# =====================
-
-
 def main():
     print(f"CLASIFICADOR {TRAIT_NAME.upper()} - SAE SOBRE GPT-2 (STREAMING)")
 
@@ -588,9 +546,7 @@ def main():
     us_first_batch = True
     print(f"  Undersampling: {int(us_mask.sum()):,} muestras seleccionadas de {len(y_train):,}")
 
-    # ========================
     # PASS A: Stream train -> scaler + SGD + user agg + subsample
-    # ========================
     print("\n" + "#" * 70)
     print("# PASS A: Streaming datos de entrenamiento")
     print("#" * 70)
@@ -669,9 +625,7 @@ def main():
     all_clf = dict(clf_comment)
     trained_runs = {}
 
-    # ========================
     # PASS B: Stream eval -> predicciones + user agg
-    # ========================
     print("\n" + "#" * 70)
     print("# PASS B: Streaming datos de evaluacion")
     print("#" * 70)
@@ -713,9 +667,7 @@ def main():
 
         del last_np, mean_np
 
-    # ==============================
     # A) RESULTADOS NIVEL COMENTARIO
-    # ==============================
     all_results = {}
     print("\n" + "#" * 70)
     print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
@@ -737,9 +689,7 @@ def main():
     del eval_preds
     gc.collect()
 
-    # ==============================
     # B) NIVEL USUARIO
-    # ==============================
     if has_author:
         print("\n" + "#" * 70)
         print("# B) CLASIFICACION A NIVEL DE USUARIO")
@@ -802,8 +752,6 @@ def main():
                     "clf": clf,
                     "scaler": u_scaler,
                 }
-
-
 
             del X_u_train, y_u_train, X_u_eval, y_u_eval, X_tr_n, X_ev_n
             gc.collect()
@@ -892,9 +840,7 @@ def main():
         torch.cuda.empty_cache()
     gc.collect()
 
-    # ==============================
     # RESUMEN FINAL
-    # ==============================
     print("RESUMEN DE RESULTADOS (EVAL)")
     header_f1 = " ".join(f"{'F1_'+cn:>8s}" for cn in CLASS_NAMES)
     print(f"{'Config':<45} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {header_f1}")
@@ -907,6 +853,7 @@ def main():
         )
 
     summary_path = os.path.join(OUTPUT_DIR, "resultados_resumen.json")
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     with open(summary_path, "w", encoding="utf-8") as f:
         json.dump({
             "selection_metric_order": ["f1_macro", "recall_macro", "precision_macro"],
@@ -938,7 +885,6 @@ def main():
     print(f"\nResumen guardado en: {summary_path}")
 
     print("COMPLETADO - Mejor modelo evaluado tambien en test")
-
 
 if __name__ == "__main__":
     main()

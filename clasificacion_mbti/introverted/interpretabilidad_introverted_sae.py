@@ -5,7 +5,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from interpretabilidad_sae_common import SaeInterpretabilityConfig, run_posthoc_analysis
 
-
 def main() -> None:
     config = SaeInterpretabilityConfig(
         task_name="introverted",
@@ -17,7 +16,6 @@ def main() -> None:
         mbti_trait="introverted",
     )
     run_posthoc_analysis(config)
-
 
 if __name__ == "__main__":
     main()

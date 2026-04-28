@@ -52,10 +52,7 @@ from preprocesamiento import preparar_dataset_para_mbti
 
 dotenv.load_dotenv()
 
-# =====================
 # CONFIGURACION
-# =====================
-
 TRAIT_NAME = "thinking"
 
 MODEL = "openai-community/gpt2"
@@ -107,12 +104,7 @@ USER_AGG_CHUNK_SIZE = 8192
 # Output
 OUTPUT_DIR = f"modelos/{TRAIT_NAME}_gpt_activaciones"
 
-
-# =====================
 # UTILIDADES
-# =====================
-
-
 def calcular_pesos_clase_manual(y: np.ndarray) -> np.ndarray:
     """Asigna pesos manuales: clase menos frecuente -> 1.1, mas frecuente -> 0.9."""
     PESOS_POR_RANGO = [1.1, 0.9]  # de menos a mas frecuente
@@ -123,13 +115,11 @@ def calcular_pesos_clase_manual(y: np.ndarray) -> np.ndarray:
         weights[class_idx] = PESOS_POR_RANGO[rank]
     return weights
 
-
 def sample_weights_from_class_weights(y: np.ndarray, class_weights: Optional[np.ndarray]) -> np.ndarray:
     """Devuelve vector de sample weights; 1.0 si class_weights es None."""
     if class_weights is None:
         return np.ones(len(y), dtype=np.float32)
     return class_weights[y]
-
 
 def random_undersample(X: np.ndarray, y: np.ndarray, random_state: int = RANDOM_STATE):
     """Submuestrea aleatoriamente cada clase al tamano de la clase minoritaria."""
@@ -149,7 +139,6 @@ def random_undersample(X: np.ndarray, y: np.ndarray, random_state: int = RANDOM_
     rng.shuffle(indices)
     return X[indices], y[indices]
 
-
 def random_undersample_idx(y: np.ndarray, random_state: int = RANDOM_STATE) -> np.ndarray:
     """Devuelve indices submuestreados al tamano de la clase minoritaria."""
     rng = np.random.RandomState(random_state)
@@ -168,12 +157,7 @@ def random_undersample_idx(y: np.ndarray, random_state: int = RANDOM_STATE) -> n
     rng.shuffle(indices)
     return indices
 
-
-# =====================
 # CARGA DE DATOS
-# =====================
-
-
 def cargar_datos() -> pd.DataFrame:
     """Carga comentarios con TRAIT_NAME conocido usando preprocesamiento centralizado."""
     df, _ = preparar_dataset_para_mbti(
@@ -193,12 +177,7 @@ def cargar_datos() -> pd.DataFrame:
     print(f"Distribucion de {TRAIT_NAME}: {dist}")
     return df
 
-
-# =====================
 # EXTRACCION DE ACTIVACIONES
-# =====================
-
-
 def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     """Extrae activaciones de GPT-2 y guarda last_token + mean por comentario."""
 
@@ -312,7 +291,6 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
 
     print(f"Activaciones guardadas en {ACTIVATIONS_DIR}/")
 
-
 def cargar_o_extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray], int]:
     """Carga activaciones de disco si existen, sino las extrae y guarda.
 
@@ -345,12 +323,7 @@ def cargar_o_extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndar
 
     return cargar_o_extraer_activaciones(df)
 
-
-# =====================
 # SPLITS
-# =====================
-
-
 def dividir_comentarios(
     labels: np.ndarray, df: pd.DataFrame, authors: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -402,7 +375,6 @@ def dividir_comentarios(
     print(f"  Sin leakage: cada usuario aparece en un unico split.")
     return train_idx, eval_idx, test_idx
 
-
 def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Train/eval/test estratificado a nivel de usuario."""
     os.makedirs(SPLITS_DIR, exist_ok=True)
@@ -449,12 +421,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
 
     return train_auth, eval_auth, test_auth
 
-
-# =====================
 # EVALUACION
-# =====================
-
-
 def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
     """Imprime y devuelve metricas de evaluacion (binario)."""
     acc = accuracy_score(y_true, y_pred)
@@ -469,7 +436,7 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
     rec_c = recall_score(y_true, y_pred, average=None, labels=all_labels, zero_division=0)
     f1_c = f1_score(y_true, y_pred, average=None, labels=all_labels, zero_division=0)
 
-    print(f"\n=== {nombre} ===")
+    print(f"\n{nombre}")
     print(
         f"Accuracy: {acc:.4f} | Balanced Acc: {bal_acc:.4f} | "
         f"Precision macro: {prec_macro:.4f} | Recall macro: {rec_macro:.4f} | "
@@ -493,14 +460,12 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
 
     return result
 
-
 def _selection_score(metrics: Dict[str, float]) -> Tuple[float, float, float]:
     return (
         float(metrics.get("f1_macro", float("-inf"))),
         float(metrics.get("recall_macro", float("-inf"))),
         float(metrics.get("precision_macro", float("-inf"))),
     )
-
 
 def _select_best_run(all_results: Dict[str, Dict[str, float]]) -> Tuple[str, Dict[str, float]]:
     best_name, best_metrics = max(
@@ -509,12 +474,7 @@ def _select_best_run(all_results: Dict[str, Dict[str, float]]) -> Tuple[str, Dic
     )
     return best_name, best_metrics
 
-
-# =====================
 # ENTRENAMIENTO NIVEL COMENTARIO
-# =====================
-
-
 def entrenar_comentario(
     feats: np.ndarray, train_idx: np.ndarray, eval_idx: np.ndarray,
     y_train: np.ndarray, y_eval: np.ndarray,
@@ -580,12 +540,7 @@ def entrenar_comentario(
 
     return clf, metrics
 
-
-# =====================
 # ENTRENAMIENTO NIVEL USUARIO
-# =====================
-
-
 def _agregar_por_usuario(
     authors: np.ndarray,
     features: np.ndarray,
@@ -630,12 +585,7 @@ def _agregar_por_usuario(
     user_sums[valid] /= user_counts[valid, np.newaxis]
     return user_sums[valid].astype(np.float32), user_labels[valid]
 
-
-# =====================
 # MAIN
-# =====================
-
-
 def main():
     print(f"CLASIFICADOR {TRAIT_NAME.upper()} - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)")
 
@@ -664,9 +614,7 @@ def main():
     trained_runs = {}
     train_auth = eval_auth = test_auth = None
 
-    # ==============================
     # A) NIVEL COMENTARIO
-    # ==============================
     print("\n" + "#" * 70)
     print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
     print("#" * 70)
@@ -736,9 +684,7 @@ def main():
                 "scaler": scaler,
             }
 
-    # ==============================
     # B) NIVEL USUARIO
-    # ==============================
     if has_author and authors is not None:
         print("\n" + "#" * 70)
         print("# B) CLASIFICACION A NIVEL DE USUARIO")
@@ -817,13 +763,10 @@ def main():
                     "scaler": u_scaler,
                 }
 
-
             del X_u_train, y_u_train, X_u_eval, y_u_eval, X_tr_n, X_ev_n
             gc.collect()
 
-    # ==============================
     # RESUMEN FINAL
-    # ==============================
     print("RESUMEN DE RESULTADOS (EVAL)")
     header_f1 = " ".join(f"{'F1_'+cn:>8s}" for cn in CLASS_NAMES)
     print(f"{'Config':<45} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {header_f1}")
@@ -923,7 +866,6 @@ def main():
     print(f"\nResumen guardado en: {summary_path}")
 
     print("COMPLETADO - Mejor modelo evaluado tambien en test")
-
 
 if __name__ == "__main__":
     main()
