@@ -61,7 +61,7 @@ dotenv.load_dotenv()
 
 # CONFIGURACION
 MODEL = "openai-community/gpt2"
-CONTEXT_LEN = 512
+CONTEXT_LEN = 256  # P99 token len ~391; truncamos 2.5% (cola larga)
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # Ruta a la SAE entrenada sobre todo el corpus
@@ -267,9 +267,12 @@ def _setup_models():
     hookpoint_name = sae.cfg.hookpoint
     print(f"SAE cargada: {num_latents} latentes, k={sae.cfg.k}, hookpoint={hookpoint_name}")
 
-    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    # Critico para que `last real token = lengths-1`: GPT-2 ya por defecto es
+    # right-padded, pero lo fijamos explicitamente.
+    tokenizer.padding_side = "right"
 
     model = AutoModelForCausalLM.from_pretrained(
         MODEL,
@@ -277,6 +280,21 @@ def _setup_models():
         dtype=SAE_DTYPE,
     )
     model.eval()
+
+    # OPT #1: truncar el modelo despues del HOOKPOINT. Las capas posteriores
+    # son compute desperdiciado (solo consumimos la activacion del hook).
+    _keep = int(hookpoint_name.rsplit(".", 1)[1]) + 1
+    model.transformer.h = torch.nn.ModuleList(model.transformer.h[:_keep])
+    print(f"  Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11)")
+
+    # OPT #3: torch.compile sobre el bloque transformer. dynamic=True por
+    # las shapes variables; try/except para no romper el run si falla.
+    if torch.cuda.is_available():
+        try:
+            model.transformer = torch.compile(model.transformer, dynamic=True)
+            print("  torch.compile activado (dynamic=True)")
+        except Exception as _ce:
+            print(f"  torch.compile no disponible, sigo sin compilar: {_ce}")
 
     hookpoint_module = model.get_submodule(hookpoint_name)
     return tokenizer, model, sae, hookpoint_module, num_latents
@@ -310,7 +328,7 @@ def _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latent
                             texts,
                             max_length=CONTEXT_LEN,
                             truncation=True,
-                            padding="max_length",
+                            padding=True,
                             return_attention_mask=True,
                             return_tensors="pt",
                         )
@@ -384,16 +402,34 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
     print(f"SAE cargada: {num_latents} latentes, k={sae.cfg.k}, hookpoint={hookpoint_name}")
 
     # Cargar modelo GPT-2
-    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    # Critico para que `last real token = lengths-1`: GPT-2 ya por defecto es
+    # right-padded, pero lo fijamos explicitamente.
+    tokenizer.padding_side = "right"
 
     model = AutoModelForCausalLM.from_pretrained(
         MODEL,
         device_map={"": DEVICE},
-        torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,  # Quadro RTX 8000 (Turing) sin BF16 nativo
     )
     model.eval()
+
+    # OPT #1: truncar el modelo despues del HOOKPOINT. Las capas posteriores
+    # son compute desperdiciado (solo consumimos la activacion del hook).
+    _keep = int(hookpoint_name.rsplit(".", 1)[1]) + 1
+    model.transformer.h = torch.nn.ModuleList(model.transformer.h[:_keep])
+    print(f"  Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11)")
+
+    # OPT #3: torch.compile sobre el bloque transformer. dynamic=True por
+    # las shapes variables; try/except para no romper el run si falla.
+    if torch.cuda.is_available():
+        try:
+            model.transformer = torch.compile(model.transformer, dynamic=True)
+            print("  torch.compile activado (dynamic=True)")
+        except Exception as _ce:
+            print(f"  torch.compile no disponible, sigo sin compilar: {_ce}")
 
     hookpoint_module = model.get_submodule(hookpoint_name)
     captured = {}
@@ -431,7 +467,7 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
                     batch_texts,
                     max_length=CONTEXT_LEN,
                     truncation=True,
-                    padding="max_length",
+                    padding=True,
                     return_attention_mask=True,
                     return_tensors="pt",
                 )

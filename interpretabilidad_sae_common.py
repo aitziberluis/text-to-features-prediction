@@ -27,7 +27,7 @@ PATH_SAE = "sae-ckpts/sae-gpt2-comments"
 PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
 PATH_AUTORES = "data/author_profiles.csv"
 TEXT_COLUMN = "body"
-CONTEXT_LEN = 512
+CONTEXT_LEN = 256  # P99 token len ~391; truncamos 2.5% (cola larga)
 EXTRACT_BATCH_SIZE = 32
 MIN_EXTRACT_BATCH_SIZE = 4
 PROGRESS_INTERVAL = 3600
@@ -381,9 +381,12 @@ def _setup_models() -> Tuple[AutoTokenizer, AutoModelForCausalLM, Sae, torch.nn.
     hookpoint_name = sae.cfg.hookpoint
     print(f"SAE cargada: {num_latents} latentes, k={sae.cfg.k}, hookpoint={hookpoint_name}")
 
-    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    # GPT-2 ya por defecto es right-padded; lo fijamos explicitamente para
+    # que `last real token = lengths-1` siga siendo valido.
+    tokenizer.padding_side = "right"
 
     model = AutoModelForCausalLM.from_pretrained(
         MODEL,
@@ -391,6 +394,21 @@ def _setup_models() -> Tuple[AutoTokenizer, AutoModelForCausalLM, Sae, torch.nn.
         dtype=SAE_DTYPE,
     )
     model.eval()
+
+    # OPT #1: truncar el modelo despues del HOOKPOINT. Las capas posteriores
+    # son compute desperdiciado (solo consumimos la activacion del hook).
+    _keep = int(hookpoint_name.rsplit(".", 1)[1]) + 1
+    model.transformer.h = torch.nn.ModuleList(model.transformer.h[:_keep])
+    print(f"  Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11)")
+
+    # OPT #3: torch.compile sobre el bloque transformer. dynamic=True por
+    # las shapes variables; try/except para no romper el run si falla.
+    if torch.cuda.is_available():
+        try:
+            model.transformer = torch.compile(model.transformer, dynamic=True)
+            print("  torch.compile activado (dynamic=True)")
+        except Exception as _ce:
+            print(f"  torch.compile no disponible, sigo sin compilar: {_ce}")
 
     hookpoint_module = model.get_submodule(hookpoint_name)
     return tokenizer, model, sae, hookpoint_module, num_latents
@@ -465,7 +483,7 @@ def _stream_sae_features(
                             batch_texts,
                             max_length=CONTEXT_LEN,
                             truncation=True,
-                            padding="max_length",
+                            padding=True,
                             return_attention_mask=True,
                             return_tensors="pt",
                         )

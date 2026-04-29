@@ -29,3 +29,4 @@ Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF
 Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  96%|█████████▌| 142/148 [00:00<00:00, 1414.42it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1050.44it/s]
 num_latents=16384
   [TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32
+  [TRAIN  16.9%] step 27787/164518 (889,184/5,264,573) | batch=32

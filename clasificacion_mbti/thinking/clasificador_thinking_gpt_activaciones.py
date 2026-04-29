@@ -44,7 +44,12 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader, Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# El tokenizer "fast" es paralelo internamente (Rayon). Con num_workers>0 en el
+# DataLoader queremos un solo hilo por worker para no oversubscribir CPU.
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 # Importar desde el directorio raiz del proyecto
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -56,7 +61,7 @@ dotenv.load_dotenv()
 TRAIT_NAME = "thinking"
 
 MODEL = "openai-community/gpt2"
-CONTEXT_LEN = 512
+CONTEXT_LEN = 256  # P99 token len ~391; truncamos 2.5% (cola larga)
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 HOOKPOINT = "transformer.h.8"
 
@@ -82,7 +87,8 @@ EVAL_SIZE = 0.15
 RANDOM_STATE = 42
 
 # Entrenamiento
-EXTRACT_BATCH_SIZE = 32
+EXTRACT_BATCH_SIZE = 128  # GPT2-small fp16 en RTX 8000 48GB cabe sobrado
+EXTRACT_NUM_WORKERS = 16  # workers de tokenizacion en paralelo
 TRAIN_EPOCHS = 1
 SGD_ALPHA = 1e-5
 
@@ -103,6 +109,44 @@ USER_AGG_CHUNK_SIZE = 8192
 
 # Output
 OUTPUT_DIR = f"modelos/{TRAIT_NAME}_gpt_activaciones"
+
+# DATASET / COLLATE PARA TOKENIZACION EN PARALELO
+class _TextDataset(Dataset):
+    """Devuelve (texto, indice_original) en el orden ya bucketizado por longitud."""
+
+    def __init__(self, textos: List[str], order: np.ndarray):
+        self.textos = textos
+        self.order = order
+
+    def __len__(self) -> int:
+        return len(self.order)
+
+    def __getitem__(self, i: int):
+        idx = int(self.order[i])
+        return self.textos[idx], idx
+
+
+class _Collate:
+    """Tokeniza un batch con padding dinamico (a la longitud maxima del batch)."""
+
+    def __init__(self, tokenizer, context_len: int):
+        self.tokenizer = tokenizer
+        self.context_len = context_len
+
+    def __call__(self, batch):
+        textos = [b[0] for b in batch]
+        indices = [b[1] for b in batch]
+        tokens = self.tokenizer(
+            textos,
+            max_length=self.context_len,
+            truncation=True,
+            padding=True,
+            return_attention_mask=True,
+            return_tensors="pt",
+        )
+        import torch as _torch
+        return tokens["input_ids"], tokens["attention_mask"], _torch.tensor(indices, dtype=_torch.long)
+
 
 # UTILIDADES
 def calcular_pesos_clase_manual(y: np.ndarray) -> np.ndarray:
@@ -183,18 +227,41 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
 
     n = len(df)
     print(f"\nExtrayendo activaciones de GPT-2 para {n:,} comentarios...")
-    print(f"Hookpoint: {HOOKPOINT}, batch_size: {EXTRACT_BATCH_SIZE}")
+    print(f"Hookpoint: {HOOKPOINT}, batch_size: {EXTRACT_BATCH_SIZE}, "
+          f"workers: {EXTRACT_NUM_WORKERS}")
 
-    tokenizer = AutoTokenizer.from_pretrained(MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    # Critico para que `last real token = lengths-1`: GPT-2 ya por defecto es
+    # right-padded, pero lo fijamos explicitamente.
+    tokenizer.padding_side = "right"
 
+    # Quadro RTX 8000 (Turing, sm_75) NO tiene tensor cores BF16; si fp16.
+    use_fp16 = torch.cuda.is_available()
     model = AutoModelForCausalLM.from_pretrained(
         MODEL,
         device_map={"": DEVICE},
-        torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+        torch_dtype=torch.float16 if use_fp16 else torch.float32,
     )
     model.eval()
+
+    # OPT #1: truncar el modelo despues del HOOKPOINT. Las capas posteriores
+    # (y el LM head, que ademas saltamos llamando a model.transformer(...)
+    # en vez de model(...)) son compute desperdiciado.
+    _keep = int(HOOKPOINT.rsplit(".", 1)[1]) + 1
+    model.transformer.h = torch.nn.ModuleList(model.transformer.h[:_keep])
+    print(f"  Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11 + LM head)")
+
+    # OPT #3: torch.compile sobre el bloque transformer. dynamic=True para
+    # tolerar shapes variables del bucketing por longitud. Guardado con
+    # try/except para que un fallo de compilacion no rompa el run.
+    if torch.cuda.is_available():
+        try:
+            model.transformer = torch.compile(model.transformer, dynamic=True)
+            print("  torch.compile activado (dynamic=True)")
+        except Exception as _ce:
+            print(f"  torch.compile no disponible, sigo sin compilar: {_ce}")
 
     hookpoint_module = model.get_submodule(HOOKPOINT)
     captured = {}
@@ -207,69 +274,83 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     handle = hookpoint_module.register_forward_hook(hook)
 
     hidden_size = getattr(model.config, "hidden_size", None) or getattr(model.config, "n_embd")
-    total_steps = math.ceil(n / EXTRACT_BATCH_SIZE)
 
-    # Pre-allocate arrays en disco con memmap para no ocupar toda la RAM
     os.makedirs(ACTIVATIONS_DIR, exist_ok=True)
     last_token_path = os.path.join(ACTIVATIONS_DIR, "last_token.npy")
     mean_token_path = os.path.join(ACTIVATIONS_DIR, "mean_token.npy")
 
-    last_token_mmap = np.lib.format.open_memmap(
-        last_token_path, mode="w+", dtype=np.float32, shape=(n, hidden_size)
-    )
-    mean_token_mmap = np.lib.format.open_memmap(
-        mean_token_path, mode="w+", dtype=np.float32, shape=(n, hidden_size)
-    )
+    # Buffer en RAM para evitar escrituras aleatorias al HDD (procesamos en
+    # orden de longitud y escribimos por indice original).
+    last_token_full = np.empty((n, hidden_size), dtype=np.float32)
+    mean_token_full = np.empty((n, hidden_size), dtype=np.float32)
 
     textos = df["text"].tolist()
+
+    # Bucketizacion por longitud para minimizar el padding desperdiciado.
+    print("  Calculando longitudes y ordenando por longitud (bucketing)...")
+    char_lens = np.fromiter((len(t) for t in textos), dtype=np.int64, count=n)
+    sorted_order = np.argsort(char_lens, kind="stable")
+
+    dataset = _TextDataset(textos, sorted_order)
+    collate = _Collate(tokenizer, CONTEXT_LEN)
+    loader = DataLoader(
+        dataset,
+        batch_size=EXTRACT_BATCH_SIZE,
+        num_workers=EXTRACT_NUM_WORKERS,
+        collate_fn=collate,
+        pin_memory=True,
+        shuffle=False,
+        persistent_workers=False,
+    )
+
+    total_steps = math.ceil(n / EXTRACT_BATCH_SIZE)
     last_print = time.time()
+    device = torch.device(DEVICE)
 
     try:
         with torch.no_grad():
-            for step, start in enumerate(range(0, n, EXTRACT_BATCH_SIZE)):
-                end = min(start + EXTRACT_BATCH_SIZE, n)
-                batch_texts = textos[start:end]
+            for step, (input_ids, attention_mask, original_idx) in enumerate(loader):
+                input_ids = input_ids.to(device, non_blocking=True)
+                attention_mask = attention_mask.to(device, non_blocking=True)
 
-                tokens = tokenizer(
-                    batch_texts,
-                    max_length=CONTEXT_LEN,
-                    truncation=True,
-                    padding="max_length",
-                    return_attention_mask=True,
-                    return_tensors="pt",
-                )
-                input_ids = tokens["input_ids"].to(model.device)
-                attention_mask = tokens["attention_mask"].to(model.device)
+                # Saltamos el LM head: el hook ya tiene lo que necesitamos.
+                model.transformer(input_ids=input_ids, attention_mask=attention_mask)
 
-                model(input_ids=input_ids, attention_mask=attention_mask)
+                acts = captured["act"]
+                act_dtype = acts.dtype
+                mask = attention_mask.to(act_dtype)
+                lengths = attention_mask.sum(dim=1).clamp(min=1).long() - 1
 
-                acts = captured["act"].float().cpu()  # (bs, seq, hidden)
-                mask = attention_mask.cpu().float()    # (bs, seq)
+                batch_idx = torch.arange(acts.shape[0], device=device)
+                last_tok = acts[batch_idx, lengths, :]
 
-                # Last token: posicion del ultimo token real
-                lengths = mask.sum(dim=1).clamp(min=1).long() - 1
-                batch_idx = torch.arange(acts.shape[0])
-                last_tok = acts[batch_idx, lengths, :]  # (bs, hidden)
+                mask_3d = mask.unsqueeze(-1)
+                denom = mask.sum(dim=1, keepdim=True).clamp(min=1)
+                mean_tok = (acts * mask_3d).sum(dim=1) / denom
 
-                # Mean token: media sobre tokens reales
-                mask_3d = mask.unsqueeze(-1)  # (bs, seq, 1)
-                mean_tok = (acts * mask_3d).sum(dim=1) / mask.sum(dim=1, keepdim=True).clamp(min=1)
+                last_np = last_tok.float().cpu().numpy()
+                mean_np = mean_tok.float().cpu().numpy()
+                idx_np = original_idx.numpy()
 
-                last_token_mmap[start:end] = last_tok.numpy()
-                mean_token_mmap[start:end] = mean_tok.numpy()
+                last_token_full[idx_np] = last_np
+                mean_token_full[idx_np] = mean_np
 
                 now = time.time()
                 if now - last_print >= PROGRESS_INTERVAL or step == 0 or step == total_steps - 1:
                     pct = 100.0 * (step + 1) / total_steps
+                    seq_len = input_ids.shape[1]
+                    done = min((step + 1) * EXTRACT_BATCH_SIZE, n)
                     print(f"  [{pct:5.1f}%] step {step+1}/{total_steps} "
-                          f"({end:,}/{n:,} comentarios)")
+                          f"({done:,}/{n:,} comentarios, seq_len_batch={seq_len})")
                     last_print = now
 
     finally:
         handle.remove()
 
-    # Flush memmap
-    del last_token_mmap, mean_token_mmap
+    print(f"  Volcando activaciones a {ACTIVATIONS_DIR}/ ...")
+    np.save(last_token_path, last_token_full)
+    np.save(mean_token_path, mean_token_full)
+    del last_token_full, mean_token_full
 
     # Guardar labels y authors
     labels = df["label"].to_numpy().astype(np.int8)

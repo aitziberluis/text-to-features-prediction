@@ -206,10 +206,11 @@ def preparar_modelo_y_datos(dataset: Dataset):
 
 	print("Cargando tokenizer y modelo...")
 	tokenizer = AutoTokenizer.from_pretrained(MODEL)
+	# Quadro RTX 8000 (Turing, sm_75) NO tiene tensor cores BF16; si fp16.
 	gpt = AutoModelForCausalLM.from_pretrained(
 		MODEL,
 		device_map={"": DEVICE},
-		torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+		torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
 	)
 
 	# Aseguramos que el tokenizer tiene token de padding

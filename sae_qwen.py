@@ -201,10 +201,17 @@ def preparar_modelo_y_datos(dataset: Dataset):
     print("Cargando tokenizer y modelo Qwen...")
     tokenizer = AutoTokenizer.from_pretrained(MODEL, trust_remote_code=True)
 
+    # Auto-pick: BF16 nativo en Ampere+ (RTX A6000, sm_86); FP16 en Turing
+    # (Quadro RTX 8000, sm_75) que no tiene tensor cores BF16.
+    if torch.cuda.is_available():
+        cap = torch.cuda.get_device_capability(0)
+        _train_dtype = torch.bfloat16 if cap[0] >= 8 else torch.float16
+    else:
+        _train_dtype = torch.float32
     model_kwargs = {
         "trust_remote_code": True,
         "device_map": {"": DEVICE},
-        "torch_dtype": torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+        "torch_dtype": _train_dtype,
     }
     if torch.cuda.is_available() and USE_FLASH_ATTN:
         model_kwargs["attn_implementation"] = "flash_attention_2"
