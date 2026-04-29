@@ -1,0 +1,31 @@
+[2026-04-29 08:41:56] Cache SAE eliminada: /hdd/aitziber.l/activaciones_sae_gpt2_genero
+[2026-04-29 08:41:56] --- Iniciando clasificacion_genero/gpt_activaciones/top_latentes_activos_genero.py (solo top latentes activos) ---
+======================================================================
+TOP LATENTES SAE MAS ACTIVOS POR CLASE - genero
+======================================================================
+PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con género por autor...
+   ✓ 17,639,863 comentarios con info de género
+
+4. Filtrando solo género conocido (m/f)...
+   ✓ 7,379,659 comentarios con género m/f
+   (Eliminados 10,260,204 con género unknown)
+
+5. Distribución por género:
+   m: 4,920,137 comentarios (66.7%)
+   f: 2,459,522 comentarios (33.3%)
+✓ Dataset preparado y listo para usar
+Train comments: 5,264,573
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  96%|█████████▌| 142/148 [00:00<00:00, 1414.42it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1050.44it/s]
+num_latents=16384
+  [TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32

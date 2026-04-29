@@ -144,6 +144,40 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
         pooling=best_pooling,
     )
 
+    # Top latentes por activacion media (independiente del clasificador) +
+    # ejemplos/palabras asociados (segundo pase sobre TRAIN).
+    top_by_activation_no_examples = _compute_top_activation_per_class(
+        class_act_stats,
+        config.class_names,
+        top_k=config.top_k_latents,
+    )
+    activation_targets: Dict[int, List[int]] = {}
+    for class_idx, class_name in enumerate(config.class_names):
+        latents = [int(e["latent_id"]) for e in top_by_activation_no_examples.get(class_name, [])]
+        if latents:
+            activation_targets[class_idx] = latents
+    if activation_targets:
+        activation_examples = _collect_examples_for_target_latents(
+            df=df_train,
+            tokenizer=tokenizer,
+            model=model,
+            sae=sae,
+            hookpoint_module=hookpoint_module,
+            num_latents=num_latents,
+            targets=activation_targets,
+            top_examples=config.top_examples_per_latent,
+            pooling=best_pooling,
+            pass_name="TRAIN_TOPACT_EXAMPLES",
+        )
+    else:
+        activation_examples = None
+    top_by_activation = _compute_top_activation_per_class(
+        class_act_stats,
+        config.class_names,
+        top_k=config.top_k_latents,
+        examples_by_class_idx=activation_examples,
+    )
+
     del model, tokenizer, sae
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
@@ -182,11 +216,7 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
             latent_stats,
             examples,
         ),
-        "top_latents_by_activation": _compute_top_activation_per_class(
-            class_act_stats,
-            config.class_names,
-            top_k=config.top_k_latents,
-        ),
+        "top_latents_by_activation": top_by_activation,
         "num_eval_predictions": int(len(y_pred)),
     }
 
@@ -267,9 +297,11 @@ def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
             for entry in entries[:10]:
                 contrast = entry.get("mean_contrast")
                 contrast_str = f" contrast={contrast:+.4f}" if contrast is not None else ""
+                words = ", ".join(w["token"] for w in entry.get("top_words", [])[:8])
+                words_str = f" palabras=[{words}]" if words else ""
                 print(
                     f"  L{entry['latent_id']:>6}  mean_act={entry['mean_activation']:+.4f}  "
-                    f"nonzero_rate={entry['nonzero_rate']:.4f}{contrast_str}"
+                    f"nonzero_rate={entry['nonzero_rate']:.4f}{contrast_str}{words_str}"
                 )
 
 
@@ -937,12 +969,17 @@ def _compute_top_activation_per_class(
     class_act_stats: Optional[Dict[str, np.ndarray]],
     class_names: Sequence[str],
     top_k: int,
+    examples_by_class_idx: Optional[Dict[int, Dict[int, Dict[str, object]]]] = None,
 ) -> Dict[str, List[Dict[str, object]]]:
     """Para cada clase, devuelve los `top_k` latentes con mayor activacion media en TRAIN.
 
     Independiente del clasificador: solo mira la activacion bruta agregada por clase.
     Tambien aporta `mean_contrast` = mean(clase) - mean(otras clases) para indicar
     cuan especifico es ese latente de la clase.
+
+    Si se proporciona `examples_by_class_idx` (mapa class_idx -> latent_id ->
+    {top_words, examples}), se inyectan las palabras asociadas y los ejemplos
+    en cada entrada.
     """
     if not class_act_stats:
         return {}
@@ -970,17 +1007,90 @@ def _compute_top_activation_per_class(
         order = np.argsort(class_mean)[::-1][:top_k]
         entries: List[Dict[str, object]] = []
         for latent in order.tolist():
-            entries.append(
-                {
-                    "latent_id": int(latent),
-                    "mean_activation": float(class_mean[latent]),
-                    "nonzero_rate": float(nonzero_rate_by_class[class_idx, latent]),
-                    "mean_activation_other_classes": float(other_mean[latent]),
-                    "mean_contrast": float(class_mean[latent] - other_mean[latent]),
-                }
-            )
+            entry: Dict[str, object] = {
+                "latent_id": int(latent),
+                "mean_activation": float(class_mean[latent]),
+                "nonzero_rate": float(nonzero_rate_by_class[class_idx, latent]),
+                "mean_activation_other_classes": float(other_mean[latent]),
+                "mean_contrast": float(class_mean[latent] - other_mean[latent]),
+            }
+            if examples_by_class_idx is not None:
+                ex = examples_by_class_idx.get(class_idx, {}).get(latent)
+                if ex is not None:
+                    entry["top_words"] = ex.get("top_words", [])
+                    entry["examples"] = ex.get("examples", [])
+            entries.append(entry)
         formatted[class_name] = entries
     return formatted
+
+
+def _collect_examples_for_target_latents(
+    df: pd.DataFrame,
+    tokenizer: AutoTokenizer,
+    model: AutoModelForCausalLM,
+    sae: Sae,
+    hookpoint_module: torch.nn.Module,
+    num_latents: int,
+    targets: Dict[int, List[int]],
+    top_examples: int,
+    pooling: str = "mean_of_mean",
+    pass_name: str = "EXAMPLES",
+) -> Dict[int, Dict[int, Dict[str, object]]]:
+    """Recorre el dataframe y guarda los `top_examples` textos con mayor activacion
+    para cada (class_idx, latent_id) presente en `targets`. Devuelve tambien
+    `top_words` agregadas a partir de esos ejemplos."""
+    heaps: Dict[int, Dict[int, List[Tuple[float, str]]]] = {
+        class_idx: {latent: [] for latent in latents}
+        for class_idx, latents in targets.items()
+    }
+
+    for start, end, last_np, mean_np in _stream_sae_features(
+        df, tokenizer, model, sae, hookpoint_module, num_latents, pass_name
+    ):
+        feats_np = last_np if pooling == "mean_of_last" else mean_np
+        labels = df["label"].iloc[start:end].to_numpy(dtype=np.int64)
+        texts = df["text"].iloc[start:end].astype(str).tolist()
+
+        for class_idx, latents in targets.items():
+            if not latents:
+                continue
+            class_rows = np.where(labels == class_idx)[0]
+            if class_rows.size == 0:
+                continue
+            class_values = feats_np[class_rows][:, latents]
+            for latent_pos, latent in enumerate(latents):
+                latent_values = class_values[:, latent_pos]
+                if latent_values.size == 0:
+                    continue
+                take_n = min(top_examples, latent_values.size)
+                candidate_rows = np.argpartition(latent_values, -take_n)[-take_n:]
+                heap = heaps[class_idx][latent]
+                for candidate in candidate_rows:
+                    activation = float(latent_values[candidate])
+                    if activation <= 0:
+                        continue
+                    text = _truncate_text(texts[int(class_rows[candidate])])
+                    item = (activation, text)
+                    if len(heap) < top_examples:
+                        heapq.heappush(heap, item)
+                    elif activation > heap[0][0]:
+                        heapq.heapreplace(heap, item)
+
+    examples: Dict[int, Dict[int, Dict[str, object]]] = {
+        class_idx: {} for class_idx in targets
+    }
+    for class_idx, latent_heaps in heaps.items():
+        for latent, heap in latent_heaps.items():
+            ranked = sorted(heap, reverse=True)
+            ranked_texts = [text for _act, text in ranked]
+            examples[class_idx][latent] = {
+                "top_words": _top_words(ranked_texts),
+                "examples": [
+                    {"activation": float(act), "text": text}
+                    for act, text in ranked
+                ],
+            }
+    return examples
 
 
 def _render_markdown(results: Dict[str, object]) -> str:
@@ -1034,9 +1144,11 @@ def _render_markdown(results: Dict[str, object]) -> str:
             for entry in entries[:10]:
                 contrast = entry.get("mean_contrast")
                 contrast_str = f", contrast={contrast:.4f}" if contrast is not None else ""
+                words = ", ".join(w["token"] for w in entry.get("top_words", [])[:8])
+                words_str = f", palabras={words}" if words else ""
                 lines.append(
                     f"- Latente {entry['latent_id']}: mean_act={entry['mean_activation']:.4f}, "
-                    f"nonzero_rate={entry['nonzero_rate']:.4f}{contrast_str}"
+                    f"nonzero_rate={entry['nonzero_rate']:.4f}{contrast_str}{words_str}"
                 )
             lines.append("")
 
