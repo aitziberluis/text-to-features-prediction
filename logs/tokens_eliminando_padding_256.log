@@ -1,0 +1,37 @@
+nohup: ignoring input
+CSV: /home/aitziber.l/TFM/data/all_comments_since_2015.csv
+Tokenizer: openai-community/gpt2
+Umbral: > 256 tokens
+Token indices sequence length is longer than the specified maximum sequence length for this model (1035 > 1024). Running this sequence through the model will result in indexing errors
+  [progreso] procesados=1,199,988 | >256=27,772 (2.31%) | avg_len=48.0 | max_len=49501 | vel=21,785 c/s | t=0.9 min
+  [progreso] procesados=1,999,980 | >256=47,240 (2.36%) | avg_len=48.8 | max_len=49501 | vel=21,754 c/s | t=1.5 min
+  [progreso] procesados=2,799,975 | >256=66,565 (2.38%) | avg_len=49.2 | max_len=49501 | vel=21,753 c/s | t=2.1 min
+  [progreso] procesados=3,599,968 | >256=86,442 (2.40%) | avg_len=49.5 | max_len=49501 | vel=21,597 c/s | t=2.8 min
+  [progreso] procesados=4,399,960 | >256=106,513 (2.42%) | avg_len=49.8 | max_len=49501 | vel=21,540 c/s | t=3.4 min
+  [progreso] procesados=5,199,955 | >256=126,604 (2.43%) | avg_len=50.0 | max_len=65624 | vel=21,455 c/s | t=4.0 min
+  [progreso] procesados=5,999,950 | >256=146,549 (2.44%) | avg_len=50.1 | max_len=65624 | vel=21,335 c/s | t=4.7 min
+  [progreso] procesados=6,799,943 | >256=166,333 (2.45%) | avg_len=50.2 | max_len=65624 | vel=21,351 c/s | t=5.3 min
+  [progreso] procesados=7,599,935 | >256=186,115 (2.45%) | avg_len=50.3 | max_len=65624 | vel=21,418 c/s | t=5.9 min
+  [progreso] procesados=8,399,928 | >256=205,871 (2.45%) | avg_len=50.3 | max_len=65624 | vel=21,470 c/s | t=6.5 min
+  [progreso] procesados=9,199,924 | >256=226,148 (2.46%) | avg_len=50.4 | max_len=65624 | vel=21,439 c/s | t=7.2 min
+  [progreso] procesados=9,999,902 | >256=241,396 (2.41%) | avg_len=50.1 | max_len=66831 | vel=21,584 c/s | t=7.7 min
+  [progreso] procesados=10,799,888 | >256=262,489 (2.43%) | avg_len=50.2 | max_len=66831 | vel=21,561 c/s | t=8.3 min
+  [progreso] procesados=11,599,872 | >256=284,881 (2.46%) | avg_len=50.3 | max_len=66831 | vel=21,536 c/s | t=9.0 min
+  [progreso] procesados=12,399,860 | >256=306,987 (2.48%) | avg_len=50.4 | max_len=66831 | vel=21,511 c/s | t=9.6 min
+  [progreso] procesados=13,199,844 | >256=326,196 (2.47%) | avg_len=50.4 | max_len=66831 | vel=21,533 c/s | t=10.2 min
+  [progreso] procesados=13,999,835 | >256=343,664 (2.45%) | avg_len=50.2 | max_len=66831 | vel=21,562 c/s | t=10.8 min
+  [progreso] procesados=14,799,825 | >256=361,192 (2.44%) | avg_len=50.1 | max_len=66831 | vel=21,591 c/s | t=11.4 min
+  [progreso] procesados=15,599,819 | >256=378,686 (2.43%) | avg_len=50.1 | max_len=66831 | vel=21,616 c/s | t=12.0 min
+  [progreso] procesados=16,399,810 | >256=396,314 (2.42%) | avg_len=50.0 | max_len=66831 | vel=21,636 c/s | t=12.6 min
+  [progreso] procesados=17,199,803 | >256=413,909 (2.41%) | avg_len=49.9 | max_len=66831 | vel=21,647 c/s | t=13.2 min
+
+
+RESUMEN
+
+Comentarios validos procesados : 17,639,864
+Comentarios body nulo/vacio    : 198
+Comentarios con > 256 tokens : 423,444
+Porcentaje                     : 2.4005%
+Longitud media (tokens)        : 49.88
+Longitud maxima (tokens)       : 66831
+Tiempo total                   : 13.59 min

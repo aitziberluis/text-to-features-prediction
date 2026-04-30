@@ -1,35 +1,0 @@
-nohup: ignoring input
-CLASIFICADOR EDAD - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
-PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE EDAD
-
-1. Cargando comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-   ✓ 17,639,864 comentarios cargados
-
-2. Cargando autores...
-   ✓ 10,295 autores cargados
-
-3. Uniendo comentarios con edad por autor...
-   ✓ 17,639,863 comentarios con info de edad
-
-4. Filtrando solo edad conocida (rangos válidos)...
-   ✓ 5,538,809 comentarios con rango de edad válido
-   (Eliminados 12,101,054 comentarios con edad nula/fuera de rango)
-
-5. Distribución por rango de edad:
-   20_29: 2,811,112 comentarios (50.8%)
-   30_39: 1,422,075 comentarios (25.7%)
-   14_19: 877,575 comentarios (15.8%)
-   40_plus: 428,047 comentarios (7.7%)
-✓ Dataset de edad preparado y listo para usar
-Rangos de edad presentes: {'20_29': 2811112, '30_39': 1422075, '14_19': 877575, '40_plus': 428047}
-
-Extrayendo activaciones de GPT-2 para 5,538,809 comentarios...
-Hookpoint: transformer.h.8, batch_size: 128, workers: 16
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-`torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  95%|█████████▌| 141/148 [00:00<00:00, 1408.83it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1128.11it/s]
-  Modelo truncado a las primeras 9 capas (skip h.9..h.11 + LM head)
-  torch.compile activado (dynamic=True)
-  Calculando longitudes y ordenando por longitud (bucketing)...
-  [  0.0%] step 1/43272 (128/5,538,809 comentarios, seq_len_batch=1)

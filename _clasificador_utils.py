@@ -50,7 +50,6 @@ def print_best_per_level_eval(
 ) -> None:
     print("\n" + "=" * 70, flush=True)
     print("MEJOR MODELO POR NIVEL EN EVAL", flush=True)
-    print("=" * 70, flush=True)
     for level in ("comentario", "usuario"):
         entry = best_per_level.get(level)
         if entry is None:
@@ -71,7 +70,6 @@ def print_best_per_level_test(
 ) -> None:
     print("\n" + "=" * 70, flush=True)
     print("MEJOR MODELO POR NIVEL EVALUADO EN TEST", flush=True)
-    print("=" * 70, flush=True)
     for level in ("comentario", "usuario"):
         entry = best_per_level_test.get(level)
         if entry is None:

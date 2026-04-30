@@ -13,12 +13,13 @@ from preprocesamiento import cargar_comentarios
 dotenv.load_dotenv()
 
 
-# CONFIGURACIÓN GENERAL
 
-MODEL = "Qwen/Qwen3.5-2B"  # modelo base Qwen
-CONTEXT_LEN = int(os.getenv("SAE_CONTEXT_LEN", "512"))
+MODEL = os.getenv("SAE_MODEL", "Qwen/Qwen3-4B-Base")  # 36 capas, hidden=2560
+CONTEXT_LEN = int(os.getenv("SAE_CONTEXT_LEN", "256"))  # P99 token len ~391; 2.5% truncados
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-HOOKPOINT = os.getenv("SAE_HOOKPOINT", "model.layers.15")
+# Por defecto el centro: capa 17 de 36. Idealmente: usar layer-sweep antes
+# (ver find_best_layer.py) para elegir la mejor capa segun tu tarea.
+HOOKPOINT = os.getenv("SAE_HOOKPOINT", "model.layers.17")
 
 # Ajustes de rendimiento (sobre-escribibles por variables de entorno)
 TOKENIZE_BATCH_SIZE = int(os.getenv("SAE_TOKENIZE_BATCH_SIZE", "256"))
@@ -169,7 +170,6 @@ def detectar_batch_size_optimo(
 
 
 
-# CARGA Y PREPARACIÓN DE DATOS
 
 
 def cargar_dataset_texto() -> Dataset:
@@ -190,7 +190,6 @@ def cargar_dataset_texto() -> Dataset:
     return dataset
 
 
-# TOKENIZACIÓN Y MODELO
 
 
 def preparar_modelo_y_datos(dataset: Dataset):
@@ -225,6 +224,41 @@ def preparar_modelo_y_datos(dataset: Dataset):
             model = AutoModelForCausalLM.from_pretrained(MODEL, **model_kwargs)
         else:
             raise
+    model.eval()
+
+    # OPT #1: truncar el modelo despues del HOOKPOINT (Qwen: model.model.layers).
+    # Aunque tiny_sae corta el forward via StopIteration, las capas posteriores
+    # siguen ocupando VRAM y bloqueando batches mas grandes. Para Qwen3-4B con
+    # hookpoint en la capa 17 de 36 esto libera ~50% del peso del modelo.
+    import torch.nn as _nn
+    _keep = int(HOOKPOINT.rsplit(".", 1)[1]) + 1
+    if hasattr(model, "model") and hasattr(model.model, "layers"):
+        n_total = len(model.model.layers)
+        model.model.layers = _nn.ModuleList(model.model.layers[:_keep])
+        # Tambien podemos quitar el norm final y el lm_head: nunca se ejecutan.
+        if hasattr(model.model, "norm"):
+            del model.model.norm
+        print(
+            f"  Modelo truncado a las primeras {_keep} capas (de {n_total}); "
+            f"liberadas {n_total - _keep} capas + final norm + lm_head"
+        )
+    else:
+        print("  AVISO: arquitectura inesperada, no trunco capas.")
+    if hasattr(model, "lm_head"):
+        del model.lm_head
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    # OPT #3: torch.compile sobre el bloque transformer truncado. dynamic=False
+    # porque en SAE training las shapes son fijas (CONTEXT_LEN x batch).
+    if torch.cuda.is_available():
+        try:
+            model.model = torch.compile(
+                model.model, mode="reduce-overhead", dynamic=False, fullgraph=False
+            )
+            print("  torch.compile activado (reduce-overhead, static shapes)")
+        except Exception as _ce:
+            print(f"  torch.compile no disponible: {_ce}")
 
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -260,7 +294,6 @@ def preparar_modelo_y_datos(dataset: Dataset):
     return tokenizer, model, tokenized
 
 
-# CONFIGURACIÓN Y ENTRENAMIENTO DE LA SAE
 
 
 def entrenar_sae(dataset: Dataset):

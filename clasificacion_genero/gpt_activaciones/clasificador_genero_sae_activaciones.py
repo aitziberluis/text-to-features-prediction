@@ -59,7 +59,6 @@ from tiny_sae import Sae
 
 dotenv.load_dotenv()
 
-# CONFIGURACION
 MODEL = "openai-community/gpt2"
 CONTEXT_LEN = 256  # P99 token len ~391; truncamos 2.5% (cola larga)
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -169,7 +168,6 @@ def _is_oom_error(exc: BaseException) -> bool:
         return True
     return "out of memory" in str(exc).lower()
 
-# CARGA DE DATOS
 def cargar_datos_genero() -> pd.DataFrame:
     """Carga comentarios con genero m/f usando preprocesamiento centralizado."""
     df, _ = preparar_dataset_para_sae(
@@ -191,7 +189,6 @@ def cargar_datos_genero() -> pd.DataFrame:
     print(f"Generos presentes: {dist}")
     return df
 
-# EXTRACCION DE REPRESENTACIONES SAE
 def _pool_sparse_to_dense(
     top_acts: torch.Tensor,
     top_indices: torch.Tensor,
@@ -554,7 +551,6 @@ def extraer_activaciones(
 
     return _extraer_activaciones(df)
 
-# SPLITS
 def dividir_comentarios(
     labels: np.ndarray, df: pd.DataFrame, authors: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -644,7 +640,6 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
     print(f"Split de usuarios guardado en {split_path}")
     return train_auth, eval_auth, test_auth
 
-# EVALUACION
 def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
     """Imprime y devuelve metricas de evaluacion."""
     acc = accuracy_score(y_true, y_pred)
@@ -702,7 +697,6 @@ def _build_user_arrays(user_dict: Dict[str, List[object]], num_latents: int) -> 
         y[i] = lab
     return X, y
 
-# ENTRENAMIENTO NIVEL COMENTARIO
 def entrenar_comentario(
     feats: np.ndarray, train_idx: np.ndarray, eval_idx: np.ndarray,
     y_train: np.ndarray, y_eval: np.ndarray,
@@ -765,7 +759,6 @@ def entrenar_comentario(
 
     return clf, metrics
 
-# ENTRENAMIENTO NIVEL USUARIO
 def _agregar_por_usuario(
     authors: np.ndarray,
     features: np.ndarray,
@@ -918,10 +911,8 @@ def main():
     us_mask = random_undersample_mask(y_train)
     us_first_batch = True
 
-    # A) NIVEL COMENTARIO
     print("\n" + "#" * 70)
-    print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
-    print("#" * 70)
+    print("A) CLASIFICACION A NIVEL DE COMENTARIO")
 
     first_batch = True
     for start, end, last_np, mean_np in _stream_sae_features(
@@ -975,8 +966,7 @@ def main():
 
     eval_preds = {key: [] for key in clf_comment}
     print("\n" + "#" * 70)
-    print("# PASS B: Streaming datos de evaluacion")
-    print("#" * 70)
+    print("PASS B: Streaming datos de evaluacion")
 
     for start, end, last_np, mean_np in _stream_sae_features(
         df_eval, tokenizer, model, sae, hookpoint_module, num_latents, pass_name="EVAL"
@@ -1021,11 +1011,9 @@ def main():
     del eval_preds
     gc.collect()
 
-    # B) NIVEL USUARIO
     if has_author:
         print("\n" + "#" * 70)
-        print("# B) CLASIFICACION A NIVEL DE USUARIO")
-        print("#" * 70)
+        print("B) CLASIFICACION A NIVEL DE USUARIO")
 
         print(f"\nSplit usuarios: train={len(train_auth):,} eval={len(eval_auth):,} test={len(test_auth):,}")
 
@@ -1101,8 +1089,7 @@ def main():
     print_best_per_level_eval(best_per_level)
 
     print("\n" + "#" * 70)
-    print("# PASS C: Streaming datos de test (mejor por nivel)")
-    print("#" * 70)
+    print("PASS C: Streaming datos de test (mejor por nivel)")
 
     # Determinar comment_pooling necesario para el mejor usuario (si lo hay)
     best_user_entry = best_per_level.get("usuario")
@@ -1178,10 +1165,8 @@ def main():
         torch.cuda.empty_cache()
     gc.collect()
 
-    # RESUMEN FINAL
     print("RESUMEN DE RESULTADOS (EVAL)")
     print(f"{'Config':<50} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {'F1_f':>6} {'F1_m':>6}")
-    print("-" * 85)
     for key, m in all_results.items():
         print(f"{key:<50} {m['accuracy']:.4f} {m['balanced_accuracy']:.5f} "
               f"{m['f1_macro']:.4f} {m['f1_female']:.4f} {m['f1_male']:.4f}")

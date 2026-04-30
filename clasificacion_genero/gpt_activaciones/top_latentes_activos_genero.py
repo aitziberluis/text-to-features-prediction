@@ -41,9 +41,7 @@ def main() -> None:
         top_examples_per_latent=TOP_EXAMPLES,
     )
 
-    print("=" * 70, flush=True)
     print("TOP LATENTES SAE MAS ACTIVOS POR CLASE - genero", flush=True)
-    print("=" * 70, flush=True)
 
     df = _load_dataframe(config)
     train_auth, _eval_auth, _test_auth = _load_user_splits(config)
@@ -111,7 +109,6 @@ def main() -> None:
     # Imprimir resultados al log
     print("\n" + "=" * 70, flush=True)
     print(f"TOP {TOP_K} latentes mas activos por clase (independiente del clasificador)", flush=True)
-    print("=" * 70, flush=True)
     for class_name, entries in top_by_act.items():
         print(f"\n[Clase {class_name}] top {len(entries)} latentes por activacion media:", flush=True)
         print(

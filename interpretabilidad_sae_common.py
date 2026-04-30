@@ -240,7 +240,6 @@ def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
     """Imprime al stdout un resumen legible de la interpretabilidad SAE."""
     print("\n" + "=" * 70, flush=True)
     print(f"INTERPRETABILIDAD SAE - {results['task_name']}", flush=True)
-    print("=" * 70, flush=True)
     print(f"Modo de almacenamiento : {results['storage_mode']}")
     print(f"Pooling analizado      : {results['pooling']}")
     print(f"Balance analizado      : {results.get('balance', '?')}")
@@ -252,7 +251,7 @@ def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
     print(f"Latentes SAE           : {results['num_latents']:,}")
 
     metrics = results.get("metrics", {}) or {}
-    print(f"\n--- Metricas en EVAL (nivel usuario, {results['pooling']}, {results.get('balance', '?')}) ---")
+    print(f"\nMetricas en EVAL (nivel usuario, {results['pooling']}, {results.get('balance', '?')})")
     print(
         f"Accuracy={metrics.get('accuracy', float('nan')):.4f} | "
         f"BalancedAcc={metrics.get('balanced_accuracy', float('nan')):.4f} | "
@@ -267,7 +266,7 @@ def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
 
     ablation = (results.get("ablation") or {}).get("ablations") or {}
     if ablation:
-        print("\n--- Ablacion (drops vs baseline) ---")
+        print("\nAblacion (drops vs baseline)")
         print(f"{'Top':>5} {'BalAccDrop':>12} {'F1macDrop':>12} {'BalAccDropRnd':>15} {'F1macDropRnd':>14}")
         for size, info in ablation.items():
             print(
@@ -279,7 +278,7 @@ def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
 
     top_by_class = results.get("top_latents_by_class") or {}
     if top_by_class:
-        print("\n--- Top latentes por clase ---")
+        print("\nTop latentes por clase")
         for class_name, entries in top_by_class.items():
             print(f"\n[Clase {class_name}] top {min(len(entries), 10)} latentes:")
             for entry in entries[:10]:
@@ -291,7 +290,7 @@ def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
 
     top_by_act = results.get("top_latents_by_activation") or {}
     if top_by_act:
-        print("\n--- Top latentes mas activos por clase (independiente del clasificador) ---")
+        print("\nTop latentes mas activos por clase (independiente del clasificador)")
         for class_name, entries in top_by_act.items():
             print(f"\n[Clase {class_name}] top {min(len(entries), 10)} latentes por activacion media:")
             for entry in entries[:10]:

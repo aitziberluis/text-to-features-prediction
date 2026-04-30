@@ -57,7 +57,6 @@ from preprocesamiento import preparar_dataset_para_mbti
 
 dotenv.load_dotenv()
 
-# CONFIGURACION
 TRAIT_NAME = "intuitive"
 
 MODEL = "openai-community/gpt2"
@@ -109,8 +108,8 @@ USER_AGG_CHUNK_SIZE = 8192
 
 # Output
 OUTPUT_DIR = f"modelos/{TRAIT_NAME}_gpt_activaciones"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# DATASET / COLLATE PARA TOKENIZACION EN PARALELO
 class _TextDataset(Dataset):
     """Devuelve (texto, indice_original) en el orden ya bucketizado por longitud."""
 
@@ -148,7 +147,6 @@ class _Collate:
         return tokens["input_ids"], tokens["attention_mask"], _torch.tensor(indices, dtype=_torch.long)
 
 
-# UTILIDADES
 def calcular_pesos_clase_manual(y: np.ndarray) -> np.ndarray:
     """Asigna pesos manuales: clase menos frecuente -> 1.1, mas frecuente -> 0.9."""
     PESOS_POR_RANGO = [1.1, 0.9]  # de menos a mas frecuente
@@ -201,7 +199,6 @@ def random_undersample_idx(y: np.ndarray, random_state: int = RANDOM_STATE) -> n
     rng.shuffle(indices)
     return indices
 
-# CARGA DE DATOS
 def cargar_datos() -> pd.DataFrame:
     """Carga comentarios con TRAIT_NAME conocido usando preprocesamiento centralizado."""
     df, _ = preparar_dataset_para_mbti(
@@ -221,7 +218,6 @@ def cargar_datos() -> pd.DataFrame:
     print(f"Distribucion de {TRAIT_NAME}: {dist}")
     return df
 
-# EXTRACCION DE ACTIVACIONES
 def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     """Extrae activaciones de GPT-2 y guarda last_token + mean por comentario."""
 
@@ -404,7 +400,6 @@ def cargar_o_extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndar
 
     return cargar_o_extraer_activaciones(df)
 
-# SPLITS
 def dividir_comentarios(
     labels: np.ndarray, df: pd.DataFrame, authors: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -502,7 +497,6 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
 
     return train_auth, eval_auth, test_auth
 
-# EVALUACION
 def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
     """Imprime y devuelve metricas de evaluacion (binario)."""
     acc = accuracy_score(y_true, y_pred)
@@ -555,7 +549,6 @@ def _select_best_run(all_results: Dict[str, Dict[str, float]]) -> Tuple[str, Dic
     )
     return best_name, best_metrics
 
-# ENTRENAMIENTO NIVEL COMENTARIO
 def entrenar_comentario(
     feats: np.ndarray, train_idx: np.ndarray, eval_idx: np.ndarray,
     y_train: np.ndarray, y_eval: np.ndarray,
@@ -621,7 +614,6 @@ def entrenar_comentario(
 
     return clf, metrics
 
-# ENTRENAMIENTO NIVEL USUARIO
 def _agregar_por_usuario(
     authors: np.ndarray,
     features: np.ndarray,
@@ -695,10 +687,8 @@ def main():
     trained_runs = {}
     train_auth = eval_auth = test_auth = None
 
-    # A) NIVEL COMENTARIO
     print("\n" + "#" * 70)
-    print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
-    print("#" * 70)
+    print("A) CLASIFICACION A NIVEL DE COMENTARIO")
 
     train_idx, eval_idx, test_idx = dividir_comentarios(labels, df, authors)
     y_train_c = labels[train_idx]
@@ -765,11 +755,9 @@ def main():
                 "scaler": scaler,
             }
 
-    # B) NIVEL USUARIO
     if has_author and authors is not None:
         print("\n" + "#" * 70)
-        print("# B) CLASIFICACION A NIVEL DE USUARIO")
-        print("#" * 70)
+        print("B) CLASIFICACION A NIVEL DE USUARIO")
 
         train_auth, eval_auth, test_auth = dividir_usuarios(df)
         print(f"\nSplit usuarios: train={len(train_auth):,} eval={len(eval_auth):,} test={len(test_auth):,}")
@@ -847,7 +835,6 @@ def main():
             del X_u_train, y_u_train, X_u_eval, y_u_eval, X_tr_n, X_ev_n
             gc.collect()
 
-    # RESUMEN FINAL
     print("RESUMEN DE RESULTADOS (EVAL)")
     header_f1 = " ".join(f"{'F1_'+cn:>8s}" for cn in CLASS_NAMES)
     print(f"{'Config':<45} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {header_f1}")

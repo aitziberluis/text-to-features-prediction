@@ -526,7 +526,7 @@ def tests_significacion_genero(df_merged: pd.DataFrame) -> Dict[str, Any]:
 			"interpretacion": "pequeño" if abs(cohens_d) < 0.5 else "medio" if abs(cohens_d) < 0.8 else "grande"
 		}
 	
-	print("\n===== TESTS DE SIGNIFICACIÓN (m vs f) =====")
+	print("\nTESTS DE SIGNIFICACIÓN (m vs f)")
 	if "mann_whitney" in resultados:
 		print(f"Mann-Whitney U test: p={resultados['mann_whitney']['p_value']:.4f} {'*' if resultados['mann_whitney']['significativo'] else '(no sig.)'}")
 	if "t_test" in resultados:
@@ -596,7 +596,7 @@ def visualizar_distribucion_genero(df_merged: pd.DataFrame, output_dir: str = "f
 	plt.tight_layout()
 	fig_path = os.path.join(output_dir, "distribucion_genero.png")
 	plt.savefig(fig_path, dpi=300, bbox_inches='tight')
-	print(f"\n✓ Figura guardada: {fig_path}")
+	print(f"\nFigura guardada: {fig_path}")
 	plt.close()
 	
 	# Figura 2: Distribución de autores y comentarios totales
@@ -628,10 +628,10 @@ def visualizar_distribucion_genero(df_merged: pd.DataFrame, output_dir: str = "f
 	plt.tight_layout()
 	fig_path = os.path.join(output_dir, "resumen_autores_comentarios.png")
 	plt.savefig(fig_path, dpi=300, bbox_inches='tight')
-	print(f"✓ Figura guardada: {fig_path}")
+	print(f"Figura guardada: {fig_path}")
 	plt.close()
 	
-	print(f"\n✓ Todas las figuras guardadas en: {output_dir}/")
+	print(f"\nTodas las figuras guardadas en: {output_dir}/")
 
 
 def analisis_exploratorio_por_genero(df_merged: pd.DataFrame, con_graficos: bool = True) -> Dict[str, Any]:
@@ -686,11 +686,11 @@ def analisis_exploratorio_por_genero(df_merged: pd.DataFrame, con_graficos: bool
 	)
 
 	print("ANÁLISIS EXPLORATORIO DE DATOS - GÉNERO")
-	print("\n===== RESUMEN POR GÉNERO (a nivel de autor) =====")
+	print("\nRESUMEN POR GÉNERO (a nivel de autor)")
 	print(resumen_genero.to_string(index=False))
 
 	# También podemos sacar estadísticas globales (sin agrupar) de num_comments
-	print("\n===== ESTADÍSTICAS GLOBALES DE num_comments =====")
+	print("\nESTADÍSTICAS GLOBALES DE num_comments")
 	print(df["num_comments"].describe())
 	
 	# Tests de significación
@@ -743,12 +743,12 @@ def preparar_dataset_para_sae(
 	# Cargar datos
 	print("\n1. Cargando comentarios...")
 	df_comentarios = cargar_comentarios(path_comentarios, nrows=max_comments)
-	print(f"   ✓ {len(df_comentarios):,} comentarios cargados")
+	print(f"   {len(df_comentarios):,} comentarios cargados")
 	
 	print("\n2. Cargando autores...")
 	df_autores_raw = cargar_autores(path_autores)
 	df_autores = normalizar_genero(df_autores_raw)
-	print(f"   ✓ {len(df_autores):,} autores cargados")
+	print(f"   {len(df_autores):,} autores cargados")
 	
 	# Unir comentarios con género
 	print("\n3. Uniendo comentarios con género por autor...")
@@ -757,7 +757,7 @@ def preparar_dataset_para_sae(
 		on="author", 
 		how="inner"
 	)
-	print(f"   ✓ {len(df_comentarios_con_genero):,} comentarios con info de género")
+	print(f"   {len(df_comentarios_con_genero):,} comentarios con info de género")
 	
 	# Filtrar solo género conocido si se solicita
 	if solo_genero_conocido:
@@ -766,7 +766,7 @@ def preparar_dataset_para_sae(
 			df_comentarios_con_genero["gender_clean"].isin(["m", "f"])
 		].reset_index(drop=True)
 		print(f"\n4. Filtrando solo género conocido (m/f)...")
-		print(f"   ✓ {len(df_comentarios_con_genero):,} comentarios con género m/f")
+		print(f"   {len(df_comentarios_con_genero):,} comentarios con género m/f")
 		print(f"   (Eliminados {antes - len(df_comentarios_con_genero):,} con género unknown)")
 	
 	# Mostrar distribución
@@ -776,7 +776,7 @@ def preparar_dataset_para_sae(
 		pct = 100 * count / len(df_comentarios_con_genero)
 		print(f"   {gender}: {count:,} comentarios ({pct:.1f}%)")
 	
-	print("✓ Dataset preparado y listo para usar")
+	print("Dataset preparado y listo para usar")
 	
 	return df_comentarios_con_genero, df_autores
 
@@ -800,7 +800,7 @@ def preparar_dataset_para_edad(
 
 	print("\n1. Cargando comentarios...")
 	df_comentarios = cargar_comentarios(path_comentarios, nrows=max_comments)
-	print(f"   ✓ {len(df_comentarios):,} comentarios cargados")
+	print(f"   {len(df_comentarios):,} comentarios cargados")
 
 	print("\n2. Cargando autores...")
 	df_autores_raw = cargar_autores(path_autores)
@@ -809,7 +809,7 @@ def preparar_dataset_para_edad(
 		age_bins=age_bins,
 		age_labels=age_labels,
 	)
-	print(f"   ✓ {len(df_autores):,} autores cargados")
+	print(f"   {len(df_autores):,} autores cargados")
 
 	print("\n3. Uniendo comentarios con edad por autor...")
 	df_comentarios_con_edad = df_comentarios.merge(
@@ -817,7 +817,7 @@ def preparar_dataset_para_edad(
 		on="author",
 		how="inner",
 	)
-	print(f"   ✓ {len(df_comentarios_con_edad):,} comentarios con info de edad")
+	print(f"   {len(df_comentarios_con_edad):,} comentarios con info de edad")
 
 	if solo_edad_conocida:
 		antes = len(df_comentarios_con_edad)
@@ -825,7 +825,7 @@ def preparar_dataset_para_edad(
 			df_comentarios_con_edad["age_group"].isin(age_labels)
 		].reset_index(drop=True)
 		print("\n4. Filtrando solo edad conocida (rangos válidos)...")
-		print(f"   ✓ {len(df_comentarios_con_edad):,} comentarios con rango de edad válido")
+		print(f"   {len(df_comentarios_con_edad):,} comentarios con rango de edad válido")
 		print(
 			f"   (Eliminados {antes - len(df_comentarios_con_edad):,} comentarios con edad nula/fuera de rango)"
 		)
@@ -836,7 +836,7 @@ def preparar_dataset_para_edad(
 		pct = 100 * count / len(df_comentarios_con_edad)
 		print(f"   {age_group}: {count:,} comentarios ({pct:.1f}%)")
 
-	print("✓ Dataset de edad preparado y listo para usar")
+	print("Dataset de edad preparado y listo para usar")
 
 	return df_comentarios_con_edad, df_autores
 
@@ -862,11 +862,11 @@ def preparar_dataset_para_mbti(
 
 	print("\n1. Cargando comentarios...")
 	df_comentarios = cargar_comentarios(path_comentarios, nrows=max_comments)
-	print(f"   ✓ {len(df_comentarios):,} comentarios cargados")
+	print(f"   {len(df_comentarios):,} comentarios cargados")
 
 	print("\n2. Cargando autores...")
 	df_autores = cargar_autores(path_autores)
-	print(f"   ✓ {len(df_autores):,} autores cargados")
+	print(f"   {len(df_autores):,} autores cargados")
 
 	print(f"\n3. Filtrando autores con '{columna_mbti}' conocido...")
 	if columna_mbti not in df_autores.columns:
@@ -876,7 +876,7 @@ def preparar_dataset_para_mbti(
 	df_autores_filtrado = df_autores[df_autores[columna_mbti].notna()].copy()
 	df_autores_filtrado[columna_mbti] = df_autores_filtrado[columna_mbti].astype(int)
 	n_filtrados = len(df_autores) - len(df_autores_filtrado)
-	print(f"   ✓ {len(df_autores_filtrado):,} autores con {columna_mbti} conocido")
+	print(f"   {len(df_autores_filtrado):,} autores con {columna_mbti} conocido")
 	print(f"   (Eliminados {n_filtrados:,} autores con {columna_mbti} nulo)")
 
 	print(f"\n4. Uniendo comentarios con {columna_mbti} por autor...")
@@ -885,7 +885,7 @@ def preparar_dataset_para_mbti(
 		on="author",
 		how="inner",
 	)
-	print(f"   ✓ {len(df_merged):,} comentarios con info de {columna_mbti}")
+	print(f"   {len(df_merged):,} comentarios con info de {columna_mbti}")
 
 	eliminados = len(df_comentarios) - len(df_merged)
 	print(f"   (Eliminados {eliminados:,} comentarios sin {columna_mbti} conocido)")
@@ -896,7 +896,7 @@ def preparar_dataset_para_mbti(
 		pct = 100 * count / len(df_merged)
 		print(f"   {int(val)}: {count:,} comentarios ({pct:.1f}%)")
 
-	print(f"✓ Dataset de {columna_mbti} preparado y listo para usar")
+	print(f"Dataset de {columna_mbti} preparado y listo para usar")
 
 	return df_merged, df_autores_filtrado
 
@@ -1074,16 +1074,15 @@ def analizar_columnas_experimento(
 	path_fig = os.path.join(output_dir, "columnas_experimento.png")
 	plt.savefig(path_fig, dpi=300, bbox_inches="tight")
 	plt.close()
-	print(f"\n✓ Figura combinada guardada: {path_fig}")
+	print(f"\nFigura combinada guardada: {path_fig}")
 
-	print(f"\n✓ Análisis de columnas del experimento completado")
+	print(f"\nAnálisis de columnas del experimento completado")
 	return resumen
 
 
 if __name__ == "__main__":
 	print("\n" + "#"*60)
-	print("# PREPROCESAMIENTO Y ANÁLISIS EXPLORATORIO DE DATOS")
-	print("#"*60)
+	print("PREPROCESAMIENTO Y ANÁLISIS EXPLORATORIO DE DATOS")
 	
 	# Rutas a los datos
 	path_comentarios = "data/all_comments_since_2015.csv"
@@ -1150,10 +1149,9 @@ if __name__ == "__main__":
 	analizar_columnas_experimento(df_autores_raw, output_dir="figuras")
 	
 	print("\n" + "#"*60)
-	print("# ANÁLISIS COMPLETO")
-	print("#"*60)
-	print("\n✓ Análisis exploratorio completado con éxito")
-	print("✓ Gráficos guardados en: figuras/")
+	print("ANÁLISIS COMPLETO")
+	print("\nAnálisis exploratorio completado con éxito")
+	print("Gráficos guardados en: figuras/")
 	print("\nPara usar este dataset en SAE/clasificador:")
 	print("  from preprocesamiento import preparar_dataset_para_sae")
 	print("  df_comentarios, df_autores = preparar_dataset_para_sae(...)")

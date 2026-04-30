@@ -1,5 +1,6 @@
 from dataclasses import dataclass, asdict
 import json
+import os
 import time
 from pathlib import Path
 from typing import Iterable
@@ -7,9 +8,14 @@ from torch.optim import Adam
 import torch
 from safetensors.torch import load_model, save_model
 from torch import Tensor, nn
+from torch.utils.data import DataLoader
 from transformers import PreTrainedModel
 import wandb
 import einops
+
+# Tokenizer "fast" es paralelo en Rayon; con num_workers>0 en el DataLoader
+# queremos un solo hilo por worker para no oversubscribir la CPU.
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 
 @dataclass
@@ -108,6 +114,13 @@ class TrainConfig:
     optimize_every_n_tokens: int = 8192
     save_repr_every_n_steps: int = 1000
     checkpoint_dir: str = ""  # si vacío, usa sae-ckpts/{wandb_name}
+    num_workers: int = 8     # workers de DataLoader para batching paralelo
+    log_every_n_steps: int = 200  # cadencia de log a stdout/wandb (en pasos de batch)
+
+
+def _collate_input_ids(batch):
+    """Convierte una lista de items {input_ids: [...]} en un tensor (B, T) int64."""
+    return torch.stack([torch.as_tensor(item["input_ids"], dtype=torch.long) for item in batch])
 
 
 def train_sae(
@@ -156,20 +169,54 @@ def train_sae(
         save_dir = Path("sae-ckpts") / train_cfg.wandb_name
     save_dir.mkdir(parents=True, exist_ok=True)
 
+    # OPT: usar DataLoader para batching paralelo. Esto:
+    #  - hace batching/colate en workers (ya no es el cuello de botella Python)
+    #  - prefetch automatico mientras la GPU esta ocupada
+    #  - corrige un bug del bucle anterior que tiraba 1 de cada
+    #    `model_batch_size` ejemplos (cuando el batch ya estaba lleno, el
+    #    `tokens` actual nunca se anadia).
+    has_dataset_iface = hasattr(token_iterator, "__len__") and hasattr(
+        token_iterator, "__getitem__"
+    )
+    if has_dataset_iface:
+        loader = DataLoader(
+            token_iterator,
+            batch_size=train_cfg.model_batch_size,
+            num_workers=train_cfg.num_workers,
+            pin_memory=torch.cuda.is_available(),
+            collate_fn=_collate_input_ids,
+            drop_last=False,
+            shuffle=False,
+            persistent_workers=train_cfg.num_workers > 0,
+        )
+        total_batches = len(loader)
+    else:
+        # Fallback: iterable generico, hacemos batching en Python (lento).
+        loader = None
+        total_batches = None
+
+    def _iter_batches():
+        if loader is not None:
+            for b in loader:
+                yield b
+        else:
+            buf = []
+            for item in token_iterator:
+                buf.append(torch.as_tensor(item["input_ids"], dtype=torch.long))
+                if len(buf) == train_cfg.model_batch_size:
+                    yield torch.stack(buf)
+                    buf = []
+            if buf:
+                yield torch.stack(buf)
+
     try:
         tokens_seen_since_last_step = 0
         tokens_seen_since_last_save = 0
-        total_examples = len(token_iterator) if hasattr(token_iterator, '__len__') else None
         last_log_time = time.time()
         last_loss = None
-        batch = []
-        for step, tokens in enumerate(token_iterator):
 
-            if len(batch) < train_cfg.model_batch_size:
-                batch.append(torch.tensor(tokens["input_ids"]))
-                continue
-
-            batch = torch.stack(batch).to(model.device)
+        for step, batch in enumerate(_iter_batches()):
+            batch = batch.to(model.device, non_blocking=True)
             tokens_seen_since_last_step += batch.numel()
             tokens_seen_since_last_save += batch.numel()
 
@@ -193,9 +240,7 @@ def train_sae(
             error = predicted - sae_output
             loss = (error**2).sum()
 
-            # Guarda representaciones cada cierto número de pasos
-            # - gpt_repr: activaciones originales del modelo (media en tokens)
-            # - sae_repr: salida reconstruida por la SAE (media en tokens)
+            # Guarda representaciones cada cierto numero de pasos
             if (
                 train_cfg.save_repr_every_n_steps > 0
                 and step % train_cfg.save_repr_every_n_steps == 0
@@ -237,15 +282,33 @@ def train_sae(
 
             last_loss = loss.item()
             now = time.time()
-            if now - last_log_time >= 3600:  # cada hora
-                elapsed_h = (now - last_log_time) / 3600
-                pct = f"{step / total_examples * 100:.1f}%" if total_examples else "?"
+            if (
+                train_cfg.log_every_n_steps > 0
+                and step > 0
+                and step % train_cfg.log_every_n_steps == 0
+            ):
+                pct = (
+                    f"{100.0 * step / total_batches:.1f}%"
+                    if total_batches
+                    else "?"
+                )
                 print(
-                    f"[SAE] step={step} | progreso={pct} | loss={last_loss:.4f} | +{elapsed_h:.1f}h",
+                    f"[SAE] step={step}/{total_batches or '?'} ({pct}) | "
+                    f"loss={last_loss:.4f}",
                     flush=True,
                 )
                 last_log_time = now
-            batch = []
+            elif now - last_log_time >= 3600:
+                pct = (
+                    f"{100.0 * step / total_batches:.1f}%"
+                    if total_batches
+                    else "?"
+                )
+                print(
+                    f"[SAE] step={step} | progreso={pct} | loss={last_loss:.4f} | hora",
+                    flush=True,
+                )
+                last_log_time = now
     finally:
         handle.remove()
         if use_wandb:

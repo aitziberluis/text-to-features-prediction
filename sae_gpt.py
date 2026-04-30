@@ -12,10 +12,9 @@ from preprocesamiento import cargar_comentarios
 
 dotenv.load_dotenv()
 
-# CONFIGURACIÓN GENERAL
 
 MODEL = "openai-community/gpt2"  # puedes cambiar a otro modelo causal
-CONTEXT_LEN = int(os.getenv("SAE_CONTEXT_LEN", "512"))
+CONTEXT_LEN = int(os.getenv("SAE_CONTEXT_LEN", "256"))  # P99 token len ~391; 2.5% truncados
 DEVICE = os.getenv("SAE_DEVICE", "cuda:0" if torch.cuda.is_available() else "cpu")
 HOOKPOINT = os.getenv("SAE_HOOKPOINT", "transformer.h.8")
 
@@ -169,7 +168,6 @@ def detectar_batch_size_optimo(
 		torch.cuda.empty_cache()
 
 
-# CARGA Y PREPARACIÓN DE DATOS
 
 
 def cargar_dataset_texto() -> Dataset:
@@ -196,7 +194,6 @@ def cargar_dataset_texto() -> Dataset:
 	return dataset
 
 
-# TOKENIZACIÓN Y MODELO
 
 
 def preparar_modelo_y_datos(dataset: Dataset):
@@ -205,13 +202,38 @@ def preparar_modelo_y_datos(dataset: Dataset):
 	configurar_rendimiento_cuda()
 
 	print("Cargando tokenizer y modelo...")
-	tokenizer = AutoTokenizer.from_pretrained(MODEL)
+	tokenizer = AutoTokenizer.from_pretrained(MODEL, use_fast=True)
 	# Quadro RTX 8000 (Turing, sm_75) NO tiene tensor cores BF16; si fp16.
 	gpt = AutoModelForCausalLM.from_pretrained(
 		MODEL,
 		device_map={"": DEVICE},
 		torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
 	)
+	gpt.eval()
+
+	# OPT #1: truncar el modelo despues del HOOKPOINT. Aunque tiny_sae corta
+	# el forward via StopIteration, las capas posteriores siguen ocupando VRAM
+	# y bloqueando batches mas grandes.
+	import torch.nn as _nn
+	_keep = int(HOOKPOINT.rsplit(".", 1)[1]) + 1
+	gpt.transformer.h = _nn.ModuleList(gpt.transformer.h[:_keep])
+	if hasattr(gpt, "lm_head"):
+		del gpt.lm_head
+	if torch.cuda.is_available():
+		torch.cuda.empty_cache()
+	print(f"  Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11 + LM head)")
+
+	# OPT #3: torch.compile sobre el bloque transformer truncado. Dynamic=False
+	# porque en SAE training las shapes son fijas (CONTEXT_LEN x batch);
+	# permite CUDA graphs (mode="reduce-overhead").
+	if torch.cuda.is_available():
+		try:
+			gpt.transformer = torch.compile(
+				gpt.transformer, mode="reduce-overhead", dynamic=False, fullgraph=False
+			)
+			print("  torch.compile activado (reduce-overhead, static shapes)")
+		except Exception as _ce:
+			print(f"  torch.compile no disponible: {_ce}")
 
 	# Aseguramos que el tokenizer tiene token de padding
 	if tokenizer.pad_token is None:
@@ -248,7 +270,6 @@ def preparar_modelo_y_datos(dataset: Dataset):
 	return tokenizer, gpt, tokenized
 
 
-# CONFIGURACIÓN Y ENTRENAMIENTO DE LA SAE
 
 
 def entrenar_sae(dataset: Dataset):

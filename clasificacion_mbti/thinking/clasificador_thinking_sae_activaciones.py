@@ -54,7 +54,6 @@ from tiny_sae import Sae
 
 dotenv.load_dotenv()
 
-# CONFIGURACION
 TRAIT_NAME = "thinking"
 
 MODEL = "openai-community/gpt2"
@@ -108,7 +107,6 @@ BALANCE_CONFIGS = [
     {"name": "undersampling", "use_class_weights": False},
 ]
 
-# UTILIDADES
 def calcular_pesos_clase_manual(y: np.ndarray) -> np.ndarray:
     """Asigna pesos manuales: clase menos frecuente -> 1.1, mas frecuente -> 0.9."""
     PESOS_POR_RANGO = [1.1, 0.9]  # de menos a mas frecuente
@@ -165,7 +163,6 @@ def random_undersample_mask(y: np.ndarray, random_state: int = RANDOM_STATE) -> 
         mask[chosen] = True
     return mask
 
-# CARGA DE DATOS
 def cargar_datos() -> pd.DataFrame:
     """Carga comentarios con TRAIT_NAME conocido usando preprocesamiento centralizado."""
     df, _ = preparar_dataset_para_mbti(
@@ -185,7 +182,6 @@ def cargar_datos() -> pd.DataFrame:
     print(f"Distribucion de {TRAIT_NAME}: {dist}")
     return df
 
-# EXTRACCION STREAMING DE REPRESENTACIONES SAE
 def _pool_sparse_to_dense(
     top_acts: torch.Tensor,
     top_indices: torch.Tensor,
@@ -378,7 +374,6 @@ def _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latent
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-# SPLITS
 def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Train/eval/test estratificado a nivel de usuario."""
     os.makedirs(SPLITS_DIR, exist_ok=True)
@@ -425,7 +420,6 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
 
     return train_auth, eval_auth, test_auth
 
-# EVALUACION
 def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
     """Imprime y devuelve metricas de evaluacion (binario)."""
     acc = accuracy_score(y_true, y_pred)
@@ -566,8 +560,7 @@ def main():
 
     # PASS A: Stream train -> scaler + SGD + user agg + subsample
     print("\n" + "#" * 70)
-    print("# PASS A: Streaming datos de entrenamiento")
-    print("#" * 70)
+    print("PASS A: Streaming datos de entrenamiento")
 
     first_batch = True
     for start, end, last_np, mean_np in _stream_sae_features(
@@ -645,8 +638,7 @@ def main():
 
     # PASS B: Stream eval -> predicciones + user agg
     print("\n" + "#" * 70)
-    print("# PASS B: Streaming datos de evaluacion")
-    print("#" * 70)
+    print("PASS B: Streaming datos de evaluacion")
 
     eval_preds = {key: [] for key in all_clf}
 
@@ -685,11 +677,9 @@ def main():
 
         del last_np, mean_np
 
-    # A) RESULTADOS NIVEL COMENTARIO
     all_results = {}
     print("\n" + "#" * 70)
-    print("# A) CLASIFICACION A NIVEL DE COMENTARIO")
-    print("#" * 70)
+    print("A) CLASIFICACION A NIVEL DE COMENTARIO")
 
     for key in all_clf:
         pooling, balance = key
@@ -707,11 +697,9 @@ def main():
     del eval_preds
     gc.collect()
 
-    # B) NIVEL USUARIO
     if has_author:
         print("\n" + "#" * 70)
-        print("# B) CLASIFICACION A NIVEL DE USUARIO")
-        print("#" * 70)
+        print("B) CLASIFICACION A NIVEL DE USUARIO")
 
         for user_pooling in USER_POOLINGS:
             comment_pooling = "last_token" if user_pooling == "mean_of_last" else "mean"
@@ -793,8 +781,7 @@ def main():
     print_best_per_level_eval(best_per_level)
 
     print("\n" + "#" * 70)
-    print("# PASS C: Streaming datos de test (mejor por nivel)")
-    print("#" * 70)
+    print("PASS C: Streaming datos de test (mejor por nivel)")
 
     best_comment_entry = best_per_level.get("comentario")
     best_user_entry = best_per_level.get("usuario")
@@ -858,7 +845,6 @@ def main():
         torch.cuda.empty_cache()
     gc.collect()
 
-    # RESUMEN FINAL
     print("RESUMEN DE RESULTADOS (EVAL)")
     header_f1 = " ".join(f"{'F1_'+cn:>8s}" for cn in CLASS_NAMES)
     print(f"{'Config':<45} {'Acc':>6} {'BalAcc':>7} {'F1mac':>6} {header_f1}")

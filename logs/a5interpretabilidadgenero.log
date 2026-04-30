@@ -1,0 +1,162 @@
+[2026-04-29 19:01:50] Cache SAE eliminada: /hdd/aitziber.l/activaciones_sae_gpt2_genero
+[2026-04-29 19:01:50] --- Iniciando clasificacion_genero/gpt_activaciones/interpretabilidad_genero_sae.py (solo interpretabilidad) ---
+PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+   ✓ 17,639,864 comentarios cargados
+
+2. Cargando autores...
+   ✓ 10,295 autores cargados
+
+3. Uniendo comentarios con género por autor...
+   ✓ 17,639,863 comentarios con info de género
+
+4. Filtrando solo género conocido (m/f)...
+   ✓ 7,379,659 comentarios con género m/f
+   (Eliminados 10,260,204 con género unknown)
+
+5. Distribución por género:
+   m: 4,920,137 comentarios (66.7%)
+   f: 2,459,522 comentarios (33.3%)
+✓ Dataset preparado y listo para usar
+Train comments: 5,264,573 | Eval comments: 1,116,308
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1199.74it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1194.24it/s]
+  Modelo truncado a las primeras 9 capas (skip h.9..h.11)
+  torch.compile activado (dynamic=True)
+num_latents=16384
+[SAE-best] pooling='mean_of_mean' balance='balanceado' (source=best_per_level.usuario, run='usuario_mean_of_mean_balanceado')
+  [TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32
+  [TRAIN   5.0%] step 8307/164518 (265,824/5,264,573) | batch=32
+  [TRAIN  10.1%] step 16541/164518 (529,312/5,264,573) | batch=32
+  [TRAIN  14.9%] step 24554/164518 (785,728/5,264,573) | batch=32
+  [TRAIN  19.8%] step 32656/164518 (1,044,992/5,264,573) | batch=32
+  [TRAIN  24.8%] step 40811/164518 (1,305,952/5,264,573) | batch=32
+  [TRAIN  29.7%] step 48922/164518 (1,565,504/5,264,573) | batch=32
+  [TRAIN  34.6%] step 57005/164518 (1,824,160/5,264,573) | batch=32
+  [TRAIN  39.6%] step 65110/164518 (2,083,520/5,264,573) | batch=32
+  [TRAIN  44.5%] step 73269/164518 (2,344,608/5,264,573) | batch=32
+  [TRAIN  49.5%] step 81386/164518 (2,604,352/5,264,573) | batch=32
+  [TRAIN  54.7%] step 90018/164518 (2,880,576/5,264,573) | batch=32
+  [TRAIN  59.3%] step 97483/164518 (3,119,456/5,264,573) | batch=32
+  [TRAIN  63.7%] step 104774/164518 (3,352,768/5,264,573) | batch=32
+  [TRAIN  68.1%] step 112074/164518 (3,586,368/5,264,573) | batch=32
+  [TRAIN  72.6%] step 119411/164518 (3,821,152/5,264,573) | batch=32
+  [TRAIN  77.0%] step 126752/164518 (4,056,064/5,264,573) | batch=32
+  [TRAIN  81.5%] step 134160/164518 (4,293,120/5,264,573) | batch=32
+  [TRAIN  86.0%] step 141463/164518 (4,526,816/5,264,573) | batch=32
+  [TRAIN  90.5%] step 148813/164518 (4,762,016/5,264,573) | batch=32
+  [TRAIN  94.9%] step 156066/164518 (4,994,112/5,264,573) | batch=32
+  [TRAIN  99.3%] step 163409/164518 (5,229,088/5,264,573) | batch=32
+  [TRAIN 100.0%] step 164518/164518 (5,264,573/5,264,573) | batch=32
+  [EVAL   0.0%] step 1/34885 (32/1,116,308) | batch=32
+  [EVAL  24.7%] step 8608/34885 (275,456/1,116,308) | batch=32
+  [EVAL  49.7%] step 17341/34885 (554,912/1,116,308) | batch=32
+  [EVAL  72.0%] step 25106/34885 (803,392/1,116,308) | batch=32
+  [EVAL  94.3%] step 32885/34885 (1,052,320/1,116,308) | batch=32
+  [EVAL 100.0%] step 34885/34885 (1,116,308/1,116,308) | batch=32
+  [TRAIN_TOPACT_EXAMPLES   0.0%] step 1/164518 (32/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES   5.5%] step 9010/164518 (288,320/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  10.8%] step 17789/164518 (569,248/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  16.2%] step 26576/164518 (850,432/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  21.5%] step 35318/164518 (1,130,176/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  26.8%] step 44141/164518 (1,412,512/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  32.0%] step 52713/164518 (1,686,816/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  37.4%] step 61505/164518 (1,968,160/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  42.6%] step 70124/164518 (2,243,968/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  47.9%] step 78758/164518 (2,520,256/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  53.5%] step 88018/164518 (2,816,576/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  58.3%] step 95980/164518 (3,071,360/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  62.9%] step 103559/164518 (3,313,888/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  67.5%] step 111120/164518 (3,555,840/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  72.2%] step 118708/164518 (3,798,656/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  76.7%] step 126250/164518 (4,040,000/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  81.3%] step 133825/164518 (4,282,400/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  85.9%] step 141342/164518 (4,522,944/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  90.5%] step 148897/164518 (4,764,704/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  95.1%] step 156438/164518 (5,006,016/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES  99.7%] step 164022/164518 (5,248,704/5,264,573) | batch=32
+  [TRAIN_TOPACT_EXAMPLES 100.0%] step 164518/164518 (5,264,573/5,264,573) | batch=32
+
+
+INTERPRETABILIDAD SAE - genero
+
+Modo de almacenamiento : streaming_without_feature_cache
+Pooling analizado      : mean_of_mean
+Balance analizado      : balanceado
+Fuente seleccion SAE   : best_per_level.usuario (run='usuario_mean_of_mean_balanceado')
+Comentarios train/eval : 5,264,573 / 1,116,308
+Usuarios train/eval    : 2,158 / 463
+Latentes SAE           : 16,384
+
+--- Metricas en EVAL (nivel usuario, mean_of_mean, balanceado) ---
+Accuracy=0.8855 | BalancedAcc=0.8855 | F1 macro=0.8847 | F1 weighted=0.8856
+      female: precision=0.8645 recall=0.8852 f1=0.8747
+        male: precision=0.9036 recall=0.8858 f1=0.8946
+
+--- Ablacion (drops vs baseline) ---
+  Top   BalAccDrop    F1macDrop   BalAccDropRnd   F1macDropRnd
+    5       0.0091       0.0088          0.0024         0.0022
+   10       0.0063       0.0065          0.0048         0.0044
+   20       0.0044       0.0044          0.0007         0.0019
+
+--- Top latentes por clase ---
+
+[Clase female] top 10 latentes:
+  L  9068  score=+453.1181  coef=-453.1181  palabras=[women, woman, high, value, female, mean, transwomen, turkish]
+  L  7653  score=+427.9947  coef=-427.9947  palabras=[problem, figures, nailed, figuratively, literally, someone, tag, roger]
+  L 15584  score=+423.9405  coef=-423.9405  palabras=[sprache, stache, deutsche, schwere, clear, cache, cookies, reset]
+  L 14541  score=+411.8726  coef=-411.8726  palabras=[pubes, string, sure, ginger, trim, dude, shave, pubic]
+  L  2942  score=+403.7262  coef=-403.7262  palabras=[precious, favorite, gemstone, second, diamond, gem, that's, ruby]
+  L  1256  score=+398.7014  coef=-398.7014  palabras=[fucked, pretty, messed, that's, think, worn, sounds, aren't]
+  L 14029  score=+397.7077  coef=-397.7077  palabras=[thinking, i'm, mike, tyson, minimum, lilith, reagan, thing]
+  L  8206  score=+396.6053  coef=-396.6053  palabras=[retriever, unbelievable, believers, believer, want, believe, self, loathing]
+  L 10660  score=+372.3960  coef=-372.3960  palabras=[cosplay, cosmo, epic, silent, hill, amazing, considered, cosleeping]
+  L  8636  score=+370.9979  coef=-370.9979  palabras=[trans, person, think, emergency, transpose, depends, woman, downvoted]
+
+[Clase male] top 10 latentes:
+  L 12777  score=+668.3529  coef=+668.3529  palabras=[gay, mods, fake, lol, say]
+  L  6429  score=+468.3890  coef=+468.3890  palabras=[wife, first, girlfriend]
+  L   465  score=+460.5831  coef=+460.5831  palabras=[gay, mods, fake, lol, marriage, say]
+  L  4026  score=+424.9529  coef=+424.9529  palabras=[dick, pics, small, need, dickbutt, fight, send]
+  L  7384  score=+406.1725  coef=+406.1725  palabras=[workers, dependent, impress, new, worker, nope, enraged, campaign]
+  L 13275  score=+398.0843  coef=+398.0843  palabras=[drag, race, saved, ahs, powerful, desmond, drags, unexpected]
+  L 12845  score=+383.9589  coef=+383.9589  palabras=[still, way, far, lol, moneytoo, time]
+  L  1756  score=+373.0350  coef=+373.0350  palabras=[he's, right, wrong, correct, you're, she's]
+  L  5793  score=+369.2259  coef=+369.2259  palabras=[hot, sounds, extra, shes]
+  L  7789  score=+369.1522  coef=+369.1522  palabras=[destroy, destroyed, items, destruction, box, godzilla, whole, world]
+
+--- Top latentes mas activos por clase (independiente del clasificador) ---
+
+[Clase female] top 10 latentes por activacion media:
+  L 11265  mean_act=+103.3978  nonzero_rate=1.0000 contrast=-7.9350 palabras=[rice, mouth, wood, claw, games]
+  L 12117  mean_act=+86.1643  nonzero_rate=1.0000 contrast=-3.5374 palabras=[aries, mouth, games, wood, zing]
+  L  4808  mean_act=+77.7227  nonzero_rate=1.0000 contrast=-1.6914 palabras=[rice, mouth, case, land, games, zing]
+  L 10130  mean_act=+40.7817  nonzero_rate=1.0000 contrast=-2.9547 palabras=[alien, ouch, mouth, butt]
+  L  4882  mean_act=+30.0810  nonzero_rate=1.0000 contrast=-2.3561 palabras=[mouth, roll, games, claw]
+  L  2371  mean_act=+24.5121  nonzero_rate=1.0000 contrast=-1.9202 palabras=[zing, mouth, wood, claw, games]
+  L  5394  mean_act=+20.5651  nonzero_rate=1.0000 contrast=-1.6117 palabras=[claw]
+  L 14277  mean_act=+20.4799  nonzero_rate=1.0000 contrast=-1.6054 palabras=[zing, games]
+  L 10257  mean_act=+19.1322  nonzero_rate=1.0000 contrast=-1.4857 palabras=[rice, claw, wood, games, mouth]
+  L  2155  mean_act=+18.7860  nonzero_rate=1.0000 contrast=-1.4705 palabras=[zing, games, mouth, claw, aries]
+
+[Clase male] top 10 latentes por activacion media:
+  L 11265  mean_act=+111.3328  nonzero_rate=1.0000 contrast=+7.9350 palabras=[mouth]
+  L 12117  mean_act=+89.7017  nonzero_rate=1.0000 contrast=+3.5374 palabras=[mouth, games]
+  L  4808  mean_act=+79.4141  nonzero_rate=1.0000 contrast=+1.6914 palabras=[dad, mouth, balls, zing]
+  L 10130  mean_act=+43.7365  nonzero_rate=1.0000 contrast=+2.9547 palabras=[ouch, mouth, numbers, continue, reason]
+  L  4882  mean_act=+32.4371  nonzero_rate=1.0000 contrast=+2.3561
+  L  2371  mean_act=+26.4323  nonzero_rate=1.0000 contrast=+1.9202 palabras=[mouth]
+  L  5394  mean_act=+22.1768  nonzero_rate=1.0000 contrast=+1.6117 palabras=[bats]
+  L 14277  mean_act=+22.0853  nonzero_rate=1.0000 contrast=+1.6054 palabras=[zing]
+  L 10257  mean_act=+20.6179  nonzero_rate=1.0000 contrast=+1.4857 palabras=[dad, thy, bats, games]
+  L  2155  mean_act=+20.2566  nonzero_rate=1.0000 contrast=+1.4705 palabras=[zing, games, mouth]
+
+Resumen JSON guardado en: modelos/genero_sae_interpretabilidad/interpretabilidad_sae_resumen.json
+Resumen Markdown guardado en: modelos/genero_sae_interpretabilidad/interpretabilidad_sae_resumen.md
+[2026-04-29 22:51:56] OK: clasificacion_genero/gpt_activaciones/interpretabilidad_genero_sae.py completado (3h 50m)
