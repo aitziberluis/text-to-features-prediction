@@ -6,8 +6,7 @@ CLASIFICADOR PERCEIVING - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
 Preparación de Dataset para Clasificación de PERCEIVING
 
 1. Cargando comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-   17,639,864 comentarios cargados
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío. 17,639,864 comentarios cargados
 
 2. Cargando autores...
    10,295 autores cargados
@@ -30,7 +29,10 @@ Extrayendo activaciones de GPT-2 para 15,582,276 comentarios...
 Hookpoint: transformer.h.8, batch_size: 128, workers: 16
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
 `torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1133.47it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1129.70it/s]
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1133.47it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1129.70it/s]
   Modelo truncado a las primeras 9 capas (skip h.9..h.11 + LM head)
   torch.compile activado (dynamic=True)
   Calculando longitudes y ordenando por longitud (bucketing)...
@@ -420,7 +422,10 @@ Comentarios: train=10,998,355 eval=2,452,738 test=2,131,183
   1: train=6,340,601 eval=1,407,801 test=1,215,300
 SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1310.05it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1304.13it/s]
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1310.05it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1304.13it/s]
   Modelo truncado a las primeras 9 capas (skip h.9..h.11)
   torch.compile activado (dynamic=True)
 num_latents=16384
@@ -786,7 +791,10 @@ Extrayendo activaciones de GPT-2 para 15,581,291 comentarios...
 Hookpoint: transformer.h.8, batch_size: 128, workers: 16
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
 `torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1130.84it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1126.90it/s]
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1130.84it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1126.90it/s]
   Modelo truncado a las primeras 9 capas (skip h.9..h.11 + LM head)
   torch.compile activado (dynamic=True)
   Calculando longitudes y ordenando por longitud (bucketing)...
@@ -1176,7 +1184,10 @@ Comentarios: train=10,992,938 eval=2,435,982 test=2,152,371
   1: train=7,994,999 eval=1,826,652 test=1,566,467
 SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1099.76it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1095.80it/s]
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1099.76it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1095.80it/s]
   Modelo truncado a las primeras 9 capas (skip h.9..h.11)
   torch.compile activado (dynamic=True)
 num_latents=16384
