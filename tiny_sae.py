@@ -1,3 +1,4 @@
+#este archivo se ha cogido de opensource y se ha modificado para el proyecto
 from dataclasses import dataclass, asdict
 import json
 import os
@@ -12,12 +13,9 @@ from torch.utils.data import DataLoader
 from transformers import PreTrainedModel
 import wandb
 import einops
-
 # Tokenizer "fast" es paralelo en Rayon; con num_workers>0 en el DataLoader
 # queremos un solo hilo por worker para no oversubscribir la CPU.
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
-
-
 @dataclass
 class SaeConfig:
     d_in: int
@@ -154,7 +152,6 @@ def train_sae(
             inputs = inputs[0]
         if isinstance(outputs, tuple):
             outputs = outputs[0]
-
         global_inputs = inputs
         global_outputs = outputs
 

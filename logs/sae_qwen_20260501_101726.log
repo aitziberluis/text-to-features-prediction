@@ -1,0 +1,358 @@
+nohup: ignoring input
+GPU: 1 | hookpoint: model.layers.25
+Inicio: Fri May  1 10:17:26 AM CEST 2026
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+`torch_dtype` is deprecated! Use `dtype` instead!
+Cargando dataset de comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+Tamaño del dataset (comentarios): 17639864
+Cargando tokenizer y modelo Qwen...
+FlashAttention no disponible (FlashAttention2 has been toggled on, but it cannot be used due to the following error: the package for FlashAttention2 doesn't seem to be installed.). Reintentando sin flash_attention_2...
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   7%|▋         | 27/398 [00:00<00:01, 256.86it/s]
+Loading weights:  13%|█▎        | 53/398 [00:00<00:01, 235.76it/s]
+Loading weights:  19%|█▉        | 77/398 [00:00<00:01, 220.83it/s]
+Loading weights:  25%|██▌       | 100/398 [00:00<00:01, 213.53it/s]
+Loading weights:  31%|███       | 122/398 [00:00<00:01, 206.18it/s]
+Loading weights:  36%|███▌      | 143/398 [00:00<00:01, 202.19it/s]
+Loading weights:  41%|████      | 164/398 [00:00<00:01, 200.73it/s]
+Loading weights:  46%|████▋     | 185/398 [00:00<00:01, 198.22it/s]
+Loading weights:  52%|█████▏    | 205/398 [00:01<00:01, 191.27it/s]
+Loading weights:  57%|█████▋    | 225/398 [00:01<00:00, 188.85it/s]
+Loading weights:  62%|██████▏   | 247/398 [00:01<00:00, 195.81it/s]
+Loading weights:  67%|██████▋   | 268/398 [00:01<00:00, 191.67it/s]
+Loading weights:  73%|███████▎  | 289/398 [00:01<00:00, 195.11it/s]
+Loading weights:  78%|███████▊  | 311/398 [00:01<00:00, 201.94it/s]
+Loading weights:  84%|████████▎ | 333/398 [00:01<00:00, 197.94it/s]
+Loading weights:  89%|████████▉ | 355/398 [00:01<00:00, 200.28it/s]
+Loading weights:  95%|█████████▍| 377/398 [00:01<00:00, 201.44it/s]
+Loading weights: 100%|██████████| 398/398 [00:01<00:00, 202.51it/s]
+Modelo truncado a las primeras 26 capas (de 36); liberadas 10 capas + final norm + lm_head
+Cargando dataset tokenizado desde /hdd/aitziber.l/tokenized_qwen
+Dimensión oculta detectada para Qwen: d_in=2560
+Configurando SAE
+[autotune] batch=8 | pico VRAM(fwd)=6.29 GiB (13.3%) | est. train ~60%
+[autotune] batch=16 | pico VRAM(fwd)=6.87 GiB (14.5%) | est. train ~65%
+[autotune] batch=32 | pico VRAM(fwd)=8.04 GiB (17.0%) | est. train ~76%
+[autotune] batch=64 | pico VRAM(fwd)=10.39 GiB (21.9%) | est. train ~99%
+Batch size usado para entrenamiento SAE: 64
+Limitando dataset a 1,000,000,000 tokens (3,906,250 filas de 17,639,864).
+Total tokens: 1,000,000,000 | checkpoint cada 20% = 200,000,000 tokens
+Checkpoints se guardarán en: /hdd/aitziber.l
+Configurando entrenamiento de la SAE
+Estimando tiempo de entrenamiento (warmup forward + backward)
+Batches totales: 61,036 | ~2.692 s/batch (estimado) | ETA aprox: 45h 38m 9s
+torch.compile activado (reduce-overhead, static shapes)
+Iniciando entrenamiento de la SAE (Qwen)
+W0501 10:22:27.917000 271314 torch/_dynamo/convert_frame.py:1358] [7/8] torch._dynamo hit config.recompile_limit (8)
+W0501 10:22:27.917000 271314 torch/_dynamo/convert_frame.py:1358] [7/8]    function: '__call__' (/home/aitziber.l/.local/lib/python3.10/site-packages/transformers/modeling_layers.py:59)
+W0501 10:22:27.917000 271314 torch/_dynamo/convert_frame.py:1358] [7/8]    last reason: 7/7: kwargs['past_key_values'].layers[7].is_initialized == False  # if not self.is_initialized:  # ome/aitziber.l/.local/lib/python3.10/site-packages/transformers/cache_utils.py:116 in update
+W0501 10:22:27.917000 271314 torch/_dynamo/convert_frame.py:1358] [7/8] To log all recompilation reasons, use TORCH_LOGS="recompiles".
+W0501 10:22:27.917000 271314 torch/_dynamo/convert_frame.py:1358] [7/8] To diagnose recompilation issues, see https://pytorch.org/docs/main/torch.compiler_troubleshooting.html
+step=200/61036 (0.3%) | loss=0.1486
+step=400/61036 (0.7%) | loss=0.0270
+step=600/61036 (1.0%) | loss=0.0187
+step=800/61036 (1.3%) | loss=0.0224
+step=1000/61036 (1.6%) | loss=0.0092
+step=1200/61036 (2.0%) | loss=0.0112
+step=1400/61036 (2.3%) | loss=0.0205
+step=1600/61036 (2.6%) | loss=0.0074
+step=1800/61036 (2.9%) | loss=0.0084
+step=2000/61036 (3.3%) | loss=0.0058
+step=2200/61036 (3.6%) | loss=0.0597
+step=2400/61036 (3.9%) | loss=0.0170
+step=2600/61036 (4.3%) | loss=0.0235
+step=2800/61036 (4.6%) | loss=0.0212
+step=3000/61036 (4.9%) | loss=0.0159
+step=3200/61036 (5.2%) | loss=0.0094
+step=3400/61036 (5.6%) | loss=0.0030
+step=3600/61036 (5.9%) | loss=0.0349
+step=3800/61036 (6.2%) | loss=0.0071
+step=4000/61036 (6.6%) | loss=0.0043
+step=4200/61036 (6.9%) | loss=0.0160
+step=4400/61036 (7.2%) | loss=0.0136
+step=4600/61036 (7.5%) | loss=0.0065
+step=4800/61036 (7.9%) | loss=0.0018
+step=5000/61036 (8.2%) | loss=0.0249
+step=5200/61036 (8.5%) | loss=0.0026
+step=5400/61036 (8.8%) | loss=0.0041
+step=5600/61036 (9.2%) | loss=0.0136
+step=5800/61036 (9.5%) | loss=0.0028
+step=6000/61036 (9.8%) | loss=0.0057
+step=6200/61036 (10.2%) | loss=0.0070
+step=6400/61036 (10.5%) | loss=0.0064
+step=6600/61036 (10.8%) | loss=0.0042
+step=6800/61036 (11.1%) | loss=0.0075
+step=7000/61036 (11.5%) | loss=0.0074
+step=7200/61036 (11.8%) | loss=0.0035
+step=7400/61036 (12.1%) | loss=0.0051
+step=7600/61036 (12.5%) | loss=0.0037
+step=7800/61036 (12.8%) | loss=0.0071
+step=8000/61036 (13.1%) | loss=0.0034
+step=8200/61036 (13.4%) | loss=0.0054
+step=8400/61036 (13.8%) | loss=0.0051
+step=8600/61036 (14.1%) | loss=0.0030
+step=8800/61036 (14.4%) | loss=0.0017
+step=9000/61036 (14.7%) | loss=0.0021
+step=9200/61036 (15.1%) | loss=0.0039
+step=9400/61036 (15.4%) | loss=0.0039
+step=9600/61036 (15.7%) | loss=0.0031
+step=9800/61036 (16.1%) | loss=0.0694
+step=10000/61036 (16.4%) | loss=0.0055
+step=10200/61036 (16.7%) | loss=0.0051
+step=10400/61036 (17.0%) | loss=0.0086
+step=10600/61036 (17.4%) | loss=0.0045
+step=10800/61036 (17.7%) | loss=0.0115
+step=11000/61036 (18.0%) | loss=0.0073
+step=11200/61036 (18.3%) | loss=0.0046
+step=11400/61036 (18.7%) | loss=0.0179
+step=11600/61036 (19.0%) | loss=0.0089
+step=11800/61036 (19.3%) | loss=0.0053
+step=12000/61036 (19.7%) | loss=0.0011
+step=12200/61036 (20.0%) | loss=0.0065
+step=12400/61036 (20.3%) | loss=0.0040
+step=12600/61036 (20.6%) | loss=0.0029
+step=12800/61036 (21.0%) | loss=0.0048
+step=13000/61036 (21.3%) | loss=0.0106
+step=13200/61036 (21.6%) | loss=0.0203
+step=13400/61036 (22.0%) | loss=0.0057
+step=13600/61036 (22.3%) | loss=0.0112
+step=13800/61036 (22.6%) | loss=0.0044
+step=14000/61036 (22.9%) | loss=0.0139
+step=14200/61036 (23.3%) | loss=0.0134
+step=14400/61036 (23.6%) | loss=0.0018
+step=14600/61036 (23.9%) | loss=0.0186
+step=14800/61036 (24.2%) | loss=0.0027
+step=15000/61036 (24.6%) | loss=0.0029
+step=15200/61036 (24.9%) | loss=0.0085
+step=15400/61036 (25.2%) | loss=0.0081
+step=15600/61036 (25.6%) | loss=0.0026
+step=15800/61036 (25.9%) | loss=0.0043
+step=16000/61036 (26.2%) | loss=0.0029
+step=16200/61036 (26.5%) | loss=0.0082
+step=16400/61036 (26.9%) | loss=0.0042
+step=16600/61036 (27.2%) | loss=0.0031
+step=16800/61036 (27.5%) | loss=0.0100
+step=17000/61036 (27.9%) | loss=0.0034
+step=17200/61036 (28.2%) | loss=0.0054
+step=17400/61036 (28.5%) | loss=0.0036
+step=17600/61036 (28.8%) | loss=0.0053
+step=17800/61036 (29.2%) | loss=0.0046
+step=18000/61036 (29.5%) | loss=0.0371
+step=18200/61036 (29.8%) | loss=0.0030
+step=18400/61036 (30.1%) | loss=0.0014
+step=18600/61036 (30.5%) | loss=0.0017
+step=18800/61036 (30.8%) | loss=0.0152
+step=19000/61036 (31.1%) | loss=0.0134
+step=19200/61036 (31.5%) | loss=0.0017
+step=19400/61036 (31.8%) | loss=0.0016
+step=19600/61036 (32.1%) | loss=0.0127
+step=19800/61036 (32.4%) | loss=0.0043
+step=20000/61036 (32.8%) | loss=0.0271
+step=20200/61036 (33.1%) | loss=0.0037
+step=20400/61036 (33.4%) | loss=0.0156
+step=20600/61036 (33.8%) | loss=0.0028
+step=20800/61036 (34.1%) | loss=0.0026
+step=21000/61036 (34.4%) | loss=0.0039
+step=21200/61036 (34.7%) | loss=0.0037
+step=21400/61036 (35.1%) | loss=0.0081
+step=21600/61036 (35.4%) | loss=0.0024
+step=21800/61036 (35.7%) | loss=0.0026
+step=22000/61036 (36.0%) | loss=0.0031
+step=22200/61036 (36.4%) | loss=0.0065
+step=22400/61036 (36.7%) | loss=0.0100
+step=22600/61036 (37.0%) | loss=0.0111
+step=22800/61036 (37.4%) | loss=0.0038
+step=23000/61036 (37.7%) | loss=0.0065
+step=23200/61036 (38.0%) | loss=0.0010
+step=23400/61036 (38.3%) | loss=0.0021
+step=23600/61036 (38.7%) | loss=0.0029
+step=23800/61036 (39.0%) | loss=0.0044
+step=24000/61036 (39.3%) | loss=0.0016
+step=24200/61036 (39.6%) | loss=0.0019
+step=24400/61036 (40.0%) | loss=0.0029
+step=24600/61036 (40.3%) | loss=0.0142
+step=24800/61036 (40.6%) | loss=0.0064
+step=25000/61036 (41.0%) | loss=0.0127
+step=25200/61036 (41.3%) | loss=0.0020
+step=25400/61036 (41.6%) | loss=0.0042
+step=25600/61036 (41.9%) | loss=0.0021
+step=25800/61036 (42.3%) | loss=0.0100
+step=26000/61036 (42.6%) | loss=0.0081
+step=26200/61036 (42.9%) | loss=0.0044
+step=26400/61036 (43.3%) | loss=0.0030
+step=26600/61036 (43.6%) | loss=0.0143
+step=26800/61036 (43.9%) | loss=0.0047
+step=27000/61036 (44.2%) | loss=0.0085
+step=27200/61036 (44.6%) | loss=0.0023
+step=27400/61036 (44.9%) | loss=0.0012
+step=27600/61036 (45.2%) | loss=0.0108
+step=27800/61036 (45.5%) | loss=0.0044
+step=28000/61036 (45.9%) | loss=0.0035
+step=28200/61036 (46.2%) | loss=0.0120
+step=28400/61036 (46.5%) | loss=0.0035
+step=28600/61036 (46.9%) | loss=0.0114
+step=28800/61036 (47.2%) | loss=0.0016
+step=29000/61036 (47.5%) | loss=0.0069
+step=29200/61036 (47.8%) | loss=0.0185
+step=29400/61036 (48.2%) | loss=0.0067
+step=29600/61036 (48.5%) | loss=0.0043
+step=29800/61036 (48.8%) | loss=0.0012
+step=30000/61036 (49.2%) | loss=0.0032
+step=30200/61036 (49.5%) | loss=0.0042
+step=30400/61036 (49.8%) | loss=0.0076
+step=30600/61036 (50.1%) | loss=0.0062
+step=30800/61036 (50.5%) | loss=0.0261
+step=31000/61036 (50.8%) | loss=0.0103
+step=31200/61036 (51.1%) | loss=0.0028
+step=31400/61036 (51.4%) | loss=0.0032
+step=31600/61036 (51.8%) | loss=0.0022
+step=31800/61036 (52.1%) | loss=0.0065
+step=32000/61036 (52.4%) | loss=0.0041
+step=32200/61036 (52.8%) | loss=0.0064
+step=32400/61036 (53.1%) | loss=0.0089
+step=32600/61036 (53.4%) | loss=0.0030
+step=32800/61036 (53.7%) | loss=0.0250
+step=33000/61036 (54.1%) | loss=0.0070
+step=33200/61036 (54.4%) | loss=0.0078
+step=33400/61036 (54.7%) | loss=0.0077
+step=33600/61036 (55.0%) | loss=0.0041
+step=33800/61036 (55.4%) | loss=0.0035
+step=34000/61036 (55.7%) | loss=0.0047
+step=34200/61036 (56.0%) | loss=0.0061
+step=34400/61036 (56.4%) | loss=0.0034
+step=34600/61036 (56.7%) | loss=0.0165
+step=34800/61036 (57.0%) | loss=0.0043
+step=35000/61036 (57.3%) | loss=0.0132
+step=35200/61036 (57.7%) | loss=0.0064
+step=35400/61036 (58.0%) | loss=0.0157
+step=35600/61036 (58.3%) | loss=0.0030
+step=35800/61036 (58.7%) | loss=0.0026
+step=36000/61036 (59.0%) | loss=0.0032
+step=36200/61036 (59.3%) | loss=0.0045
+step=36400/61036 (59.6%) | loss=0.0051
+step=36600/61036 (60.0%) | loss=0.0080
+step=36800/61036 (60.3%) | loss=0.0103
+step=37000/61036 (60.6%) | loss=0.0032
+step=37200/61036 (60.9%) | loss=0.0039
+step=37400/61036 (61.3%) | loss=0.0041
+step=37600/61036 (61.6%) | loss=0.0044
+step=37800/61036 (61.9%) | loss=0.0068
+step=38000/61036 (62.3%) | loss=0.0034
+step=38200/61036 (62.6%) | loss=0.0448
+step=38400/61036 (62.9%) | loss=0.0088
+step=38600/61036 (63.2%) | loss=0.0026
+step=38800/61036 (63.6%) | loss=0.0120
+step=39000/61036 (63.9%) | loss=0.0204
+step=39200/61036 (64.2%) | loss=0.0049
+step=39400/61036 (64.6%) | loss=0.0010
+step=39600/61036 (64.9%) | loss=0.0043
+step=39800/61036 (65.2%) | loss=0.0106
+step=40000/61036 (65.5%) | loss=0.0035
+step=40200/61036 (65.9%) | loss=0.0075
+step=40400/61036 (66.2%) | loss=0.0258
+step=40600/61036 (66.5%) | loss=0.0073
+step=40800/61036 (66.8%) | loss=0.0074
+step=41000/61036 (67.2%) | loss=0.0043
+step=41200/61036 (67.5%) | loss=0.0039
+step=41400/61036 (67.8%) | loss=0.0017
+step=41600/61036 (68.2%) | loss=0.0056
+step=41800/61036 (68.5%) | loss=0.0023
+step=42000/61036 (68.8%) | loss=0.0156
+step=42200/61036 (69.1%) | loss=0.0024
+step=42400/61036 (69.5%) | loss=0.0018
+step=42600/61036 (69.8%) | loss=0.0068
+step=42800/61036 (70.1%) | loss=0.0030
+step=43000/61036 (70.5%) | loss=0.0021
+step=43200/61036 (70.8%) | loss=0.0114
+step=43400/61036 (71.1%) | loss=0.0405
+step=43600/61036 (71.4%) | loss=0.0030
+step=43800/61036 (71.8%) | loss=0.0027
+step=44000/61036 (72.1%) | loss=0.0045
+step=44200/61036 (72.4%) | loss=0.0055
+step=44400/61036 (72.7%) | loss=0.0074
+step=44600/61036 (73.1%) | loss=0.0064
+step=44800/61036 (73.4%) | loss=0.0027
+step=45000/61036 (73.7%) | loss=0.0074
+step=45200/61036 (74.1%) | loss=0.0059
+step=45400/61036 (74.4%) | loss=0.0035
+step=45600/61036 (74.7%) | loss=0.0117
+step=45800/61036 (75.0%) | loss=0.0098
+step=46000/61036 (75.4%) | loss=0.0105
+step=46200/61036 (75.7%) | loss=0.0034
+step=46400/61036 (76.0%) | loss=0.0033
+step=46600/61036 (76.3%) | loss=0.0019
+step=46800/61036 (76.7%) | loss=0.0072
+step=47000/61036 (77.0%) | loss=0.0030
+step=47200/61036 (77.3%) | loss=0.0041
+step=47400/61036 (77.7%) | loss=0.0056
+step=47600/61036 (78.0%) | loss=0.0078
+step=47800/61036 (78.3%) | loss=0.0059
+step=48000/61036 (78.6%) | loss=0.0069
+step=48200/61036 (79.0%) | loss=0.0071
+step=48400/61036 (79.3%) | loss=0.0067
+step=48600/61036 (79.6%) | loss=0.0021
+step=48800/61036 (80.0%) | loss=0.0040
+step=49000/61036 (80.3%) | loss=0.0073
+step=49200/61036 (80.6%) | loss=0.0069
+step=49400/61036 (80.9%) | loss=0.0034
+step=49600/61036 (81.3%) | loss=0.0035
+step=49800/61036 (81.6%) | loss=0.0176
+step=50000/61036 (81.9%) | loss=0.0023
+step=50200/61036 (82.2%) | loss=0.0026
+step=50400/61036 (82.6%) | loss=0.0055
+step=50600/61036 (82.9%) | loss=0.0089
+step=50800/61036 (83.2%) | loss=0.0042
+step=51000/61036 (83.6%) | loss=0.0117
+step=51200/61036 (83.9%) | loss=0.0021
+step=51400/61036 (84.2%) | loss=0.0027
+step=51600/61036 (84.5%) | loss=0.0073
+step=51800/61036 (84.9%) | loss=0.0029
+step=52000/61036 (85.2%) | loss=0.0045
+step=52200/61036 (85.5%) | loss=0.0013
+step=52400/61036 (85.9%) | loss=0.0009
+step=52600/61036 (86.2%) | loss=0.0092
+step=52800/61036 (86.5%) | loss=0.0050
+step=53000/61036 (86.8%) | loss=0.0020
+step=53200/61036 (87.2%) | loss=0.0024
+step=53400/61036 (87.5%) | loss=0.0032
+step=53600/61036 (87.8%) | loss=0.0019
+step=53800/61036 (88.1%) | loss=0.0025
+step=54000/61036 (88.5%) | loss=0.0049
+step=54200/61036 (88.8%) | loss=0.0035
+step=54400/61036 (89.1%) | loss=0.0028
+step=54600/61036 (89.5%) | loss=0.0021
+step=54800/61036 (89.8%) | loss=0.0020
+step=55000/61036 (90.1%) | loss=0.0068
+step=55200/61036 (90.4%) | loss=0.0110
+step=55400/61036 (90.8%) | loss=0.0037
+step=55600/61036 (91.1%) | loss=0.0021
+step=55800/61036 (91.4%) | loss=0.0032
+step=56000/61036 (91.7%) | loss=0.0068
+step=56200/61036 (92.1%) | loss=0.0029
+step=56400/61036 (92.4%) | loss=0.0034
+step=56600/61036 (92.7%) | loss=0.0013
+step=56800/61036 (93.1%) | loss=0.0078
+step=57000/61036 (93.4%) | loss=0.0048
+step=57200/61036 (93.7%) | loss=0.0020
+step=57400/61036 (94.0%) | loss=0.0048
+step=57600/61036 (94.4%) | loss=0.0088
+step=57800/61036 (94.7%) | loss=0.0037
+step=58000/61036 (95.0%) | loss=0.0037
+step=58200/61036 (95.4%) | loss=0.0016
+step=58400/61036 (95.7%) | loss=0.0035
+step=58600/61036 (96.0%) | loss=0.0030
+step=58800/61036 (96.3%) | loss=0.0074
+step=59000/61036 (96.7%) | loss=0.0103
+step=59200/61036 (97.0%) | loss=0.0110
+step=59400/61036 (97.3%) | loss=0.0053
+step=59600/61036 (97.6%) | loss=0.0055
+step=59800/61036 (98.0%) | loss=0.0014
+step=60000/61036 (98.3%) | loss=0.0024
+step=60200/61036 (98.6%) | loss=0.0024
+step=60400/61036 (99.0%) | loss=0.0096
+step=60600/61036 (99.3%) | loss=0.0018
+step=60800/61036 (99.6%) | loss=0.0073
+step=61000/61036 (99.9%) | loss=0.0061
+Guardando SAE final en /hdd/aitziber.l 
+Entrenamiento de SAE con Qwen finalizado.

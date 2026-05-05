@@ -47,7 +47,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# Importar desde el directorio raiz del proyecto
+# importar desde el directorio raiz del proyecto
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from preprocesamiento import preparar_dataset_para_mbti
 from tiny_sae import Sae
@@ -64,41 +64,41 @@ if torch.cuda.is_available():
 else:
     DEVICE = "cpu"
 
-# Ruta a la SAE entrenada sobre todo el corpus
+# ruta a la SAE entrenada sobre todo el corpus
 PATH_SAE = "sae-ckpts/sae-gpt2-comments"
 
-# Rutas de datos
+# rutas de datos
 PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
 PATH_AUTORES = "data/author_profiles.csv"
 TEXT_COLUMN = "body"
 MAX_COMMENTS = None
 
-# Clases binarias
+# clases binarias
 CLASS_NAMES = ["0", "1"]
 NUM_CLASSES = 2
 
-# Directorio compartido para los indices de split (comun a GPT y SAE)
+# directorio compartido para los indices de split (comun a GPT y SAE)
 SPLITS_DIR = f"data/splits_{TRAIT_NAME}"
 
-# Splits
+# splits
 TEST_SIZE = 0.15
 EVAL_SIZE = 0.15
 RANDOM_STATE = 42
 
-# Entrenamiento
+# entrenamiento
 EXTRACT_BATCH_SIZE = 32
 MIN_EXTRACT_BATCH_SIZE = 4
 TRAIN_EPOCHS = 1
 SGD_ALPHA = 1e-5
 
-# Precision/limpieza para reducir uso de memoria
+# precision/limpieza para reducir uso de memoria
 SAE_DTYPE = torch.float16 if torch.cuda.is_available() else torch.float32
 CUDA_EMPTY_CACHE_EVERY = 200
 
-# Progreso: imprimir cada hora (3600 s)
+# progreso: imprimir cada hora (3600 s)
 PROGRESS_INTERVAL = 3600
 
-# Configuraciones a correr
+# configuraciones a correr
 COMMENT_POOLINGS = ["last_token", "mean"]
 USER_POOLINGS = ["mean_of_last", "mean_of_mean"]
 BALANCE_CONFIGS = [
@@ -135,7 +135,7 @@ def random_undersample(X: np.ndarray, y: np.ndarray, random_state: int = RANDOM_
     classes = np.arange(NUM_CLASSES)
     counts = np.bincount(y, minlength=NUM_CLASSES)
     min_count = counts[counts > 0].min()
-    print(f"    Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
+    print(f"Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
     indices = []
     for c in classes:
         c_idx = np.where(y == c)[0]
@@ -153,7 +153,7 @@ def random_undersample_mask(y: np.ndarray, random_state: int = RANDOM_STATE) -> 
     classes = np.arange(NUM_CLASSES)
     counts = np.bincount(y, minlength=NUM_CLASSES)
     min_count = counts[counts > 0].min()
-    print(f"    Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
+    print(f"Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
     mask = np.zeros(len(y), dtype=bool)
     for c in classes:
         c_idx = np.where(y == c)[0]
@@ -206,7 +206,7 @@ def _pool_sparse_to_dense(
     dtype = top_acts.dtype
     mask = attention_mask.to(device=device, dtype=dtype)
 
-    # --- last_token ---
+    # last_token
     lengths = mask.sum(dim=1).clamp(min=1).long() - 1
     batch_idx = torch.arange(batch_size, device=device)
 
@@ -220,17 +220,17 @@ def _pool_sparse_to_dense(
         last_acts,
     )
 
-    # --- mean (weighted by attention mask) ---
+    # mean (weighted by attention mask)
     mean_pooled = torch.zeros(batch_size, num_latents, device=device, dtype=dtype)
 
-    # Mask per-token: (batch, seq, 1) para anular padding
+    # mask per-token: (batch, seq, 1) para anular padding
     token_mask = mask.unsqueeze(-1)  # (batch, seq, 1)
     masked_acts = top_acts * token_mask  # (batch, seq, k)
 
-    # Expandir batch dimension para scatter
+    # expandir batch dimension para scatter
     batch_ids = torch.arange(batch_size, device=device).view(-1, 1, 1).expand(-1, seq_len, k)
 
-    # Flatten todo y hacer scatter_add
+    # flatten todo y hacer scatter_add
     flat_batch = batch_ids.reshape(-1)
     flat_indices = top_indices.reshape(-1).long()
     flat_acts = masked_acts.reshape(-1).to(mean_pooled.dtype)
@@ -258,7 +258,7 @@ def _setup_models():
     tokenizer = AutoTokenizer.from_pretrained(MODEL, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    # Critico para que `last real token = lengths-1`: GPT-2 ya por defecto es
+    # critico para que `last real token = lengths-1`: GPT-2 ya por defecto es
     # right-padded, pero lo fijamos explicitamente.
     tokenizer.padding_side = "right"
 
@@ -271,16 +271,16 @@ def _setup_models():
     # son compute desperdiciado (solo consumimos la activacion del hook).
     _keep = int(hookpoint_name.rsplit(".", 1)[1]) + 1
     model.transformer.h = torch.nn.ModuleList(model.transformer.h[:_keep])
-    print(f"  Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11)")
+    print(f"Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11)")
 
     # OPT #3: torch.compile sobre el bloque transformer. dynamic=True por
     # las shapes variables; try/except para no romper el run si falla.
     if torch.cuda.is_available():
         try:
             model.transformer = torch.compile(model.transformer, dynamic=True)
-            print("  torch.compile activado (dynamic=True)")
+            print("torch.compile activado (dynamic=True)")
         except Exception as _ce:
-            print(f"  torch.compile no disponible, sigo sin compilar: {_ce}")
+            print(f"torch.compile no disponible, sigo sin compilar: {_ce}")
 
     hookpoint_module = model.get_submodule(hookpoint_name)
     return tokenizer, model, sae, hookpoint_module, num_latents
@@ -347,7 +347,7 @@ def _stream_sae_features(df, tokenizer, model, sae, hookpoint_module, num_latent
                         if bs <= MIN_EXTRACT_BATCH_SIZE:
                             raise
                         new_bs = max(MIN_EXTRACT_BATCH_SIZE, bs // 2)
-                        print(f"  OOM: batch {bs} -> {new_bs}", flush=True)
+                        print(f"OOM: batch {bs} -> {new_bs}", flush=True)
                         bs = new_bs
 
                 if torch.cuda.is_available() and (step + 1) % CUDA_EMPTY_CACHE_EVERY == 0:
@@ -382,7 +382,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         for s in ("train", "eval", "test")
     }
 
-    # Intentar cargar splits existentes
+    # intentar cargar splits existentes
     if all(os.path.exists(p) for p in paths.values()):
         train_auth = np.load(paths["train"], allow_pickle=True)
         eval_auth = np.load(paths["eval"], allow_pickle=True)
@@ -393,7 +393,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         if total_saved == len(user_df):
             print(f"Splits de usuarios cargados desde {SPLITS_DIR}/")
             return train_auth, eval_auth, test_auth
-        print(f"Num usuarios cambio ({total_saved} -> {len(user_df)}). Regenerando...")
+        print(f"Num usuarios cambio ({total_saved} -> {len(user_df)}). Regenerando")
 
     user_df = df[["author", "label"]].drop_duplicates("author")
     authors = user_df["author"].to_numpy()
@@ -402,7 +402,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
     train_eval_auth, test_auth = train_test_split(
         authors, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=user_labels,
     )
-    # Recalcular labels para sub-split
+    # recalcular labels para sub-split
     mask_te = np.isin(authors, train_eval_auth)
     user_labels_te = user_labels[mask_te]
 
@@ -412,7 +412,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         stratify=user_labels_te,
     )
 
-    # Guardar a disco
+    # guardar a disco
     np.save(paths["train"], train_auth)
     np.save(paths["eval"], eval_auth)
     np.save(paths["test"], test_auth)
@@ -441,7 +441,7 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
         f"F1 macro: {f1_mac:.4f} | F1 weighted: {f1_w:.4f}"
     )
     for i, cn in enumerate(CLASS_NAMES):
-        print(f"  {cn:>8s}: prec={prec_c[i]:.4f} rec={rec_c[i]:.4f} f1={f1_c[i]:.4f}")
+        print(f"{cn:>8s}: prec={prec_c[i]:.4f} rec={rec_c[i]:.4f} f1={f1_c[i]:.4f}")
     print(classification_report(y_true, y_pred, target_names=CLASS_NAMES, labels=all_labels, zero_division=0))
     print("Confusion matrix:")
     print(confusion_matrix(y_true, y_pred, labels=all_labels))
@@ -525,7 +525,7 @@ def main():
 
     print(f"\nComentarios: train={len(df_train):,} eval={len(df_eval):,} test={len(df_test):,}")
     for i, cn in enumerate(CLASS_NAMES):
-        print(f"  {cn}: train={int((y_train==i).sum()):,} eval={int((y_eval==i).sum()):,} test={int((y_test_comments==i).sum()):,}")
+        print(f"{cn}: train={int((y_train==i).sum()):,} eval={int((y_eval==i).sum()):,} test={int((y_test_comments==i).sum()):,}")
 
     train_class_weights_manual = calcular_pesos_clase_manual(y_train)
 
@@ -536,7 +536,7 @@ def main():
     # 5. Preparar acumuladores
     classes = np.arange(NUM_CLASSES, dtype=np.int64)
 
-    # Scalers (se ajustan online durante pass A)
+    # scalers (se ajustan online durante pass A)
     scalers = {"last_token": StandardScaler(), "mean": StandardScaler()}
 
     # SGD classifiers (sin_balanceo + balanceo_manual + undersampling, entrenados online)
@@ -549,17 +549,16 @@ def main():
                 random_state=RANDOM_STATE, average=True,
             )
 
-    # Acumuladores de usuario (online: {author: [sum_vec, count, label]})
+    # acumuladores de usuario (online: {author: [sum_vec, count, label]})
     user_sums_train = {"last_token": {}, "mean": {}}
     user_sums_eval = {"last_token": {}, "mean": {}}
 
-    # Pre-computar mascara de undersampling para entrenamiento
+    # pre-computar mascara de undersampling para entrenamiento
     us_mask = random_undersample_mask(y_train)
     us_first_batch = True
-    print(f"  Undersampling: {int(us_mask.sum()):,} muestras seleccionadas de {len(y_train):,}")
+    print(f"Undersampling: {int(us_mask.sum()):,} muestras seleccionadas de {len(y_train):,}")
 
     # PASS A: Stream train -> scaler + SGD + user agg + subsample
-    print("\n" + "#" * 70)
     print("PASS A: Streaming datos de entrenamiento")
 
     first_batch = True
@@ -571,14 +570,14 @@ def main():
         yb = y_train[start:end]
         feats_by_pooling = {"last_token": last_np, "mean": mean_np}
 
-        # Ajustar scalers incrementalmente
+        # ajustar scalers incrementalmente
         scalers["last_token"].partial_fit(last_np)
         scalers["mean"].partial_fit(mean_np)
 
-        # Mascara de undersampling para este batch
+        # mascara de undersampling para este batch
         batch_us_mask = us_mask[start:end]
 
-        # Escalar y entrenar SGD online
+        # escalar y entrenar SGD online
         for pooling in COMMENT_POOLINGS:
             feats_scaled = scalers[pooling].transform(
                 feats_by_pooling[pooling].astype(np.float32)
@@ -586,7 +585,7 @@ def main():
             for bal_cfg in BALANCE_CONFIGS:
                 key = (pooling, bal_cfg["name"])
                 if bal_cfg["name"] == "undersampling":
-                    # Solo entrenar con filas undersampled
+                    # solo entrenar con filas undersampled
                     if batch_us_mask.any():
                         xb_us = feats_scaled[batch_us_mask]
                         yb_us = yb[batch_us_mask]
@@ -609,7 +608,7 @@ def main():
         if batch_us_mask.any():
             us_first_batch = False
 
-        # Acumular features de usuario (train)
+        # acumular features de usuario (train)
         if has_author:
             batch_auth = authors_train[start:end]
             for pooling in COMMENT_POOLINGS:
@@ -632,12 +631,11 @@ def main():
 
     print(f"\nPass A completado: {len(y_train):,} muestras procesadas.")
 
-    # Todos los clasificadores de nivel comentario
+    # todos los clasificadores de nivel comentario
     all_clf = dict(clf_comment)
     trained_runs = {}
 
     # PASS B: Stream eval -> predicciones + user agg
-    print("\n" + "#" * 70)
     print("PASS B: Streaming datos de evaluacion")
 
     eval_preds = {key: [] for key in all_clf}
@@ -656,7 +654,7 @@ def main():
             )
             eval_preds[key].append(clf.predict(feats_scaled))
 
-        # Acumular features de usuario (eval)
+        # acumular features de usuario (eval)
         if has_author:
             yb = y_eval[start:end]
             batch_auth = authors_eval[start:end]
@@ -678,7 +676,6 @@ def main():
         del last_np, mean_np
 
     all_results = {}
-    print("\n" + "#" * 70)
     print("A) CLASIFICACION A NIVEL DE COMENTARIO")
 
     for key in all_clf:
@@ -698,7 +695,6 @@ def main():
     gc.collect()
 
     if has_author:
-        print("\n" + "#" * 70)
         print("B) CLASIFICACION A NIVEL DE USUARIO")
 
         for user_pooling in USER_POOLINGS:
@@ -719,7 +715,7 @@ def main():
             X_tr_n = u_scaler.transform(X_u_train)
             X_ev_n = u_scaler.transform(X_u_eval)
 
-            # Configuraciones de balanceo
+            # configuraciones de balanceo
             for bal_cfg in BALANCE_CONFIGS:
                 if bal_cfg["name"] == "undersampling":
                     X_u_us, y_u_us = random_undersample(X_u_train, y_u_train)
@@ -732,7 +728,7 @@ def main():
 
                 run_name = f"usuario_{user_pooling}_{bal_cfg['name']}"
                 print(f"ENTRENANDO: {run_name}")
-                print(f"  Train users: {len(y_u_us):,} | Eval users: {len(y_u_eval):,}")
+                print(f"Train users: {len(y_u_us):,} | Eval users: {len(y_u_eval):,}")
 
                 clf = SGDClassifier(
                     loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
@@ -780,7 +776,6 @@ def main():
     best_per_level = select_best_per_level(all_results)
     print_best_per_level_eval(best_per_level)
 
-    print("\n" + "#" * 70)
     print("PASS C: Streaming datos de test (mejor por nivel)")
 
     best_comment_entry = best_per_level.get("comentario")

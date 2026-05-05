@@ -8,23 +8,23 @@ PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE INTROVERTED
 
 1. Cargando comentarios...
 Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-   ✓ 17,639,864 comentarios cargados
+ 17,639,864 comentarios cargados
 
 2. Cargando autores...
-   ✓ 10,295 autores cargados
+ 10,295 autores cargados
 
 3. Filtrando autores con 'introverted' conocido...
-   ✓ 9,078 autores con introverted conocido
+ 9,078 autores con introverted conocido
    (Eliminados 1,217 autores con introverted nulo)
 
 4. Uniendo comentarios con introverted por autor...
-   ✓ 15,569,453 comentarios con info de introverted
+ 15,569,453 comentarios con info de introverted
    (Eliminados 2,070,411 comentarios sin introverted conocido)
 
 5. Distribución de introverted:
    1: 12,357,911 comentarios (79.4%)
    0: 3,211,542 comentarios (20.6%)
-✓ Dataset de introverted preparado y listo para usar
+ Dataset de introverted preparado y listo para usar
 Distribucion de introverted: {1: 12357911, 0: 3211542}
 
 Extrayendo activaciones de GPT-2 para 15,569,453 comentarios...
@@ -58,9 +58,6 @@ Cargando activaciones desde data/activaciones_gpt2_introverted/ ...
 Activaciones: hidden_size=768, comentarios=15,569,453
   0: 3,211,542 (20.6%)
   1: 12,357,911 (79.4%)
-
-
-# A) CLASIFICACION A NIVEL DE COMENTARIO
 
 Splits de usuarios guardados en data/splits_introverted/
 Split de comentarios (por usuario) guardado en data/splits_introverted/split_comentarios_por_usuario.npz
@@ -204,9 +201,6 @@ Confusion matrix:
 [[340415 324325]
  [821372 989219]]
 
-
-# B) CLASIFICACION A NIVEL DE USUARIO
-
 Splits de usuarios cargados desde data/splits_introverted/
 
 Split usuarios: train=6,354 eval=1,362 test=1,362
@@ -338,7 +332,6 @@ Confusion matrix:
  [457 588]]
 RESUMEN DE RESULTADOS (EVAL)
 Config                                           Acc  BalAcc  F1mac     F1_0     F1_1
--------------------------------------------------------------------------------------
 comentario_last_token_sin_balanceo            0.7315 0.50000 0.4225   0.0000   0.8449
 comentario_last_token_balanceo_manual         0.7314 0.50003 0.4226   0.0004   0.8449
 comentario_last_token_undersampling           0.5436 0.53938 0.5108   0.3842   0.6375
@@ -353,7 +346,6 @@ usuario_mean_of_mean_balanceo_manual          0.7577 0.55971 0.5608   0.2667   0
 usuario_mean_of_mean_undersampling            0.5940 0.62992 0.5622   0.4442   0.6802
 MEJOR MODELO EN EVAL
 usuario_mean_of_last_undersampling | F1 macro=0.5669 | Recall macro=0.6250 | Precision macro=0.5896
-
 
 MEJOR MODELO POR NIVEL EN EVAL
   [comentario] comentario_last_token_undersampling | F1 macro=0.5108 | Recall macro=0.5394 | Precision macro=0.5310
@@ -393,7 +385,6 @@ Confusion matrix:
 [[182 107]
  [429 644]]
 
-
 MEJOR MODELO POR NIVEL EVALUADO EN TEST
 
   [comentario] comentario_last_token_undersampling | Accuracy=0.5362 | BalAcc=0.5466 | F1 macro=0.4885 | Recall macro=0.5466 | Precision macro=0.5303
@@ -411,23 +402,23 @@ PREPARACIÓN DE DATASET PARA CLASIFICACIÓN DE INTROVERTED
 
 1. Cargando comentarios...
 Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-   ✓ 17,639,864 comentarios cargados
+ 17,639,864 comentarios cargados
 
 2. Cargando autores...
-   ✓ 10,295 autores cargados
+ 10,295 autores cargados
 
 3. Filtrando autores con 'introverted' conocido...
-   ✓ 9,078 autores con introverted conocido
+ 9,078 autores con introverted conocido
    (Eliminados 1,217 autores con introverted nulo)
 
 4. Uniendo comentarios con introverted por autor...
-   ✓ 15,569,453 comentarios con info de introverted
+ 15,569,453 comentarios con info de introverted
    (Eliminados 2,070,411 comentarios sin introverted conocido)
 
 5. Distribución de introverted:
    1: 12,357,911 comentarios (79.4%)
    0: 3,211,542 comentarios (20.6%)
-✓ Dataset de introverted preparado y listo para usar
+ Dataset de introverted preparado y listo para usar
 Distribucion de introverted: {1: 12357911, 0: 3211542}
 Splits de usuarios cargados desde data/splits_introverted/
 
@@ -446,8 +437,7 @@ num_latents=16384
     Undersampling: min_count=2,056,595 (de {0: 2056595, 1: 8640186})
   Undersampling: 4,113,190 muestras seleccionadas de 10,696,781
 
-
-# PASS A: Streaming datos de entrenamiento
+PASS A: Streaming datos de entrenamiento
 
   [TRAIN   0.0%] step 1/334275 (32/10,696,781) | batch=32
   [TRAIN   1.1%] step 3792/334275 (121,344/10,696,781) | batch=32
@@ -553,8 +543,7 @@ num_latents=16384
 
 Pass A completado: 10,696,781 muestras procesadas.
 
-
-# PASS B: Streaming datos de evaluacion
+PASS B: Streaming datos de evaluacion
 
   [EVAL   0.0%] step 1/77355 (32/2,475,331) | batch=32
   [EVAL   7.8%] step 6029/77355 (192,928/2,475,331) | batch=32
@@ -571,10 +560,6 @@ Pass A completado: 10,696,781 muestras procesadas.
   [EVAL  88.8%] step 68663/77355 (2,197,216/2,475,331) | batch=32
   [EVAL  95.8%] step 74090/77355 (2,370,880/2,475,331) | batch=32
   [EVAL 100.0%] step 77355/77355 (2,475,331/2,475,331) | batch=32
-
-
-# A) CLASIFICACION A NIVEL DE COMENTARIO
-
 
 EVAL comentario_last_token_sin_balanceo
 Accuracy: 0.3688 | Balanced Acc: 0.4809 | Precision macro: 0.4799 | Recall macro: 0.4809 | F1 macro: 0.3685 | F1 weighted: 0.3628
@@ -677,10 +662,6 @@ weighted avg       0.63      0.54      0.56   2475331
 Confusion matrix:
 [[350045 314695]
  [829720 980871]]
-
-
-# B) CLASIFICACION A NIVEL DE USUARIO
-
 
   Usuarios mean_of_last: train=6,354 eval=1,362
     0: train=1,320 eval=317
@@ -808,14 +789,12 @@ Confusion matrix:
 MEJOR MODELO EN EVAL
 usuario_mean_of_mean_balanceo_manual | F1 macro=0.5855 | Recall macro=0.6303 | Precision macro=0.5955
 
-
 MEJOR MODELO POR NIVEL EN EVAL
 
   [comentario] comentario_last_token_undersampling | F1 macro=0.5187 | Recall macro=0.5254 | Precision macro=0.5217
   [usuario] usuario_mean_of_mean_balanceo_manual | F1 macro=0.5855 | Recall macro=0.6303 | Precision macro=0.5955
 
-
-# PASS C: Streaming datos de test (mejor por nivel)
+PASS C: Streaming datos de test (mejor por nivel)
 
   [TEST   0.0%] step 1/74917 (32/2,397,341) | batch=32
   [TEST  10.7%] step 7985/74917 (255,520/2,397,341) | batch=32
@@ -863,14 +842,12 @@ Confusion matrix:
 [[189 100]
  [367 706]]
 
-
 MEJOR MODELO POR NIVEL EVALUADO EN TEST
 
   [comentario] comentario_last_token_undersampling | Accuracy=0.5977 | BalAcc=0.5303 | F1 macro=0.5078 | Recall macro=0.5303 | Precision macro=0.5212
   [usuario] usuario_mean_of_mean_balanceo_manual | Accuracy=0.6571 | BalAcc=0.6560 | F1 macro=0.5994 | Recall macro=0.6560 | Precision macro=0.6079
 RESUMEN DE RESULTADOS (EVAL)
 Config                                           Acc  BalAcc  F1mac     F1_0     F1_1
--------------------------------------------------------------------------------------
 comentario_last_token_sin_balanceo            0.3688 0.48088 0.3685   0.3809   0.3562
 comentario_last_token_balanceo_manual         0.3759 0.48363 0.3759   0.3814   0.3704
 comentario_last_token_undersampling           0.5865 0.52538 0.5187   0.3381   0.6994

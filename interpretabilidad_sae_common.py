@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import heapq
 import json
 import math
@@ -17,17 +16,14 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, precision_score, recall_score
 from sklearn.preprocessing import StandardScaler
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
 from preprocesamiento import preparar_dataset_para_edad, preparar_dataset_para_mbti, preparar_dataset_para_sae
 from tiny_sae import Sae
-
-
 MODEL = "openai-community/gpt2"
 PATH_SAE = "sae-ckpts/sae-gpt2-comments"
 PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
 PATH_AUTORES = "data/author_profiles.csv"
 TEXT_COLUMN = "body"
-CONTEXT_LEN = 256  # P99 token len ~391; truncamos 2.5% (cola larga)
+CONTEXT_LEN = 256  #truncamos 2.5% pero ganamos velocidad y memoria obteniendo resultados muy parecidos 
 EXTRACT_BATCH_SIZE = 32
 MIN_EXTRACT_BATCH_SIZE = 4
 PROGRESS_INTERVAL = 3600
@@ -36,7 +32,6 @@ SGD_ALPHA = 1e-5
 TOP_K_LATENTS = 20
 TOP_EXAMPLES_PER_LATENT = 8
 ABLATION_SIZES = (5, 10, 20)
-
 if torch.cuda.is_available():
     torch.cuda.set_device(0)
     DEVICE = "cuda:0"
@@ -44,21 +39,7 @@ else:
     DEVICE = "cpu"
 
 SAE_DTYPE = torch.float16 if torch.cuda.is_available() else torch.float32
-
-STOPWORDS = {
-    "about", "after", "again", "against", "all", "also", "always", "among", "and", "any",
-    "are", "around", "because", "been", "before", "being", "both", "but", "can", "cant",
-    "could", "couldnt", "did", "didnt", "does", "doesnt", "doing", "dont", "each", "even",
-    "every", "from", "get", "gets", "getting", "got", "had", "has", "have", "having", "her",
-    "here", "hers", "him", "his", "how", "http", "https", "into", "ive", "just", "like",
-    "more", "most", "much", "must", "myself", "not", "now", "off", "onto", "other", "our",
-    "ours", "out", "over", "reddit", "really", "same", "she", "should", "some", "such", "than",
-    "that", "the", "their", "theirs", "them", "then", "there", "these", "they", "this", "those",
-    "through", "too", "under", "until", "very", "was", "wasnt", "were", "werent", "what", "when",
-    "where", "which", "while", "who", "will", "with", "within", "without", "would", "wouldnt", "you",
-    "your", "yours", "youre", "its", "ill", "amp", "www", "com", "org", "net",
-}
-
+STOPWORDS = {"about", "after", "again", "against", "all", "also", "always", "among", "and", "any","are", "around", "because", "been", "before", "being", "both", "but", "can", "cant","could", "couldnt", "did", "didnt", "does", "doesnt", "doing", "dont", "each", "even","every", "from", "get", "gets", "getting", "got", "had", "has", "have", "having", "her","here", "hers", "him", "his", "how", "http", "https", "into", "ive", "just", "like","more", "most", "much", "must", "myself", "not", "now", "off", "onto", "other", "our","ours", "out", "over", "reddit", "really", "same", "she", "should", "some", "such", "than","that", "the", "their", "theirs", "them", "then", "there", "these", "they", "this", "those","through", "too", "under", "until", "very", "was", "wasnt", "were", "werent", "what", "when","where", "which", "while", "who", "will", "with", "within", "without", "would", "wouldnt", "you","your", "yours", "youre", "its", "ill", "amp", "www", "com", "org", "net",}
 
 @dataclass(frozen=True)
 class SaeInterpretabilityConfig:
@@ -76,8 +57,6 @@ class SaeInterpretabilityConfig:
     ablation_sizes: Tuple[int, ...] = ABLATION_SIZES
     sae_results_path: Optional[str] = None
     manual_balance_weights: Optional[Tuple[float, ...]] = None
-
-
 def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]:
     if not Path(PATH_SAE).exists():
         raise FileNotFoundError(f"No se encuentra la SAE en {PATH_SAE}")
@@ -108,94 +87,33 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
         flush=True,
     )
 
-    train_users, class_act_stats = _aggregate_user_features(
-        df=df_train,
-        tokenizer=tokenizer,
-        model=model,
-        sae=sae,
-        hookpoint_module=hookpoint_module,
-        num_latents=num_latents,
-        pass_name="TRAIN",
-        pooling=best_pooling,
-        num_classes=len(config.class_names),
+    train_users, class_act_stats = _aggregate_user_features(df=df_train,tokenizer=tokenizer,model=model,sae=sae,hookpoint_module=hookpoint_module,num_latents=num_latents,pass_name="TRAIN",pooling=best_pooling,num_classes=len(config.class_names),
     )
-
     X_train, y_train = _build_user_arrays(train_users, num_latents)
-    scaler, clf = _fit_user_model(
-        X_train,
-        y_train,
-        len(config.class_names),
-        balance_name=best_balance,
-        manual_weights=manual_weights,
+    scaler, clf = _fit_user_model(X_train,y_train,len(config.class_names),balance_name=best_balance,manual_weights=manual_weights,
     )
     top_latents = _select_top_latents(clf, config.class_names, config.top_k_latents)
     latent_stats = _compute_latent_stats(X_train, y_train, top_latents, config.class_names, clf.coef_)
-
-    eval_users, examples = _aggregate_eval_and_collect_examples(
-        df=df_eval,
-        tokenizer=tokenizer,
-        model=model,
-        sae=sae,
-        hookpoint_module=hookpoint_module,
-        num_latents=num_latents,
-        top_latents=top_latents,
-        class_names=config.class_names,
-        top_examples=config.top_examples_per_latent,
-        pooling=best_pooling,
-    )
-
-    # Top latentes por activacion media (independiente del clasificador) +
-    # ejemplos/palabras asociados (segundo pase sobre TRAIN).
-    top_by_activation_no_examples = _compute_top_activation_per_class(
-        class_act_stats,
-        config.class_names,
-        top_k=config.top_k_latents,
-    )
+    eval_users, examples = _aggregate_eval_and_collect_examples(df=df_eval,tokenizer=tokenizer,model=model,sae=sae,hookpoint_module=hookpoint_module,num_latents=num_latents,top_latents=top_latents,class_names=config.class_names,top_examples=config.top_examples_per_latent,pooling=best_pooling,)
+    #Top latentes por activacion media (independiente del clasificador) +
+    #ejemplos/palabras asociados (segundo pase sobre TRAIN).
+    top_by_activation_no_examples = _compute_top_activation_per_class(class_act_stats,config.class_names,top_k=config.top_k_latents,)
     activation_targets: Dict[int, List[int]] = {}
     for class_idx, class_name in enumerate(config.class_names):
         latents = [int(e["latent_id"]) for e in top_by_activation_no_examples.get(class_name, [])]
         if latents:
             activation_targets[class_idx] = latents
     if activation_targets:
-        activation_examples = _collect_examples_for_target_latents(
-            df=df_train,
-            tokenizer=tokenizer,
-            model=model,
-            sae=sae,
-            hookpoint_module=hookpoint_module,
-            num_latents=num_latents,
-            targets=activation_targets,
-            top_examples=config.top_examples_per_latent,
-            pooling=best_pooling,
-            pass_name="TRAIN_TOPACT_EXAMPLES",
-        )
+        activation_examples = _collect_examples_for_target_latents(df=df_train,tokenizer=tokenizer,model=model,sae=sae,hookpoint_module=hookpoint_module,num_latents=num_latents,targets=activation_targets,top_examples=config.top_examples_per_latent,pooling=best_pooling,pass_name="TRAIN_TOPACT_EXAMPLES",)
     else:
         activation_examples = None
-    top_by_activation = _compute_top_activation_per_class(
-        class_act_stats,
-        config.class_names,
-        top_k=config.top_k_latents,
-        examples_by_class_idx=activation_examples,
-    )
-
+    top_by_activation = _compute_top_activation_per_class(class_act_stats,config.class_names,top_k=config.top_k_latents,examples_by_class_idx=activation_examples,)
     del model, tokenizer, sae
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-
     X_eval, y_eval = _build_user_arrays(eval_users, num_latents)
     metrics, y_pred = _evaluate_user_model(clf, scaler, X_eval, y_eval, config.class_names)
-    ablation = _run_ablation(
-        X_eval=X_eval,
-        y_eval=y_eval,
-        scaler=scaler,
-        clf=clf,
-        top_latents=top_latents,
-        class_names=config.class_names,
-        num_latents=num_latents,
-        baseline_metrics=metrics,
-        ablation_sizes=config.ablation_sizes,
-    )
-
+    ablation = _run_ablation(X_eval=X_eval,y_eval=y_eval,scaler=scaler,clf=clf,top_latents=top_latents,class_names=config.class_names,num_latents=num_latents,baseline_metrics=metrics,ablation_sizes=config.ablation_sizes,)
     results = {
         "task_name": config.task_name,
         "storage_mode": "streaming_without_feature_cache",
@@ -219,16 +137,13 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
         "top_latents_by_activation": top_by_activation,
         "num_eval_predictions": int(len(y_pred)),
     }
-
     os.makedirs(config.output_dir, exist_ok=True)
     json_path = os.path.join(config.output_dir, "interpretabilidad_sae_resumen.json")
     with open(json_path, "w", encoding="utf-8") as handle:
         json.dump(results, handle, ensure_ascii=False, indent=2)
-
     md_path = os.path.join(config.output_dir, "interpretabilidad_sae_resumen.md")
     with open(md_path, "w", encoding="utf-8") as handle:
         handle.write(_render_markdown(results))
-
     # Imprimir resultados completos al stdout (queda en el log)
     _print_interpretabilidad_results(results)
     print(f"\nResumen JSON guardado en: {json_path}", flush=True)
@@ -238,32 +153,29 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
 
 def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
     """Imprime al stdout un resumen legible de la interpretabilidad SAE."""
-    print("\n" + "=" * 70, flush=True)
-    print(f"INTERPRETABILIDAD SAE - {results['task_name']}", flush=True)
-    print(f"Modo de almacenamiento : {results['storage_mode']}")
-    print(f"Pooling analizado      : {results['pooling']}")
-    print(f"Balance analizado      : {results.get('balance', '?')}")
+    print(f"interpretabilidad SAE - {results['task_name']}", flush=True)
+    print(f"Modo de almacenamiento:{results['storage_mode']}")
+    print(f"Pooling analizado:{results['pooling']}")
+    print(f"Balance analizado:{results.get('balance', '?')}")
     sae_sel = results.get("sae_selection") or {}
     if sae_sel:
-        print(f"Fuente seleccion SAE   : {sae_sel.get('source')} (run='{sae_sel.get('run_name')}')")
-    print(f"Comentarios train/eval : {results['num_comments_train']:,} / {results['num_comments_eval']:,}")
-    print(f"Usuarios train/eval    : {results['num_users_train']:,} / {results['num_users_eval']:,}")
-    print(f"Latentes SAE           : {results['num_latents']:,}")
+        print(f"Fuente seleccion SAE: {sae_sel.get('source')} (run='{sae_sel.get('run_name')}')")
+    print(f"Comentarios train/eval: {results['num_comments_train']:,} / {results['num_comments_eval']:,}")
+    print(f"Usuarios train/eval: {results['num_users_train']:,} / {results['num_users_eval']:,}")
+    print(f"Latentes SAE: {results['num_latents']:,}")
 
     metrics = results.get("metrics", {}) or {}
     print(f"\nMetricas en EVAL (nivel usuario, {results['pooling']}, {results.get('balance', '?')})")
     print(
-        f"Accuracy={metrics.get('accuracy', float('nan')):.4f} | "
-        f"BalancedAcc={metrics.get('balanced_accuracy', float('nan')):.4f} | "
+        f"Exactitud={metrics.get('accuracy', float('nan')):.4f} | "
+        f"Balancedexactitud={metrics.get('balanced_accuracy', float('nan')):.4f} | "
         f"F1 macro={metrics.get('f1_macro', float('nan')):.4f} | "
-        f"F1 weighted={metrics.get('f1_weighted', float('nan')):.4f}"
-    )
+        f"F1 weighted={metrics.get('f1_weighted', float('nan')):.4f}")
     for class_name in results.get("class_names", []):
         p = metrics.get(f"precision_{class_name}", float("nan"))
         r = metrics.get(f"recall_{class_name}", float("nan"))
         f = metrics.get(f"f1_{class_name}", float("nan"))
-        print(f"  {class_name:>10}: precision={p:.4f} recall={r:.4f} f1={f:.4f}")
-
+        print(f"{class_name:>10}: precision={p:.4f} recall={r:.4f} f1={f:.4f}")
     ablation = (results.get("ablation") or {}).get("ablations") or {}
     if ablation:
         print("\nAblacion (drops vs baseline)")
@@ -292,7 +204,7 @@ def _print_interpretabilidad_results(results: Dict[str, object]) -> None:
     if top_by_act:
         print("\nTop latentes mas activos por clase (independiente del clasificador)")
         for class_name, entries in top_by_act.items():
-            print(f"\n[Clase {class_name}] top {min(len(entries), 10)} latentes por activacion media:")
+            print(f"[Clase {class_name}] top {min(len(entries), 10)} latentes por activacion media:")
             for entry in entries[:10]:
                 contrast = entry.get("mean_contrast")
                 contrast_str = f" contrast={contrast:+.4f}" if contrast is not None else ""
@@ -398,16 +310,16 @@ def _setup_models() -> Tuple[AutoTokenizer, AutoModelForCausalLM, Sae, torch.nn.
     # son compute desperdiciado (solo consumimos la activacion del hook).
     _keep = int(hookpoint_name.rsplit(".", 1)[1]) + 1
     model.transformer.h = torch.nn.ModuleList(model.transformer.h[:_keep])
-    print(f"  Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11)")
+    print(f"Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11)")
 
     # OPT #3: torch.compile sobre el bloque transformer. dynamic=True por
     # las shapes variables; try/except para no romper el run si falla.
     if torch.cuda.is_available():
         try:
             model.transformer = torch.compile(model.transformer, dynamic=True)
-            print("  torch.compile activado (dynamic=True)")
+            print("torch.compile activado (dynamic=True)")
         except Exception as _ce:
-            print(f"  torch.compile no disponible, sigo sin compilar: {_ce}")
+            print(f"torch.compile no disponible, sigo sin compilar: {_ce}")
 
     hookpoint_module = model.get_submodule(hookpoint_name)
     return tokenizer, model, sae, hookpoint_module, num_latents
@@ -514,7 +426,7 @@ def _stream_sae_features(
                                 f"OOM incluso con batch_size={batch_size} en pass {pass_name}."
                             ) from exc
                         new_batch_size = max(MIN_EXTRACT_BATCH_SIZE, batch_size // 2)
-                        print(f"  OOM: batch {batch_size} -> {new_batch_size} en {pass_name}")
+                        print(f"OOM: batch {batch_size} -> {new_batch_size} en {pass_name}")
                         batch_size = new_batch_size
 
                 step += 1
@@ -522,7 +434,7 @@ def _stream_sae_features(
                 now = time.time()
                 if now - last_print >= PROGRESS_INTERVAL or step == 1 or end >= n:
                     pct = 100.0 * end / max(1, n)
-                    print(f"  [{pass_name} {pct:5.1f}%] step {step}/{total_steps} ({end:,}/{n:,}) | batch={current_batch_size}")
+                    print(f"[{pass_name} {pct:5.1f}%] step {step}/{total_steps} ({end:,}/{n:,}) | batch={current_batch_size}")
                     last_print = now
 
                 yield start, end, last_np, mean_np
@@ -532,7 +444,6 @@ def _stream_sae_features(
         captured.clear()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-
 
 def _aggregate_user_features(
     df: pd.DataFrame,
@@ -859,7 +770,6 @@ def _evaluate(y_true: np.ndarray, y_pred: np.ndarray, class_names: Sequence[str]
         result[f"f1_{class_name}"] = float(f1[idx])
     return result
 
-
 def _select_top_latents(clf: SGDClassifier, class_names: Sequence[str], top_k: int) -> Dict[int, List[int]]:
     coef = clf.coef_
     top_latents: Dict[int, List[int]] = {}
@@ -872,7 +782,6 @@ def _select_top_latents(clf: SGDClassifier, class_names: Sequence[str], top_k: i
     for class_idx in range(len(class_names)):
         top_latents[class_idx] = np.argsort(coef[class_idx])[-top_k:][::-1].tolist()
     return top_latents
-
 
 def _compute_latent_stats(
     X_train: np.ndarray,
@@ -906,7 +815,6 @@ def _compute_latent_stats(
             }
     return stats
 
-
 def _run_ablation(
     X_eval: np.ndarray,
     y_eval: np.ndarray,
@@ -924,18 +832,15 @@ def _run_ablation(
         selected = sorted({latent for latents in top_latents.values() for latent in latents[:size]})
         if not selected:
             continue
-
         X_zero = X_eval.copy()
         X_zero[:, selected] = 0.0
         y_zero = clf.predict(scaler.transform(X_zero))
         zero_metrics = _evaluate(y_eval, y_zero, class_names)
-
         random_latents = sorted(rng.choice(num_latents, size=len(selected), replace=False).tolist())
         X_random = X_eval.copy()
         X_random[:, random_latents] = 0.0
         y_random = clf.predict(scaler.transform(X_random))
         random_metrics = _evaluate(y_eval, y_random, class_names)
-
         ablations[str(size)] = {
             "selected_latents": selected,
             "selected_count": int(len(selected)),
@@ -953,7 +858,6 @@ def _run_ablation(
         "baseline_metrics": baseline_metrics,
         "ablations": ablations,
     }
-
 
 def _format_top_latents(
     class_names: Sequence[str],
@@ -980,8 +884,6 @@ def _format_top_latents(
             )
         formatted[class_name] = entries
     return formatted
-
-
 def _compute_top_activation_per_class(
     class_act_stats: Optional[Dict[str, np.ndarray]],
     class_names: Sequence[str],
@@ -989,11 +891,9 @@ def _compute_top_activation_per_class(
     examples_by_class_idx: Optional[Dict[int, Dict[int, Dict[str, object]]]] = None,
 ) -> Dict[str, List[Dict[str, object]]]:
     """Para cada clase, devuelve los `top_k` latentes con mayor activacion media en TRAIN.
-
     Independiente del clasificador: solo mira la activacion bruta agregada por clase.
     Tambien aporta `mean_contrast` = mean(clase) - mean(otras clases) para indicar
     cuan especifico es ese latente de la clase.
-
     Si se proporciona `examples_by_class_idx` (mapa class_idx -> latent_id ->
     {top_words, examples}), se inyectan las palabras asociadas y los ejemplos
     en cada entrada.
@@ -1067,7 +967,6 @@ def _collect_examples_for_target_latents(
         feats_np = last_np if pooling == "mean_of_last" else mean_np
         labels = df["label"].iloc[start:end].to_numpy(dtype=np.int64)
         texts = df["text"].iloc[start:end].astype(str).tolist()
-
         for class_idx, latents in targets.items():
             if not latents:
                 continue
@@ -1092,10 +991,8 @@ def _collect_examples_for_target_latents(
                         heapq.heappush(heap, item)
                     elif activation > heap[0][0]:
                         heapq.heapreplace(heap, item)
-
     examples: Dict[int, Dict[int, Dict[str, object]]] = {
-        class_idx: {} for class_idx in targets
-    }
+        class_idx: {} for class_idx in targets}
     for class_idx, latent_heaps in heaps.items():
         for latent, heap in latent_heaps.items():
             ranked = sorted(heap, reverse=True)
@@ -1104,12 +1001,8 @@ def _collect_examples_for_target_latents(
                 "top_words": _top_words(ranked_texts),
                 "examples": [
                     {"activation": float(act), "text": text}
-                    for act, text in ranked
-                ],
-            }
+                    for act, text in ranked], }
     return examples
-
-
 def _render_markdown(results: Dict[str, object]) -> str:
     lines = []
     lines.append(f"# Interpretabilidad SAE - {results['task_name']}")
@@ -1120,14 +1013,12 @@ def _render_markdown(results: Dict[str, object]) -> str:
     lines.append(f"Usuarios train: {results['num_users_train']:,} | eval: {results['num_users_eval']:,}")
     lines.append(f"Latentes SAE: {results['num_latents']:,}")
     lines.append("")
-
     metrics = results["metrics"]
     lines.append(
         f"Accuracy={metrics['accuracy']:.4f} | Balanced Acc={metrics['balanced_accuracy']:.4f} | "
         f"F1 macro={metrics['f1_macro']:.4f}"
     )
     lines.append("")
-
     for class_name, latent_entries in results["top_latents_by_class"].items():
         lines.append(f"## Clase {class_name}")
         lines.append("")
@@ -1138,7 +1029,6 @@ def _render_markdown(results: Dict[str, object]) -> str:
                 f"coef={entry['raw_coefficient']:.4f}, palabras={words}"
             )
         lines.append("")
-
     ablations = results["ablation"]["ablations"]
     if ablations:
         lines.append("## Ablacion")
@@ -1150,7 +1040,6 @@ def _render_markdown(results: Dict[str, object]) -> str:
                 f"drop aleatorio bal_acc={ablation['balanced_accuracy_drop_random']:.4f}"
             )
         lines.append("")
-
     top_by_act = results.get("top_latents_by_activation") or {}
     if top_by_act:
         lines.append("## Top latentes mas activos por clase (independiente del clasificador)")
@@ -1168,17 +1057,12 @@ def _render_markdown(results: Dict[str, object]) -> str:
                     f"nonzero_rate={entry['nonzero_rate']:.4f}{contrast_str}{words_str}"
                 )
             lines.append("")
-
     return "\n".join(lines) + "\n"
-
-
 def _truncate_text(text: str, max_chars: int = 280) -> str:
     cleaned = re.sub(r"\s+", " ", str(text)).strip()
     if len(cleaned) <= max_chars:
         return cleaned
     return cleaned[: max_chars - 3] + "..."
-
-
 def _top_words(texts: Sequence[str], top_n: int = 12) -> List[Dict[str, object]]:
     counter: Counter[str] = Counter()
     for text in texts:
@@ -1191,8 +1075,6 @@ def _top_words(texts: Sequence[str], top_n: int = 12) -> List[Dict[str, object]]
         {"token": token, "count": int(count)}
         for token, count in counter.most_common(top_n)
     ]
-
-
 def _is_oom_error(exc: BaseException) -> bool:
     if isinstance(exc, torch.OutOfMemoryError):
         return True

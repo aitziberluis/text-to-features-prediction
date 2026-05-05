@@ -4,22 +4,22 @@ PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
 
 1. Cargando comentarios...
 Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-   ✓ 17,639,864 comentarios cargados
+ 17,639,864 comentarios cargados
 
 2. Cargando autores...
-   ✓ 10,295 autores cargados
+ 10,295 autores cargados
 
 3. Uniendo comentarios con género por autor...
-   ✓ 17,639,863 comentarios con info de género
+ 17,639,863 comentarios con info de género
 
 4. Filtrando solo género conocido (m/f)...
-   ✓ 7,379,659 comentarios con género m/f
+ 7,379,659 comentarios con género m/f
    (Eliminados 10,260,204 con género unknown)
 
 5. Distribución por género:
    m: 4,920,137 comentarios (66.7%)
    f: 2,459,522 comentarios (33.3%)
-✓ Dataset preparado y listo para usar
+ Dataset preparado y listo para usar
 Train comments: 5,264,573 | Eval comments: 1,116,308
 SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
@@ -83,7 +83,6 @@ num_latents=16384
   [TRAIN_TOPACT_EXAMPLES  99.7%] step 164022/164518 (5,248,704/5,264,573) | batch=32
   [TRAIN_TOPACT_EXAMPLES 100.0%] step 164518/164518 (5,264,573/5,264,573) | batch=32
 
-
 INTERPRETABILIDAD SAE - genero
 
 Modo de almacenamiento : streaming_without_feature_cache
@@ -94,18 +93,18 @@ Comentarios train/eval : 5,264,573 / 1,116,308
 Usuarios train/eval    : 2,158 / 463
 Latentes SAE           : 16,384
 
---- Metricas en EVAL (nivel usuario, mean_of_mean, balanceado) ---
+Metricas en EVAL (nivel usuario, mean_of_mean, balanceado)
 Accuracy=0.8855 | BalancedAcc=0.8855 | F1 macro=0.8847 | F1 weighted=0.8856
       female: precision=0.8645 recall=0.8852 f1=0.8747
         male: precision=0.9036 recall=0.8858 f1=0.8946
 
---- Ablacion (drops vs baseline) ---
+Ablacion (drops vs baseline)
   Top   BalAccDrop    F1macDrop   BalAccDropRnd   F1macDropRnd
     5       0.0091       0.0088          0.0024         0.0022
    10       0.0063       0.0065          0.0048         0.0044
    20       0.0044       0.0044          0.0007         0.0019
 
---- Top latentes por clase ---
+Top latentes por clase
 
 [Clase female] top 10 latentes:
   L  9068  score=+453.1181  coef=-453.1181  palabras=[women, woman, high, value, female, mean, transwomen, turkish]
@@ -131,7 +130,7 @@ Accuracy=0.8855 | BalancedAcc=0.8855 | F1 macro=0.8847 | F1 weighted=0.8856
   L  5793  score=+369.2259  coef=+369.2259  palabras=[hot, sounds, extra, shes]
   L  7789  score=+369.1522  coef=+369.1522  palabras=[destroy, destroyed, items, destruction, box, godzilla, whole, world]
 
---- Top latentes mas activos por clase (independiente del clasificador) ---
+Top latentes mas activos por clase (independiente del clasificador)
 
 [Clase female] top 10 latentes por activacion media:
   L 11265  mean_act=+103.3978  nonzero_rate=1.0000 contrast=-7.9350 palabras=[rice, mouth, wood, claw, games]

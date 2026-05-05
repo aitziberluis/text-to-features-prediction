@@ -47,11 +47,11 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# El tokenizer "fast" es paralelo internamente (Rayon). Con num_workers>0 en el
+# el tokenizer "fast" es paralelo internamente (Rayon). Con num_workers>0 en el
 # DataLoader queremos un solo hilo por worker para no oversubscribir CPU.
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
-# Importar desde el directorio raiz del proyecto
+# importar desde el directorio raiz del proyecto
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from preprocesamiento import preparar_dataset_para_mbti
 
@@ -64,37 +64,37 @@ CONTEXT_LEN = 256  # P99 token len ~391; truncamos 2.5% (cola larga)
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 HOOKPOINT = "transformer.h.8"
 
-# Rutas
+# rutas
 PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
 PATH_AUTORES = "data/author_profiles.csv"
 TEXT_COLUMN = "body"
 MAX_COMMENTS = None
 
-# Clases binarias
+# clases binarias
 CLASS_NAMES = ["0", "1"]
 NUM_CLASSES = 2
 
-# Directorio donde se guardan las activaciones extraidas
+# directorio donde se guardan las activaciones extraidas
 ACTIVATIONS_DIR = f"data/activaciones_gpt2_{TRAIT_NAME}"
 
-# Directorio compartido para los indices de split (comun a GPT y SAE)
+# directorio compartido para los indices de split (comun a GPT y SAE)
 SPLITS_DIR = f"data/splits_{TRAIT_NAME}"
 
-# Splits
+# splits
 TEST_SIZE = 0.15
 EVAL_SIZE = 0.15
 RANDOM_STATE = 42
 
-# Entrenamiento
+# entrenamiento
 EXTRACT_BATCH_SIZE = 128  # GPT2-small fp16 en RTX 8000 48GB cabe sobrado
 EXTRACT_NUM_WORKERS = 16  # workers de tokenizacion en paralelo
 TRAIN_EPOCHS = 1
 SGD_ALPHA = 1e-5
 
-# Progreso: imprimir cada hora (3600 s)
+# progreso: imprimir cada hora (3600 s)
 PROGRESS_INTERVAL = 3600
 
-# Configuraciones a correr
+# configuraciones a correr
 COMMENT_POOLINGS = ["last_token", "mean"]
 USER_POOLINGS = ["mean_of_last", "mean_of_mean"]
 BALANCE_CONFIGS = [
@@ -106,7 +106,7 @@ BALANCE_CONFIGS = [
 SCALER_BATCH_SIZE = 8192
 USER_AGG_CHUNK_SIZE = 8192
 
-# Output
+# output
 OUTPUT_DIR = f"modelos/{TRAIT_NAME}_gpt_activaciones"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -169,7 +169,7 @@ def random_undersample(X: np.ndarray, y: np.ndarray, random_state: int = RANDOM_
     classes = np.arange(NUM_CLASSES)
     counts = np.bincount(y, minlength=NUM_CLASSES)
     min_count = counts[counts > 0].min()
-    print(f"    Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
+    print(f"Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
     indices = []
     for c in classes:
         c_idx = np.where(y == c)[0]
@@ -187,7 +187,7 @@ def random_undersample_idx(y: np.ndarray, random_state: int = RANDOM_STATE) -> n
     classes = np.arange(NUM_CLASSES)
     counts = np.bincount(y, minlength=NUM_CLASSES)
     min_count = counts[counts > 0].min()
-    print(f"    Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
+    print(f"Undersampling: min_count={min_count:,} (de {dict(zip(classes, counts))})")
     indices = []
     for c in classes:
         c_idx = np.where(y == c)[0]
@@ -222,14 +222,14 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     """Extrae activaciones de GPT-2 y guarda last_token + mean por comentario."""
 
     n = len(df)
-    print(f"\nExtrayendo activaciones de GPT-2 para {n:,} comentarios...")
+    print(f"\nExtrayendo activaciones de GPT-2 para {n:,} comentarios")
     print(f"Hookpoint: {HOOKPOINT}, batch_size: {EXTRACT_BATCH_SIZE}, "
           f"workers: {EXTRACT_NUM_WORKERS}")
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    # Critico para que `last real token = lengths-1`: GPT-2 ya por defecto es
+    # critico para que `last real token = lengths-1`: GPT-2 ya por defecto es
     # right-padded, pero lo fijamos explicitamente.
     tokenizer.padding_side = "right"
 
@@ -247,7 +247,7 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     # en vez de model(...)) son compute desperdiciado.
     _keep = int(HOOKPOINT.rsplit(".", 1)[1]) + 1
     model.transformer.h = torch.nn.ModuleList(model.transformer.h[:_keep])
-    print(f"  Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11 + LM head)")
+    print(f"Modelo truncado a las primeras {_keep} capas (skip h.{_keep}..h.11 + LM head)")
 
     # OPT #3: torch.compile sobre el bloque transformer. dynamic=True para
     # tolerar shapes variables del bucketing por longitud. Guardado con
@@ -255,9 +255,9 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     if torch.cuda.is_available():
         try:
             model.transformer = torch.compile(model.transformer, dynamic=True)
-            print("  torch.compile activado (dynamic=True)")
+            print("torch.compile activado (dynamic=True)")
         except Exception as _ce:
-            print(f"  torch.compile no disponible, sigo sin compilar: {_ce}")
+            print(f"torch.compile no disponible, sigo sin compilar: {_ce}")
 
     hookpoint_module = model.get_submodule(HOOKPOINT)
     captured = {}
@@ -275,7 +275,7 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     last_token_path = os.path.join(ACTIVATIONS_DIR, "last_token.npy")
     mean_token_path = os.path.join(ACTIVATIONS_DIR, "mean_token.npy")
 
-    # Buffer en RAM para evitar escrituras aleatorias al HDD (procesamos en
+    # buffer en RAM para evitar escrituras aleatorias al HDD (procesamos en
     # orden de longitud y escribimos por indice original).
     last_token_full = np.empty((n, hidden_size), dtype=np.float32)
     mean_token_full = np.empty((n, hidden_size), dtype=np.float32)
@@ -283,7 +283,7 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     textos = df["text"].tolist()
 
     # Bucketizacion por longitud para minimizar el padding desperdiciado.
-    print("  Calculando longitudes y ordenando por longitud (bucketing)...")
+    print("Calculando longitudes y ordenando por longitud (bucketing)")
     char_lens = np.fromiter((len(t) for t in textos), dtype=np.int64, count=n)
     sorted_order = np.argsort(char_lens, kind="stable")
 
@@ -336,19 +336,19 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
                     pct = 100.0 * (step + 1) / total_steps
                     seq_len = input_ids.shape[1]
                     done = min((step + 1) * EXTRACT_BATCH_SIZE, n)
-                    print(f"  [{pct:5.1f}%] step {step+1}/{total_steps} "
+                    print(f"[{pct:5.1f}%] step {step+1}/{total_steps} "
                           f"({done:,}/{n:,} comentarios, seq_len_batch={seq_len})")
                     last_print = now
 
     finally:
         handle.remove()
 
-    print(f"  Volcando activaciones a {ACTIVATIONS_DIR}/ ...")
+    print(f"Volcando activaciones a {ACTIVATIONS_DIR}/")
     np.save(last_token_path, last_token_full)
     np.save(mean_token_path, mean_token_full)
     del last_token_full, mean_token_full
 
-    # Guardar labels y authors
+    # guardar labels y authors
     labels = df["label"].to_numpy().astype(np.int8)
     np.save(os.path.join(ACTIVATIONS_DIR, "labels.npy"), labels)
 
@@ -357,7 +357,7 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
             os.path.join(ACTIVATIONS_DIR, "authors.parquet"), index=False
         )
 
-    # Guardar metadata
+    # guardar metadata
     meta = {
         "model": MODEL, "hookpoint": HOOKPOINT, "context_len": CONTEXT_LEN,
         "hidden_size": hidden_size, "n_comments": n,
@@ -380,7 +380,7 @@ def cargar_o_extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndar
             meta = json.load(f)
 
         if meta.get("n_comments") == len(df):
-            print(f"Cargando activaciones desde {ACTIVATIONS_DIR}/ ...")
+            print(f"Cargando activaciones desde {ACTIVATIONS_DIR}/")
             last_token = np.load(os.path.join(ACTIVATIONS_DIR, "last_token.npy"), mmap_mode="r")
             mean_token = np.load(os.path.join(ACTIVATIONS_DIR, "mean_token.npy"), mmap_mode="r")
             labels = np.load(os.path.join(ACTIVATIONS_DIR, "labels.npy"))
@@ -391,10 +391,10 @@ def cargar_o_extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndar
             if os.path.exists(authors_path):
                 authors = pd.read_parquet(authors_path)["author"].to_numpy()
 
-            print(f"  last_token: {last_token.shape}, mean_token: {mean_token.shape}")
+            print(f"last_token: {last_token.shape}, mean_token: {mean_token.shape}")
             return last_token, mean_token, labels, authors, hidden_size
         else:
-            print(f"Numero de comentarios cambio ({meta['n_comments']} -> {len(df)}). Re-extrayendo...")
+            print(f"Numero de comentarios cambio ({meta['n_comments']} -> {len(df)}). Re-extrayendo")
 
     _extraer_y_guardar_activaciones(df)
 
@@ -422,15 +422,15 @@ def dividir_comentarios(
             print(f"Cargando split de comentarios (por usuario) desde {split_path}")
             return train_idx, eval_idx, test_idx
 
-        print("Split de comentarios en cache invalido para este dataset. Regenerando...")
+        print("Split de comentarios en cache invalido para este dataset. Regenerando")
 
-    # Obtener split de usuarios
+    # obtener split de usuarios
     train_auth, eval_auth, test_auth = dividir_usuarios(df)
     train_auth_set = set(train_auth)
     eval_auth_set = set(eval_auth)
     test_auth_set = set(test_auth)
 
-    # Asignar cada comentario al split de su usuario
+    # asignar cada comentario al split de su usuario
     train_idx = []
     eval_idx = []
     test_idx = []
@@ -448,7 +448,7 @@ def dividir_comentarios(
 
     np.savez(split_path, train_idx=train_idx, eval_idx=eval_idx, test_idx=test_idx)
     print(f"Split de comentarios (por usuario) guardado en {split_path}")
-    print(f"  Sin leakage: cada usuario aparece en un unico split.")
+    print(f"Sin leakage: cada usuario aparece en un unico split.")
     return train_idx, eval_idx, test_idx
 
 def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -459,7 +459,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         for s in ("train", "eval", "test")
     }
 
-    # Intentar cargar splits existentes
+    # intentar cargar splits existentes
     if all(os.path.exists(p) for p in paths.values()):
         train_auth = np.load(paths["train"], allow_pickle=True)
         eval_auth = np.load(paths["eval"], allow_pickle=True)
@@ -470,7 +470,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         if total_saved == len(user_df):
             print(f"Splits de usuarios cargados desde {SPLITS_DIR}/")
             return train_auth, eval_auth, test_auth
-        print(f"Num usuarios cambio ({total_saved} -> {len(user_df)}). Regenerando...")
+        print(f"Num usuarios cambio ({total_saved} -> {len(user_df)}). Regenerando")
 
     user_df = df[["author", "label"]].drop_duplicates("author")
     authors = user_df["author"].to_numpy()
@@ -479,7 +479,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
     train_eval_auth, test_auth = train_test_split(
         authors, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=user_labels,
     )
-    # Recalcular labels para sub-split
+    # recalcular labels para sub-split
     mask_te = np.isin(authors, train_eval_auth)
     user_labels_te = user_labels[mask_te]
 
@@ -489,7 +489,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         stratify=user_labels_te,
     )
 
-    # Guardar a disco
+    # guardar a disco
     np.save(paths["train"], train_auth)
     np.save(paths["eval"], eval_auth)
     np.save(paths["test"], test_auth)
@@ -518,7 +518,7 @@ def evaluar(nombre: str, y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, fl
         f"F1 macro: {f1_mac:.4f} | F1 weighted: {f1_w:.4f}"
     )
     for i, cn in enumerate(CLASS_NAMES):
-        print(f"  {cn:>8s}: prec={prec_c[i]:.4f} rec={rec_c[i]:.4f} f1={f1_c[i]:.4f}")
+        print(f"{cn:>8s}: prec={prec_c[i]:.4f} rec={rec_c[i]:.4f} f1={f1_c[i]:.4f}")
     print(classification_report(y_true, y_pred, target_names=CLASS_NAMES, labels=all_labels, zero_division=0))
     print("Confusion matrix:")
     print(confusion_matrix(y_true, y_pred, labels=all_labels))
@@ -562,12 +562,12 @@ def entrenar_comentario(
     """
     run_name = f"comentario_{pooling_name}_{balance_name}"
     print(f"ENTRENANDO: {run_name}")
-    print(f"  Train: {len(y_train):,} | Eval: {len(y_eval):,}")
+    print(f"Train: {len(y_train):,} | Eval: {len(y_eval):,}")
     if class_weights is not None:
         cw_str = ", ".join(f"{CLASS_NAMES[i]}={class_weights[i]:.3f}" for i in range(NUM_CLASSES))
-        print(f"  Pesos de clase: {cw_str}")
+        print(f"Pesos de clase: {cw_str}")
     else:
-        print(f"  Pesos de clase: ninguno (todos 1.0)")
+        print(f"Pesos de clase: ninguno (todos 1.0)")
 
     clf = SGDClassifier(
         loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
@@ -598,10 +598,10 @@ def entrenar_comentario(
             now = time.time()
             if now - last_print >= PROGRESS_INTERVAL or step == total_steps - 1:
                 pct = 100.0 * (step + 1) / total_steps
-                print(f"  [Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
+                print(f"[Epoch {epoch+1}] {pct:5.1f}% ({step+1}/{total_steps})")
                 last_print = now
 
-    # Eval por lotes
+    # eval por lotes
     y_pred_parts = []
     for ev_start in range(0, len(y_eval), batch_size):
         ev_end = min(ev_start + batch_size, len(y_eval))
@@ -665,7 +665,7 @@ def main():
     # 1. Cargar datos
     df = cargar_datos()
 
-    # Verificar que hay columna author
+    # verificar que hay columna author
     if "author" not in df.columns:
         print("AVISO: No hay columna 'author', se omitiran las predicciones a nivel usuario.")
         has_author = False
@@ -677,17 +677,16 @@ def main():
     last_token, mean_token, labels, authors, hidden_size = cargar_o_extraer_activaciones(df)
     print(f"\nActivaciones: hidden_size={hidden_size}, comentarios={len(labels):,}")
 
-    # Distribucion de labels
+    # distribucion de labels
     for i, cn in enumerate(CLASS_NAMES):
         count = int((labels == i).sum())
-        print(f"  {cn}: {count:,} ({100*count/len(labels):.1f}%)")
+        print(f"{cn}: {count:,} ({100*count/len(labels):.1f}%)")
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     all_results = {}
     trained_runs = {}
     train_auth = eval_auth = test_auth = None
 
-    print("\n" + "#" * 70)
     print("A) CLASIFICACION A NIVEL DE COMENTARIO")
 
     train_idx, eval_idx, test_idx = dividir_comentarios(labels, df, authors)
@@ -698,9 +697,9 @@ def main():
     for i, cn in enumerate(CLASS_NAMES):
         tr_n = int((y_train_c == i).sum())
         ev_n = int((y_eval_c == i).sum())
-        print(f"  {cn}: train={tr_n:,} eval={ev_n:,}")
+        print(f"{cn}: train={tr_n:,} eval={ev_n:,}")
 
-    # Pre-calcular pesos de clase manuales sobre el train set
+    # pre-calcular pesos de clase manuales sobre el train set
     train_class_weights_manual = calcular_pesos_clase_manual(y_train_c)
 
     comment_features = {
@@ -711,19 +710,19 @@ def main():
     for pooling_name in COMMENT_POOLINGS:
         feats, tr_idx, ev_idx = comment_features[pooling_name]
 
-        # Fit scaler incremental en train para no materializar todo el split
-        print(f"\n  Ajustando StandardScaler para {pooling_name} (incremental)...")
+        # fit scaler incremental en train para no materializar todo el split
+        print(f"\n  Ajustando StandardScaler para {pooling_name} (incremental)")
         scaler = StandardScaler()
         for sc_start in range(0, len(tr_idx), SCALER_BATCH_SIZE):
             sc_end = min(sc_start + SCALER_BATCH_SIZE, len(tr_idx))
             chunk = np.asarray(feats[tr_idx[sc_start:sc_end]], dtype=np.float32)
             scaler.partial_fit(chunk)
-        print(f"    Scaler ajustado sobre {len(tr_idx):,} muestras")
+        print(f"Scaler ajustado sobre {len(tr_idx):,} muestras")
 
-        # --- Configuraciones de balanceo ---
+        # Configuraciones de balanceo
         for bal_cfg in BALANCE_CONFIGS:
             if bal_cfg["name"] == "undersampling":
-                # Submuestrear al tamano de la clase minoritaria (via indices)
+                # submuestrear al tamano de la clase minoritaria (via indices)
                 us_idx = random_undersample_idx(y_train_c)
                 clf, metrics = entrenar_comentario(
                     feats=feats, train_idx=tr_idx[us_idx], eval_idx=ev_idx,
@@ -756,7 +755,6 @@ def main():
             }
 
     if has_author and authors is not None:
-        print("\n" + "#" * 70)
         print("B) CLASIFICACION A NIVEL DE USUARIO")
 
         train_auth, eval_auth, test_auth = dividir_usuarios(df)
@@ -770,18 +768,18 @@ def main():
         for pooling_name in USER_POOLINGS:
             feats = user_features[pooling_name]
 
-            # Pre-agregar features por usuario (una sola vez por pooling)
-            print(f"\n  Agregando features por usuario para {pooling_name}...")
+            # pre-agregar features por usuario (una sola vez por pooling)
+            print(f"\n  Agregando features por usuario para {pooling_name}")
             X_u_train, y_u_train = _agregar_por_usuario(authors, feats, labels, set(train_auth))
             X_u_eval, y_u_eval = _agregar_por_usuario(authors, feats, labels, set(eval_auth))
 
-            # Fit scaler en train de usuarios
+            # fit scaler en train de usuarios
             u_scaler = StandardScaler()
             for sc_start in range(0, len(X_u_train), SCALER_BATCH_SIZE):
                 sc_end = min(sc_start + SCALER_BATCH_SIZE, len(X_u_train))
                 u_scaler.partial_fit(X_u_train[sc_start:sc_end])
 
-            # --- Configuraciones de balanceo ---
+            # Configuraciones de balanceo
             for bal_cfg in BALANCE_CONFIGS:
                 if bal_cfg["name"] == "undersampling":
                     X_u_us, y_u_us = random_undersample(X_u_train, y_u_train)
@@ -800,12 +798,12 @@ def main():
 
                 run_name = f"usuario_{pooling_name}_{bal_cfg['name']}"
                 print(f"ENTRENANDO: {run_name}")
-                print(f"  Train users: {len(y_u_us):,} | Eval users: {len(y_u_eval):,}")
+                print(f"Train users: {len(y_u_us):,} | Eval users: {len(y_u_eval):,}")
                 if cw is not None:
                     cw_str = ", ".join(f"{CLASS_NAMES[i]}={cw[i]:.3f}" for i in range(NUM_CLASSES))
-                    print(f"  Pesos de clase: {cw_str}")
+                    print(f"Pesos de clase: {cw_str}")
                 else:
-                    print(f"  Pesos de clase: ninguno (todos 1.0)")
+                    print(f"Pesos de clase: ninguno (todos 1.0)")
 
                 clf = SGDClassifier(
                     loss="log_loss", alpha=SGD_ALPHA, max_iter=1, tol=None,
@@ -901,7 +899,7 @@ def main():
         else _eval_test_for_run(best_run, best_artifact)
     )
 
-    # Guardar resumen JSON
+    # guardar resumen JSON
     summary_path = os.path.join(OUTPUT_DIR, "resultados_resumen.json")
     with open(summary_path, "w", encoding="utf-8") as f:
         json.dump({

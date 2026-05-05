@@ -78,14 +78,55 @@ Loading weights: 100%|██████████| 398/398 [00:02<00:00, 174.
   layer= 0 task=mbti_perce  f1m=0.5204 balacc=0.5243 ( 55.2s, n=88,309)
   layer= 1 task=genero      f1m=0.6167 balacc=0.6317 ( 27.6s, n=41,960)
   layer= 1 task=edad        f1m=0.3195 balacc=0.3614 ( 48.7s, n=31,331)
-bti_intro  f1m=0.5014 balacc=0.5392 ( 61.0s, n=88,216)
-  layer= 0 task=mbti_intui  f1m=0.4830 balacc=0.5462 ( 61.2s, n=88,390)
-  layer= 0 task=mbti_think  f1m=0.5324 balacc=0.5597 ( 60.5s, n=88,294)
-  layer= 0 task=mbti_perce  f1m=0.5204 balacc=0.5243 ( 51.3s, n=88,309)
-  layer= 1 task=genero      f1m=0.6167 balacc=0.6317 ( 27.6s, n=41,960)
-  layer= 1 task=edad        f1m=0.3195 balacc=0.3614 ( 50.6s, n=31,331)
-  layer= 1 task=mbti_intro  f1m=0.4982 balacc=0.5351 ( 48.8s, n=88,216)
-  layer= 1 task=mbti_intui  f1m=0.4823 balacc=0.5452 ( 56.5s, n=88,390)
-  layer= 1 task=mbti_think  f1m=0.5339 balacc=0.5606 ( 65.7s, n=88,294)
-  layer= 1 task=mbti_perce  f1m=0.5251 balacc=0.5286 ( 47.6s, n=88,309)
-  layer= 2 task=genero      f1m=0.6229 balacc=0.6373 ( 26.8s, n=41,960)
+  layer= 1 task=mbti_intro  f1m=0.4982 balacc=0.5351 ( 48.1s, n=88,216)
+  layer= 1 task=mbti_intui  f1m=0.4823 balacc=0.5452 ( 56.0s, n=88,390)
+  layer= 1 task=mbti_think  f1m=0.5339 balacc=0.5606 ( 62.5s, n=88,294)
+  layer= 1 task=mbti_perce  f1m=0.5251 balacc=0.5286 ( 48.9s, n=88,309)
+  layer= 2 task=genero      f1m=0.6229 balacc=0.6373 ( 25.0s, n=41,960)
+  layer= 2 task=edad        f1m=0.3229 balacc=0.3639 ( 49.8s, n=31,331)
+  layer= 2 task=mbti_intro  f1m=0.4971 balacc=0.5345 ( 57.2s, n=88,216)
+  layer= 2 task=mbti_intui  f1m=0.4782 balacc=0.5403 ( 55.9s, n=88,390)
+  layer= 2 task=mbti_think  f1m=0.5337 balacc=0.5597 ( 55.8s, n=88,294)
+  layer= 2 task=mbti_perce  f1m=0.5253 balacc=0.5285 ( 39.8s, n=88,309)
+  layer= 3 task=genero      f1m=0.6315 balacc=0.6462 ( 27.5s, n=41,960)
+  layer= 3 task=edad        f1m=0.3350 balacc=0.3770 ( 49.3s, n=31,331)
+  layer= 3 task=mbti_intro  f1m=0.5019 balacc=0.5398 ( 58.6s, n=88,216)
+  layer= 3 task=mbti_intui  f1m=0.4783 balacc=0.5408 ( 56.2s, n=88,390)
+  layer= 3 task=mbti_think  f1m=0.5376 balacc=0.5636 ( 51.5s, n=88,294)
+  layer= 3 task=mbti_perce  f1m=0.5262 balacc=0.5295 ( 41.3s, n=88,309)
+  layer= 4 task=genero      f1m=0.6339 balacc=0.6490 ( 26.1s, n=41,960)
+  layer= 4 task=edad        f1m=0.3284 balacc=0.3683 ( 47.5s, n=31,331)
+  layer= 4 task=mbti_intro  f1m=0.5082 balacc=0.5460 ( 54.5s, n=88,216)
+  layer= 4 task=mbti_intui  f1m=0.4848 balacc=0.5504 ( 55.2s, n=88,390)
+  layer= 4 task=mbti_think  f1m=0.5446 balacc=0.5716 ( 43.0s, n=88,294)
+  layer= 4 task=mbti_perce  f1m=0.5254 balacc=0.5285 ( 34.4s, n=88,309)
+  layer= 5 task=genero      f1m=0.6352 balacc=0.6504 ( 26.7s, n=41,960)
+  layer= 5 task=edad        f1m=0.3327 balacc=0.3763 ( 43.0s, n=31,331)
+  layer= 5 task=mbti_intro  f1m=0.5011 balacc=0.5390 ( 56.8s, n=88,216)
+  layer= 5 task=mbti_intui  f1m=0.4876 balacc=0.5549 ( 49.2s, n=88,390)
+  layer= 5 task=mbti_think  f1m=0.5436 balacc=0.5708 ( 33.3s, n=88,294)
+  layer= 5 task=mbti_perce  f1m=0.5316 balacc=0.5347 ( 35.2s, n=88,309)
+Traceback (most recent call last):
+  File "/home/aitziber.l/TFM/find_best_layer.py", line 481, in <module>
+  File "/home/aitziber.l/TFM/find_best_layer.py", line 477, in main
+  File "/home/aitziber.l/TFM/find_best_layer.py", line 393, in correr_probes
+    C=1.0,
+  File "/usr/local/lib/python3.10/dist-packages/sklearn/utils/_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+  File "/usr/local/lib/python3.10/dist-packages/sklearn/base.py", line 894, in fit_transform
+    return self.fit(X, **fit_params).transform(X)
+  File "/usr/local/lib/python3.10/dist-packages/sklearn/preprocessing/_data.py", line 907, in fit
+    return self.partial_fit(X, y, sample_weight)
+  File "/usr/local/lib/python3.10/dist-packages/sklearn/base.py", line 1365, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+  File "/usr/local/lib/python3.10/dist-packages/sklearn/preprocessing/_data.py", line 943, in partial_fit
+    X = validate_data(
+  File "/usr/local/lib/python3.10/dist-packages/sklearn/utils/validation.py", line 2954, in validate_data
+    out = check_array(X, input_name="X", **check_params)
+  File "/usr/local/lib/python3.10/dist-packages/sklearn/utils/validation.py", line 1105, in check_array
+    _assert_all_finite(
+  File "/usr/local/lib/python3.10/dist-packages/sklearn/utils/validation.py", line 120, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/usr/local/lib/python3.10/dist-packages/sklearn/utils/validation.py", line 169, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains infinity or a value too large for dtype('float32').

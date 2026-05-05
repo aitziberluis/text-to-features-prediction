@@ -9,107 +9,92 @@ CLASIFICADOR GENERO - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
 PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
 
 1. Cargando comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-   ✓ 17,639,864 comentarios cargados
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío. 17,639,864 comentarios cargados
+2. Cargando autores... 10,295 autores cargados
 
-2. Cargando autores...
-   ✓ 10,295 autores cargados
+3. Uniendo comentarios con género por autor... 17,639,863 comentarios con info de género
 
-3. Uniendo comentarios con género por autor...
-   ✓ 17,639,863 comentarios con info de género
-
-4. Filtrando solo género conocido (m/f)...
-   ✓ 7,379,659 comentarios con género m/f
-   (Eliminados 10,260,204 con género unknown)
+4. Filtrando solo género conocido (m/f)... 7,379,659 comentarios con género m/f (Eliminados 10,260,204 con género unknown)
 
 5. Distribución por género:
-   m: 4,920,137 comentarios (66.7%)
-   f: 2,459,522 comentarios (33.3%)
-✓ Dataset preparado y listo para usar
-Generos presentes: {'m': 4920137, 'f': 2459522}
+   m: 4,920,137 comentarios (66.7%) f: 2,459,522 comentarios (33.3%)
+ Dataset preparado y listo para usa Generos presentes: {'m': 4920137, 'f': 2459522}
 
 Extrayendo activaciones de GPT-2 para 7,379,659 comentarios...
-Hookpoint: transformer.h.8, batch_size: 32
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Hookpoint: transformer.h.8, batch_size: 32 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
 `torch_dtype` is deprecated! Use `dtype` instead!
 
 Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
 Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1170.24it/s]
 Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1123.32it/s]
-  [  0.0%] step 1/230615 (32/7,379,659 comentarios)
-  [  2.1%] step 4819/230615 (154,208/7,379,659 comentarios)
-  [  4.2%] step 9617/230615 (307,744/7,379,659 comentarios)
-  [  6.3%] step 14426/230615 (461,632/7,379,659 comentarios)
-  [  8.3%] step 19217/230615 (614,944/7,379,659 comentarios)
-  [ 10.4%] step 24017/230615 (768,544/7,379,659 comentarios)
-  [ 12.5%] step 28816/230615 (922,112/7,379,659 comentarios)
-  [ 14.6%] step 33642/230615 (1,076,544/7,379,659 comentarios)
-  [ 16.7%] step 38524/230615 (1,232,768/7,379,659 comentarios)
-  [ 18.8%] step 43359/230615 (1,387,488/7,379,659 comentarios)
-  [ 20.9%] step 48235/230615 (1,543,520/7,379,659 comentarios)
-  [ 22.9%] step 52849/230615 (1,691,168/7,379,659 comentarios)
-  [ 24.8%] step 57267/230615 (1,832,544/7,379,659 comentarios)
-  [ 26.7%] step 61637/230615 (1,972,384/7,379,659 comentarios)
-  [ 28.6%] step 66053/230615 (2,113,696/7,379,659 comentarios)
-  [ 30.5%] step 70378/230615 (2,252,096/7,379,659 comentarios)
-  [ 32.4%] step 74659/230615 (2,389,088/7,379,659 comentarios)
-  [ 34.2%] step 78941/230615 (2,526,112/7,379,659 comentarios)
-  [ 36.3%] step 83718/230615 (2,678,976/7,379,659 comentarios)
-  [ 38.4%] step 88501/230615 (2,832,032/7,379,659 comentarios)
-  [ 40.4%] step 93282/230615 (2,985,024/7,379,659 comentarios)
-  [ 42.5%] step 98079/230615 (3,138,528/7,379,659 comentarios)
-  [ 44.6%] step 102874/230615 (3,291,968/7,379,659 comentarios)
-  [ 46.7%] step 107624/230615 (3,443,968/7,379,659 comentarios)
-  [ 48.7%] step 112376/230615 (3,596,032/7,379,659 comentarios)
-  [ 50.7%] step 116981/230615 (3,743,392/7,379,659 comentarios)
-  [ 52.7%] step 121645/230615 (3,892,640/7,379,659 comentarios)
-  [ 54.7%] step 126134/230615 (4,036,288/7,379,659 comentarios)
-  [ 56.8%] step 130909/230615 (4,189,088/7,379,659 comentarios)
-  [ 58.8%] step 135689/230615 (4,342,048/7,379,659 comentarios)
-  [ 60.9%] step 140466/230615 (4,494,912/7,379,659 comentarios)
-  [ 63.0%] step 145259/230615 (4,648,288/7,379,659 comentarios)
-  [ 65.1%] step 150051/230615 (4,801,632/7,379,659 comentarios)
-  [ 67.1%] step 154847/230615 (4,955,104/7,379,659 comentarios)
-  [ 69.2%] step 159637/230615 (5,108,384/7,379,659 comentarios)
-  [ 71.3%] step 164428/230615 (5,261,696/7,379,659 comentarios)
-  [ 73.4%] step 169222/230615 (5,415,104/7,379,659 comentarios)
-  [ 75.5%] step 174014/230615 (5,568,448/7,379,659 comentarios)
-  [ 77.5%] step 178809/230615 (5,721,888/7,379,659 comentarios)
-  [ 79.6%] step 183604/230615 (5,875,328/7,379,659 comentarios)
-  [ 81.7%] step 188401/230615 (6,028,832/7,379,659 comentarios)
-  [ 83.8%] step 193198/230615 (6,182,336/7,379,659 comentarios)
-  [ 85.9%] step 197995/230615 (6,335,840/7,379,659 comentarios)
-  [ 87.9%] step 202794/230615 (6,489,408/7,379,659 comentarios)
-  [ 90.0%] step 207597/230615 (6,643,104/7,379,659 comentarios)
-  [ 92.1%] step 212395/230615 (6,796,640/7,379,659 comentarios)
-  [ 94.2%] step 217192/230615 (6,950,144/7,379,659 comentarios)
-  [ 96.3%] step 221986/230615 (7,103,552/7,379,659 comentarios)
-  [ 98.3%] step 226775/230615 (7,256,800/7,379,659 comentarios)
-  [100.0%] step 230615/230615 (7,379,659/7,379,659 comentarios)
+[  0.0%] step 1/230615 (32/7,379,659 comentarios)
+[  2.1%] step 4819/230615 (154,208/7,379,659 comentarios)
+[  4.2%] step 9617/230615 (307,744/7,379,659 comentarios)
+[  6.3%] step 14426/230615 (461,632/7,379,659 comentarios)
+[  8.3%] step 19217/230615 (614,944/7,379,659 comentarios)
+[ 10.4%] step 24017/230615 (768,544/7,379,659 comentarios)
+[ 12.5%] step 28816/230615 (922,112/7,379,659 comentarios)
+[ 14.6%] step 33642/230615 (1,076,544/7,379,659 comentarios)
+[ 16.7%] step 38524/230615 (1,232,768/7,379,659 comentarios)
+[ 18.8%] step 43359/230615 (1,387,488/7,379,659 comentarios)
+[ 20.9%] step 48235/230615 (1,543,520/7,379,659 comentarios)
+[ 22.9%] step 52849/230615 (1,691,168/7,379,659 comentarios)
+[ 24.8%] step 57267/230615 (1,832,544/7,379,659 comentarios)
+[ 26.7%] step 61637/230615 (1,972,384/7,379,659 comentarios)
+[ 28.6%] step 66053/230615 (2,113,696/7,379,659 comentarios)
+[ 30.5%] step 70378/230615 (2,252,096/7,379,659 comentarios)
+[ 32.4%] step 74659/230615 (2,389,088/7,379,659 comentarios)
+[ 34.2%] step 78941/230615 (2,526,112/7,379,659 comentarios)
+[ 36.3%] step 83718/230615 (2,678,976/7,379,659 comentarios)
+[ 38.4%] step 88501/230615 (2,832,032/7,379,659 comentarios)
+[ 40.4%] step 93282/230615 (2,985,024/7,379,659 comentarios)
+[ 42.5%] step 98079/230615 (3,138,528/7,379,659 comentarios)
+[ 44.6%] step 102874/230615 (3,291,968/7,379,659 comentarios)
+[ 46.7%] step 107624/230615 (3,443,968/7,379,659 comentarios)
+[ 48.7%] step 112376/230615 (3,596,032/7,379,659 comentarios)
+[ 50.7%] step 116981/230615 (3,743,392/7,379,659 comentarios)
+[ 52.7%] step 121645/230615 (3,892,640/7,379,659 comentarios)
+[ 54.7%] step 126134/230615 (4,036,288/7,379,659 comentarios)
+[ 56.8%] step 130909/230615 (4,189,088/7,379,659 comentarios)
+[ 58.8%] step 135689/230615 (4,342,048/7,379,659 comentarios)
+[ 60.9%] step 140466/230615 (4,494,912/7,379,659 comentarios)
+[ 63.0%] step 145259/230615 (4,648,288/7,379,659 comentarios)
+[ 65.1%] step 150051/230615 (4,801,632/7,379,659 comentarios)
+[ 67.1%] step 154847/230615 (4,955,104/7,379,659 comentarios)
+[ 69.2%] step 159637/230615 (5,108,384/7,379,659 comentarios)
+[ 71.3%] step 164428/230615 (5,261,696/7,379,659 comentarios)
+[ 73.4%] step 169222/230615 (5,415,104/7,379,659 comentarios)
+[ 75.5%] step 174014/230615 (5,568,448/7,379,659 comentarios)
+[ 77.5%] step 178809/230615 (5,721,888/7,379,659 comentarios)
+[ 79.6%] step 183604/230615 (5,875,328/7,379,659 comentarios)
+[ 81.7%] step 188401/230615 (6,028,832/7,379,659 comentarios)
+[ 83.8%] step 193198/230615 (6,182,336/7,379,659 comentarios)
+[ 85.9%] step 197995/230615 (6,335,840/7,379,659 comentarios)
+[ 87.9%] step 202794/230615 (6,489,408/7,379,659 comentarios)
+[ 90.0%] step 207597/230615 (6,643,104/7,379,659 comentarios)
+[ 92.1%] step 212395/230615 (6,796,640/7,379,659 comentarios)
+[ 94.2%] step 217192/230615 (6,950,144/7,379,659 comentarios)
+[ 96.3%] step 221986/230615 (7,103,552/7,379,659 comentarios)
+[ 98.3%] step 226775/230615 (7,256,800/7,379,659 comentarios)
+[100.0%] step 230615/230615 (7,379,659/7,379,659 comentarios)
 Activaciones guardadas en data/activaciones_gpt2_genero/
-Cargando activaciones desde data/activaciones_gpt2_genero/ ...
-  last_token: (7379659, 768), mean_token: (7379659, 768)
+Cargando activaciones desde data/activaciones_gpt2_genero/ ... last_token: (7379659, 768), mean_token: (7379659, 768)
 
 Activaciones: hidden_size=768, comentarios=7,379,659
 
-
-# A) CLASIFICACION A NIVEL DE COMENTARIO
-
 Split de usuarios guardado en data/splits_genero_70_15_15/split_usuarios.npz
 Split de comentarios (por usuario) guardado en data/splits_genero_70_15_15/split_comentarios_por_usuario.npz
-  Sin leakage: cada usuario aparece en un unico split.
+Sin leakage: cada usuario aparece en un unico split.
 
 Split comentarios: train=5,264,573 eval=1,116,308 test=998,778
-  Train dist: f=1,751,645 m=3,512,928
-  Eval  dist: f=394,212 m=722,096
+Train dist: f=1,751,645 m=3,512,928 Eval  dist: f=394,212 m=722,096
 
   Ajustando StandardScaler para last_token...
-ENTRENANDO: comentario_last_token_sin_balanceo
-  Train: 5,264,573 | Eval: 1,116,308
-  Pesos: female=1.0, male=1.0
-  [Epoch 1] 100.0% (1286/1286)
+ENTRENANDO: comentario_last_token_sin_balanceoTrain: 5,264,573 | Eval: 1,116,308
+Pesos: female=1.0, male=1.0
+[Epoch 1] 100.0% (1286/1286)
 
-=== EVAL comentario_last_token_sin_balanceo ===
+EVAL comentario_last_token_sin_balanceo
 Accuracy: 0.6870 | Balanced Acc: 0.6298 | Precision macro: 0.6514 | Recall macro: 0.6298 | F1 macro: 0.6343 | F1 weighted: 0.6750
   female: prec=0.5750 rec=0.4352 f1=0.4955
   male:   prec=0.7278 rec=0.8244 f1=0.7731
@@ -126,11 +111,11 @@ Confusion matrix:
 [[171573 222639]
  [126808 595288]]
 ENTRENANDO: comentario_last_token_balanceado
-  Train: 5,264,573 | Eval: 1,116,308
-  Pesos: female=1.1, male=0.9
-  [Epoch 1] 100.0% (1286/1286)
+Train: 5,264,573 | Eval: 1,116,308
+Pesos: female=1.1, male=0.9
+[Epoch 1] 100.0% (1286/1286)
 
-=== EVAL comentario_last_token_balanceado ===
+EVAL comentario_last_token_balanceado
 Accuracy: 0.6777 | Balanced Acc: 0.6405 | Precision macro: 0.6447 | Recall macro: 0.6405 | F1 macro: 0.6422 | F1 weighted: 0.6753
   female: prec=0.5465 rec=0.5135 f1=0.5295
   male:   prec=0.7429 rec=0.7674 f1=0.7549
@@ -145,14 +130,13 @@ weighted avg       0.67      0.68      0.68   1116308
 
 Confusion matrix:
 [[202437 191775]
- [167970 554126]]
-    Undersampling: min_count=1,751,645 (de {0: 1751645, 1: 3512928})
+ [167970 554126]] Undersampling: min_count=1,751,645 (de {0: 1751645, 1: 3512928})
 ENTRENANDO: comentario_last_token_undersampling
   Train: 3,503,290 | Eval: 1,116,308
   Pesos: female=1.0, male=1.0
   [Epoch 1] 100.0% (856/856)
 
-=== EVAL comentario_last_token_undersampling ===
+EVAL comentario_last_token_undersampling
 Accuracy: 0.6257 | Balanced Acc: 0.6359 | Precision macro: 0.6242 | Recall macro: 0.6359 | F1 macro: 0.6168 | F1 weighted: 0.6339
   female: prec=0.4786 rec=0.6708 f1=0.5586
   male:   prec=0.7698 rec=0.6011 f1=0.6750
@@ -175,7 +159,7 @@ ENTRENANDO: comentario_mean_sin_balanceo
   Pesos: female=1.0, male=1.0
   [Epoch 1] 100.0% (1286/1286)
 
-=== EVAL comentario_mean_sin_balanceo ===
+EVAL comentario_mean_sin_balanceo
 Accuracy: 0.6953 | Balanced Acc: 0.6426 | Precision macro: 0.6620 | Recall macro: 0.6426 | F1 macro: 0.6476 | F1 weighted: 0.6856
   female: prec=0.5867 rec=0.4636 f1=0.5179
   male:   prec=0.7373 rec=0.8217 f1=0.7772
@@ -196,7 +180,7 @@ ENTRENANDO: comentario_mean_balanceado
   Pesos: female=1.1, male=0.9
   [Epoch 1] 100.0% (1286/1286)
 
-=== EVAL comentario_mean_balanceado ===
+EVAL comentario_mean_balanceado
 Accuracy: 0.6850 | Balanced Acc: 0.6497 | Precision macro: 0.6533 | Recall macro: 0.6497 | F1 macro: 0.6512 | F1 weighted: 0.6831
   female: prec=0.5568 rec=0.5294 f1=0.5428
   male:   prec=0.7498 rec=0.7699 f1=0.7597
@@ -218,7 +202,7 @@ ENTRENANDO: comentario_mean_undersampling
   Pesos: female=1.0, male=1.0
   [Epoch 1] 100.0% (856/856)
 
-=== EVAL comentario_mean_undersampling ===
+EVAL comentario_mean_undersampling
 Accuracy: 0.6351 | Balanced Acc: 0.6459 | Precision macro: 0.6333 | Recall macro: 0.6459 | F1 macro: 0.6264 | F1 weighted: 0.6432
   female: prec=0.4881 rec=0.6825 f1=0.5692
   male:   prec=0.7785 rec=0.6093 f1=0.6836
@@ -235,19 +219,16 @@ Confusion matrix:
 [[269042 125170]
  [282115 439981]]
 
-
-# B) CLASIFICACION A NIVEL DE USUARIO
-
 Cargando split de usuarios compartido desde data/splits_genero_70_15_15/split_usuarios.npz
 
 Split usuarios: train=2,158 eval=463 test=463
 
-  Agregando features por usuario para mean_of_last...
+Agregando features por usuario para mean_of_last...
 ENTRENANDO: usuario_mean_of_last_sin_balanceo
-  Train users: 2,158 | Eval users: 463
-  Pesos: female=1.0, male=1.0
+Train users: 2,158 | Eval users: 463
+Pesos: female=1.0, male=1.0
 
-=== EVAL usuario_mean_of_last_sin_balanceo ===
+EVAL usuario_mean_of_last_sin_balanceo
 Accuracy: 0.8661 | Balanced Acc: 0.8644 | Precision macro: 0.8650 | Recall macro: 0.8644 | F1 macro: 0.8647 | F1 weighted: 0.8660
   female: prec=0.8551 rec=0.8469 f1=0.8510
   male:   prec=0.8750 rec=0.8819 f1=0.8784
@@ -262,12 +243,12 @@ weighted avg       0.87      0.87      0.87       463
 
 Confusion matrix:
 [[177  32]
- [ 30 224]]
+[ 30 224]]
 ENTRENANDO: usuario_mean_of_last_balanceado
-  Train users: 2,158 | Eval users: 463
-  Pesos: female=1.1, male=0.9
+Train users: 2,158 | Eval users: 463
+Pesos: female=1.1, male=0.9
 
-=== EVAL usuario_mean_of_last_balanceado ===
+EVAL usuario_mean_of_last_balanceado
 Accuracy: 0.8661 | Balanced Acc: 0.8652 | Precision macro: 0.8646 | Recall macro: 0.8652 | F1 macro: 0.8649 | F1 weighted: 0.8661
   female: prec=0.8483 rec=0.8565 f1=0.8524
   male:   prec=0.8810 rec=0.8740 f1=0.8775
@@ -285,10 +266,10 @@ Confusion matrix:
  [ 32 222]]
     Undersampling: min_count=922 (de {0: 922, 1: 1236})
 ENTRENANDO: usuario_mean_of_last_undersampling
-  Train users: 1,844 | Eval users: 463
-  Pesos: female=1.0, male=1.0
+Train users: 1,844 | Eval users: 463
+Pesos: female=1.0, male=1.0
 
-=== EVAL usuario_mean_of_last_undersampling ===
+EVAL usuario_mean_of_last_undersampling
 Accuracy: 0.8488 | Balanced Acc: 0.8503 | Precision macro: 0.8475 | Recall macro: 0.8503 | F1 macro: 0.8481 | F1 weighted: 0.8491
   female: prec=0.8117 rec=0.8660 f1=0.8380
   male:   prec=0.8833 rec=0.8346 f1=0.8583
@@ -305,12 +286,12 @@ Confusion matrix:
 [[181  28]
  [ 42 212]]
 
-  Agregando features por usuario para mean_of_mean...
+Agregando features por usuario para mean_of_mean...
 ENTRENANDO: usuario_mean_of_mean_sin_balanceo
-  Train users: 2,158 | Eval users: 463
-  Pesos: female=1.0, male=1.0
+Train users: 2,158 | Eval users: 463
+Pesos: female=1.0, male=1.0
 
-=== EVAL usuario_mean_of_mean_sin_balanceo ===
+EVAL usuario_mean_of_mean_sin_balanceo
 Accuracy: 0.8726 | Balanced Acc: 0.8724 | Precision macro: 0.8710 | Recall macro: 0.8724 | F1 macro: 0.8716 | F1 weighted: 0.8727
   female: prec=0.8505 rec=0.8708 f1=0.8605
   male:   prec=0.8916 rec=0.8740 f1=0.8827
@@ -330,7 +311,7 @@ ENTRENANDO: usuario_mean_of_mean_balanceado
   Train users: 2,158 | Eval users: 463
   Pesos: female=1.1, male=0.9
 
-=== EVAL usuario_mean_of_mean_balanceado ===
+EVAL usuario_mean_of_mean_balanceado
 Accuracy: 0.8704 | Balanced Acc: 0.8713 | Precision macro: 0.8689 | Recall macro: 0.8713 | F1 macro: 0.8697 | F1 weighted: 0.8706
   female: prec=0.8402 rec=0.8804 f1=0.8598
   male:   prec=0.8975 rec=0.8622 f1=0.8795
@@ -345,13 +326,12 @@ weighted avg       0.87      0.87      0.87       463
 
 Confusion matrix:
 [[184  25]
- [ 35 219]]
-    Undersampling: min_count=922 (de {0: 922, 1: 1236})
+ [ 35 219]] Undersampling: min_count=922 (de {0: 922, 1: 1236})
 ENTRENANDO: usuario_mean_of_mean_undersampling
-  Train users: 1,844 | Eval users: 463
-  Pesos: female=1.0, male=1.0
+Train users: 1,844 | Eval users: 463
+Pesos: female=1.0, male=1.0
 
-=== EVAL usuario_mean_of_mean_undersampling ===
+EVAL usuario_mean_of_mean_undersampling
 Accuracy: 0.8790 | Balanced Acc: 0.8792 | Precision macro: 0.8775 | Recall macro: 0.8792 | F1 macro: 0.8782 | F1 weighted: 0.8792
   female: prec=0.8558 rec=0.8804 f1=0.8679
   male:   prec=0.8992 rec=0.8780 f1=0.8884
@@ -369,7 +349,6 @@ Confusion matrix:
  [ 31 223]]
 RESUMEN DE RESULTADOS (EVAL)
 Config                                                Acc  BalAcc  F1mac   F1_f   F1_m
--------------------------------------------------------------------------------------
 comentario_last_token_sin_balanceo                 0.6870 0.62981 0.6343 0.4955 0.7731
 comentario_last_token_balanceado                   0.6777 0.64045 0.6422 0.5295 0.7549
 comentario_last_token_undersampling                0.6257 0.63592 0.6168 0.5586 0.6750
@@ -385,13 +364,11 @@ usuario_mean_of_mean_undersampling                 0.8790 0.87917 0.8782 0.8679 
 MEJOR MODELO EN EVAL
 usuario_mean_of_mean_undersampling | F1 macro=0.8782 | Recall macro=0.8792 | Precision macro=0.8775
 
-
 MEJOR MODELO POR NIVEL EN EVAL
+[comentario] comentario_mean_balanceado | F1 macro=0.6512 | Recall macro=0.6497 | Precision macro=0.6533
+[usuario] usuario_mean_of_mean_undersampling | F1 macro=0.8782 | Recall macro=0.8792 | Precision macro=0.8775
 
-  [comentario] comentario_mean_balanceado | F1 macro=0.6512 | Recall macro=0.6497 | Precision macro=0.6533
-  [usuario] usuario_mean_of_mean_undersampling | F1 macro=0.8782 | Recall macro=0.8792 | Precision macro=0.8775
-
-=== TEST comentario_mean_balanceado ===
+TEST comentario_mean_balanceado
 Accuracy: 0.7040 | Balanced Acc: 0.6370 | Precision macro: 0.6501 | Recall macro: 0.6370 | F1 macro: 0.6417 | F1 weighted: 0.6972
   female: prec=0.5335 rec=0.4569 f1=0.4922
   male:   prec=0.7667 rec=0.8171 f1=0.7911
@@ -408,7 +385,7 @@ Confusion matrix:
 [[143319 170346]
  [125321 559792]]
 
-=== TEST usuario_mean_of_mean_undersampling ===
+TEST usuario_mean_of_mean_undersampling
 Accuracy: 0.8683 | Balanced Acc: 0.8643 | Precision macro: 0.8666 | Recall macro: 0.8643 | F1 macro: 0.8653 | F1 weighted: 0.8680
   female: prec=0.8564 rec=0.8350 f1=0.8456
   male:   prec=0.8769 rec=0.8935 f1=0.8851
@@ -425,11 +402,9 @@ Confusion matrix:
 [[167  33]
  [ 28 235]]
 
-
 MEJOR MODELO POR NIVEL EVALUADO EN TEST
 
-  [comentario] comentario_mean_balanceado | Accuracy=0.7040 | BalAcc=0.6370 | F1 macro=0.6417 | Recall macro=0.6370 | Precision macro=0.6501
-  [usuario] usuario_mean_of_mean_undersampling | Accuracy=0.8683 | BalAcc=0.8643 | F1 macro=0.8653 | Recall macro=0.8643 | Precision macro=0.8666
+[comentario] comentario_mean_balanceado | Accuracy=0.7040 | BalAcc=0.6370 | F1 macro=0.6417 | Recall macro=0.6370 | Precision macro=0.6501[usuario] usuario_mean_of_mean_undersampling | Accuracy=0.8683 | BalAcc=0.8643 | F1 macro=0.8653 | Recall macro=0.8643 | Precision macro=0.8666
 
 Resumen guardado en: modelos/genero_gpt_activaciones/resultados_resumen.json
 COMPLETADO - Mejor modelo evaluado tambien en test
@@ -442,29 +417,20 @@ CLASIFICADOR GENERO - REPRESENTACIONES SAE SOBRE GPT-2
 PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
 
 1. Cargando comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-   ✓ 17,639,864 comentarios cargados
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío. 17,639,864 comentarios cargados
 
-2. Cargando autores...
-   ✓ 10,295 autores cargados
+2. Cargando autores... 10,295 autores cargados
 
-3. Uniendo comentarios con género por autor...
-   ✓ 17,639,863 comentarios con info de género
+3. Uniendo comentarios con género por autor... 17,639,863 comentarios con info de género
 
-4. Filtrando solo género conocido (m/f)...
-   ✓ 7,379,659 comentarios con género m/f
-   (Eliminados 10,260,204 con género unknown)
+4. Filtrando solo género conocido (m/f)... 7,379,659 comentarios con género m/f (Eliminados 10,260,204 con género unknown)
 
-5. Distribución por género:
-   m: 4,920,137 comentarios (66.7%)
-   f: 2,459,522 comentarios (33.3%)
-✓ Dataset preparado y listo para usar
+5. Distribución por género: m: 4,920,137 comentarios (66.7%) f: 2,459,522 comentarios (33.3%)
+Dataset preparado y listo para usar
 Generos presentes: {'m': 4920137, 'f': 2459522}
 Cargando split de usuarios compartido desde data/splits_genero_70_15_15/split_usuarios.npz
 
-Comentarios: train=5,264,573 eval=1,116,308 test=998,778
-  female: train=1,751,645 eval=394,212 test=313,665
-  male:   train=3,512,928 eval=722,096 test=685,113
+Comentarios: train=5,264,573 eval=1,116,308 test=998,778 female: train=1,751,645 eval=394,212 test=313,665 male:   train=3,512,928 eval=722,096 test=685,113
 SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
 
@@ -473,33 +439,25 @@ Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1171
 Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1166.97it/s]
 
 Representaciones SAE en streaming: num_latents=16384
-    Undersampling: min_count=1,751,645 (de {0: 1751645, 1: 3512928})
-
-
-# A) CLASIFICACION A NIVEL DE COMENTARIO
-
-  [TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32
-  [TRAIN  10.6%] step 17485/164518 (559,520/5,264,573) | batch=32
-  [TRAIN  21.5%] step 35404/164518 (1,132,928/5,264,573) | batch=32
-  [TRAIN  32.7%] step 53834/164518 (1,722,688/5,264,573) | batch=32
-  [TRAIN  44.4%] step 72967/164518 (2,334,944/5,264,573) | batch=32
-  [TRAIN  55.8%] step 91846/164518 (2,939,072/5,264,573) | batch=32
-  [TRAIN  67.3%] step 110675/164518 (3,541,600/5,264,573) | batch=32
-  [TRAIN  77.0%] step 126661/164518 (4,053,152/5,264,573) | batch=32
-  [TRAIN  88.4%] step 145357/164518 (4,651,424/5,264,573) | batch=32
-  [TRAIN  99.7%] step 164013/164518 (5,248,416/5,264,573) | batch=32
-  [TRAIN 100.0%] step 164518/164518 (5,264,573/5,264,573) | batch=32
-
+Undersampling: min_count=1,751,645 (de {0: 1751645, 1: 3512928})
+TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32
+TRAIN  10.6%] step 17485/164518 (559,520/5,264,573) | batch=32
+TRAIN  21.5%] step 35404/164518 (1,132,928/5,264,573) | batch=32
+TRAIN  32.7%] step 53834/164518 (1,722,688/5,264,573) | batch=32
+TRAIN  44.4%] step 72967/164518 (2,334,944/5,264,573) | batch=32
+TRAIN  55.8%] step 91846/164518 (2,939,072/5,264,573) | batch=32
+TRAIN  67.3%] step 110675/164518 (3,541,600/5,264,573) | batch=32
+TRAIN  77.0%] step 126661/164518 (4,053,152/5,264,573) | batch=32
+TRAIN  88.4%] step 145357/164518 (4,651,424/5,264,573) | batch=32
+TRAIN  99.7%] step 164013/164518 (5,248,416/5,264,573) | batch=32
+TRAIN 100.0%] step 164518/164518 (5,264,573/5,264,573) | batch=32
 Pass A completado: 5,264,573 muestras procesadas.
+PASS B: Streaming datos de evaluacion
+[EVAL   0.0%] step 1/34885 (32/1,116,308) | batch=32
+[EVAL  69.3%] step 24190/34885 (774,080/1,116,308) | batch=32
+[EVAL 100.0%] step 34885/34885 (1,116,308/1,116,308) | batch=32
 
-
-# PASS B: Streaming datos de evaluacion
-
-  [EVAL   0.0%] step 1/34885 (32/1,116,308) | batch=32
-  [EVAL  69.3%] step 24190/34885 (774,080/1,116,308) | batch=32
-  [EVAL 100.0%] step 34885/34885 (1,116,308/1,116,308) | batch=32
-
-=== EVAL comentario_last_token_sin_balanceo ===
+EVAL comentario_last_token_sin_balanceo
 Accuracy: 0.5270 | Balanced Acc: 0.5867 | Precision macro: 0.5906 | Recall macro: 0.5867 | F1 macro: 0.5266 | F1 weighted: 0.5223
   female: prec=0.4116 rec=0.7897 f1=0.5411
   male:   prec=0.7696 rec=0.3837 f1=0.5121
@@ -516,7 +474,7 @@ Confusion matrix:
 [[311290  82922]
  [445050 277046]]
 
-=== EVAL comentario_last_token_balanceado ===
+EVAL comentario_last_token_balanceado
 Accuracy: 0.5396 | Balanced Acc: 0.5941 | Precision macro: 0.5956 | Recall macro: 0.5941 | F1 macro: 0.5395 | F1 weighted: 0.5380
   female: prec=0.4185 rec=0.7800 f1=0.5447
   male:   prec=0.7727 rec=0.4083 f1=0.5343
@@ -533,7 +491,7 @@ Confusion matrix:
 [[307471  86741]
  [427239 294857]]
 
-=== EVAL comentario_last_token_undersampling ===
+EVAL comentario_last_token_undersampling
 Accuracy: 0.5616 | Balanced Acc: 0.6062 | Precision macro: 0.6030 | Recall macro: 0.6062 | F1 macro: 0.5613 | F1 weighted: 0.5646
   female: prec=0.4313 rec=0.7582 f1=0.5498
   male:   prec=0.7748 rec=0.4542 f1=0.5727
@@ -550,7 +508,7 @@ Confusion matrix:
 [[298872  95340]
  [394101 327995]]
 
-=== EVAL comentario_mean_sin_balanceo ===
+EVAL comentario_mean_sin_balanceo
 Accuracy: 0.6359 | Balanced Acc: 0.6367 | Precision macro: 0.6256 | Recall macro: 0.6367 | F1 macro: 0.6231 | F1 weighted: 0.6435
   female: prec=0.4881 rec=0.6395 f1=0.5536
   male:   prec=0.7631 rec=0.6339 f1=0.6925
@@ -567,7 +525,7 @@ Confusion matrix:
 [[252086 142126]
  [264371 457725]]
 
-=== EVAL comentario_mean_balanceado ===
+EVAL comentario_mean_balanceado
 Accuracy: 0.6370 | Balanced Acc: 0.6431 | Precision macro: 0.6310 | Recall macro: 0.6431 | F1 macro: 0.6264 | F1 weighted: 0.6449
   female: prec=0.4897 rec=0.6638 f1=0.5636
   male:   prec=0.7722 rec=0.6223 f1=0.6892
@@ -584,7 +542,7 @@ Confusion matrix:
 [[261672 132540]
  [272715 449381]]
 
-=== EVAL comentario_mean_undersampling ===
+EVAL comentario_mean_undersampling
 Accuracy: 0.6232 | Balanced Acc: 0.6453 | Precision macro: 0.6333 | Recall macro: 0.6453 | F1 macro: 0.6182 | F1 weighted: 0.6310
   female: prec=0.4778 rec=0.7205 f1=0.5746
   male:   prec=0.7889 rec=0.5700 f1=0.6618
@@ -601,20 +559,15 @@ Confusion matrix:
 [[284041 110171]
  [310479 411617]]
 
-
-# B) CLASIFICACION A NIVEL DE USUARIO
-
-
 Split usuarios: train=2,158 eval=463 test=463
-
-  Agregando features por usuario para mean_of_last...
-  Usuarios train: 2,158 (f=922 m=1,236)
-  Usuarios eval:  463
+Agregando features por usuario para mean_of_last...
+Usuarios train: 2,158 (f=922 m=1,236)
+Usuarios eval:  463
 ENTRENANDO: usuario_mean_of_last_sin_balanceo
-  Train users: 2,158 | Eval users: 463
-  Pesos: female=1.0, male=1.0
+Train users: 2,158 | Eval users: 463
+Pesos: female=1.0, male=1.0
 
-=== EVAL usuario_mean_of_last_sin_balanceo ===
+EVAL usuario_mean_of_last_sin_balanceo
 Accuracy: 0.7473 | Balanced Acc: 0.7582 | Precision macro: 0.7639 | Recall macro: 0.7582 | F1 macro: 0.7469 | F1 weighted: 0.7460
   female: prec=0.6691 rec=0.8708 f1=0.7568
   male:   prec=0.8586 rec=0.6457 f1=0.7371
@@ -634,7 +587,7 @@ ENTRENANDO: usuario_mean_of_last_balanceado
   Train users: 2,158 | Eval users: 463
   Pesos: female=1.1, male=0.9
 
-=== EVAL usuario_mean_of_last_balanceado ===
+EVAL usuario_mean_of_last_balanceado
 Accuracy: 0.7473 | Balanced Acc: 0.7544 | Precision macro: 0.7544 | Recall macro: 0.7544 | F1 macro: 0.7473 | F1 weighted: 0.7473
   female: prec=0.6811 rec=0.8278 f1=0.7473
   male:   prec=0.8278 rec=0.6811 f1=0.7473
@@ -649,13 +602,12 @@ weighted avg       0.76      0.75      0.75       463
 
 Confusion matrix:
 [[173  36]
- [ 81 173]]
-    Undersampling: min_count=922 (de {0: 922, 1: 1236})
+ [ 81 173]] Undersampling: min_count=922 (de {0: 922, 1: 1236})
 ENTRENANDO: usuario_mean_of_last_undersampling
-  Train users: 1,844 | Eval users: 463
-  Pesos: female=1.0, male=1.0
+Train users: 1,844 | Eval users: 463
+Pesos: female=1.0, male=1.0
 
-=== EVAL usuario_mean_of_last_undersampling ===
+EVAL usuario_mean_of_last_undersampling
 Accuracy: 0.7754 | Balanced Acc: 0.7821 | Precision macro: 0.7815 | Recall macro: 0.7821 | F1 macro: 0.7754 | F1 weighted: 0.7755
   female: prec=0.7092 rec=0.8517 f1=0.7739
   male:   prec=0.8538 rec=0.7126 f1=0.7768
@@ -672,14 +624,14 @@ Confusion matrix:
 [[178  31]
  [ 73 181]]
 
-  Agregando features por usuario para mean_of_mean...
-  Usuarios train: 2,158 (f=922 m=1,236)
-  Usuarios eval:  463
+Agregando features por usuario para mean_of_mean...
+Usuarios train: 2,158 (f=922 m=1,236)
+Usuarios eval:  463
 ENTRENANDO: usuario_mean_of_mean_sin_balanceo
-  Train users: 2,158 | Eval users: 463
-  Pesos: female=1.0, male=1.0
+Train users: 2,158 | Eval users: 463
+Pesos: female=1.0, male=1.0
 
-=== EVAL usuario_mean_of_mean_sin_balanceo ===
+EVAL usuario_mean_of_mean_sin_balanceo
 Accuracy: 0.8704 | Balanced Acc: 0.8704 | Precision macro: 0.8688 | Recall macro: 0.8704 | F1 macro: 0.8695 | F1 weighted: 0.8706
   female: prec=0.8465 rec=0.8708 f1=0.8585
   male:   prec=0.8911 rec=0.8701 f1=0.8805
@@ -694,12 +646,12 @@ weighted avg       0.87      0.87      0.87       463
 
 Confusion matrix:
 [[182  27]
- [ 33 221]]
+[ 33 221]]
 ENTRENANDO: usuario_mean_of_mean_balanceado
-  Train users: 2,158 | Eval users: 463
-  Pesos: female=1.1, male=0.9
+Train users: 2,158 | Eval users: 463
+Pesos: female=1.1, male=0.9
 
-=== EVAL usuario_mean_of_mean_balanceado ===
+EVAL usuario_mean_of_mean_balanceado
 Accuracy: 0.8747 | Balanced Acc: 0.8765 | Precision macro: 0.8734 | Recall macro: 0.8765 | F1 macro: 0.8742 | F1 weighted: 0.8750
   female: prec=0.8386 rec=0.8947 f1=0.8657
   male:   prec=0.9083 rec=0.8583 f1=0.8826
@@ -714,13 +666,10 @@ weighted avg       0.88      0.87      0.87       463
 
 Confusion matrix:
 [[187  22]
- [ 36 218]]
-    Undersampling: min_count=922 (de {0: 922, 1: 1236})
-ENTRENANDO: usuario_mean_of_mean_undersampling
-  Train users: 1,844 | Eval users: 463
-  Pesos: female=1.0, male=1.0
+ [ 36 218]] Undersampling: min_count=922 (de {0: 922, 1: 1236})
+ENTRENANDO: usuario_mean_of_mean_undersamplingTrain users: 1,844 | Eval users: 463Pesos: female=1.0, male=1.0
 
-=== EVAL usuario_mean_of_mean_undersampling ===
+EVAL usuario_mean_of_mean_undersampling
 Accuracy: 0.8683 | Balanced Acc: 0.8710 | Precision macro: 0.8676 | Recall macro: 0.8710 | F1 macro: 0.8678 | F1 weighted: 0.8686
   female: prec=0.8246 rec=0.8995 f1=0.8604
   male:   prec=0.9106 rec=0.8425 f1=0.8753
@@ -739,20 +688,14 @@ Confusion matrix:
 MEJOR MODELO EN EVAL
 usuario_mean_of_mean_balanceado | F1 macro=0.8742 | Recall macro=0.8765 | Precision macro=0.8734
 
+MEJOR MODELO POR NIVEL EN EVAL [comentario] comentario_mean_balanceado | F1 macro=0.6264 | Recall macro=0.6431 | Precision macro=0.6310[usuario] usuario_mean_of_mean_balanceado | F1 macro=0.8742 | Recall macro=0.8765 | Precision macro=0.8734
+PASS C: Streaming datos de test (mejor por nivel)
 
-MEJOR MODELO POR NIVEL EN EVAL
+[TEST   0.0%] step 1/31212 (32/998,778) | batch=32
+[TEST  85.7%] step 26744/31212 (855,808/998,778) | batch=32
+[TEST 100.0%] step 31212/31212 (998,778/998,778) | batch=32
 
-  [comentario] comentario_mean_balanceado | F1 macro=0.6264 | Recall macro=0.6431 | Precision macro=0.6310
-  [usuario] usuario_mean_of_mean_balanceado | F1 macro=0.8742 | Recall macro=0.8765 | Precision macro=0.8734
-
-
-# PASS C: Streaming datos de test (mejor por nivel)
-
-  [TEST   0.0%] step 1/31212 (32/998,778) | batch=32
-  [TEST  85.7%] step 26744/31212 (855,808/998,778) | batch=32
-  [TEST 100.0%] step 31212/31212 (998,778/998,778) | batch=32
-
-=== TEST comentario_mean_balanceado ===
+TEST comentario_mean_balanceado
 Accuracy: 0.6473 | Balanced Acc: 0.6359 | Precision macro: 0.6203 | Recall macro: 0.6359 | F1 macro: 0.6202 | F1 weighted: 0.6579
   female: prec=0.4539 rec=0.6051 f1=0.5187
   male:   prec=0.7867 rec=0.6666 f1=0.7217
@@ -769,7 +712,7 @@ Confusion matrix:
 [[189801 123864]
  [228394 456719]]
 
-=== TEST usuario_mean_of_mean_balanceado ===
+TEST usuario_mean_of_mean_balanceado
 Accuracy: 0.8942 | Balanced Acc: 0.8937 | Precision macro: 0.8915 | Recall macro: 0.8937 | F1 macro: 0.8925 | F1 weighted: 0.8943
   female: prec=0.8683 rec=0.8900 f1=0.8790
   male:   prec=0.9147 rec=0.8973 f1=0.9060
@@ -786,14 +729,12 @@ Confusion matrix:
 [[178  22]
  [ 27 236]]
 
-
 MEJOR MODELO POR NIVEL EVALUADO EN TEST
 
   [comentario] comentario_mean_balanceado | Accuracy=0.6473 | BalAcc=0.6359 | F1 macro=0.6202 | Recall macro=0.6359 | Precision macro=0.6203
   [usuario] usuario_mean_of_mean_balanceado | Accuracy=0.8942 | BalAcc=0.8937 | F1 macro=0.8925 | Recall macro=0.8937 | Precision macro=0.8915
 RESUMEN DE RESULTADOS (EVAL)
 Config                                                Acc  BalAcc  F1mac   F1_f   F1_m
--------------------------------------------------------------------------------------
 comentario_last_token_sin_balanceo                 0.5270 0.58666 0.5266 0.5411 0.5121
 comentario_last_token_balanceado                   0.5396 0.59415 0.5395 0.5447 0.5343
 comentario_last_token_undersampling                0.5616 0.60619 0.5613 0.5498 0.5727
@@ -818,23 +759,13 @@ COMPLETADO - Mejor modelo evaluado tambien en test
 PREPARACIÓN DE DATASET PARA SAE/CLASIFICADOR
 
 1. Cargando comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-   ✓ 17,639,864 comentarios cargados
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío. 17,639,864 comentarios cargados
+2. Cargando autores... 10,295 autores cargados
+3. Uniendo comentarios con género por autor...17,639,863 comentarios con info de género
 
-2. Cargando autores...
-   ✓ 10,295 autores cargados
+4. Filtrando solo género conocido (m/f)... 7,379,659 comentarios con género m/f (Eliminados 10,260,204 con género unknown)
 
-3. Uniendo comentarios con género por autor...
-   ✓ 17,639,863 comentarios con info de género
-
-4. Filtrando solo género conocido (m/f)...
-   ✓ 7,379,659 comentarios con género m/f
-   (Eliminados 10,260,204 con género unknown)
-
-5. Distribución por género:
-   m: 4,920,137 comentarios (66.7%)
-   f: 2,459,522 comentarios (33.3%)
-✓ Dataset preparado y listo para usar
+5. Distribución por género: m: 4,920,137 comentarios (66.7%) f: 2,459,522 comentarios (33.3%) Dataset preparado y listo para usar
 Train comments: 5,264,573 | Eval comments: 1,116,308
 SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
@@ -842,62 +773,59 @@ Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF
 Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
 Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1484.17it/s]
 num_latents=16384
-  [TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32
-  [TRAIN  16.4%] step 26990/164518 (863,680/5,264,573) | batch=32
-  [TRAIN  33.8%] step 55590/164518 (1,778,880/5,264,573) | batch=32
-  [TRAIN  51.4%] step 84491/164518 (2,703,712/5,264,573) | batch=32
-  [TRAIN  68.9%] step 113385/164518 (3,628,320/5,264,573) | batch=32
-  [TRAIN  86.5%] step 142278/164518 (4,552,896/5,264,573) | batch=32
-  [TRAIN 100.0%] step 164518/164518 (5,264,573/5,264,573) | batch=32
-  [EVAL   0.0%] step 1/34885 (32/1,116,308) | batch=32
-  [EVAL  82.0%] step 28589/34885 (914,848/1,116,308) | batch=32
-  [EVAL 100.0%] step 34885/34885 (1,116,308/1,116,308) | batch=32
-
-
+[TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32
+[TRAIN  16.4%] step 26990/164518 (863,680/5,264,573) | batch=32
+[TRAIN  33.8%] step 55590/164518 (1,778,880/5,264,573) | batch=32
+[TRAIN  51.4%] step 84491/164518 (2,703,712/5,264,573) | batch=32
+[TRAIN  68.9%] step 113385/164518 (3,628,320/5,264,573) | batch=32
+[TRAIN  86.5%] step 142278/164518 (4,552,896/5,264,573) | batch=32
+[TRAIN 100.0%] step 164518/164518 (5,264,573/5,264,573) | batch=32
+[EVAL   0.0%] step 1/34885 (32/1,116,308) | batch=32
+[EVAL  82.0%] step 28589/34885 (914,848/1,116,308) | batch=32
+[EVAL 100.0%] step 34885/34885 (1,116,308/1,116,308) | batch=32
 INTERPRETABILIDAD SAE - genero
-
 Modo de almacenamiento : streaming_without_feature_cache
 Pooling analizado      : mean_of_mean
 Comentarios train/eval : 5,264,573 / 1,116,308
 Usuarios train/eval    : 2,158 / 463
 Latentes SAE           : 16,384
 
---- Metricas en EVAL (nivel usuario, mean_of_mean) ---
+Metricas en EVAL (nivel usuario, mean_of_mean)
 Accuracy=0.8704 | BalancedAcc=0.8709 | F1 macro=0.8696 | F1 weighted=0.8706
       female: precision=0.8433 recall=0.8756 f1=0.8592
         male: precision=0.8943 recall=0.8661 f1=0.8800
 
---- Ablacion (drops vs baseline) ---
+Ablacion (drops vs baseline)
   Top   BalAccDrop    F1macDrop   BalAccDropRnd   F1macDropRnd
     5      -0.0044      -0.0043          0.0024         0.0022
    10       0.0000       0.0000         -0.0015        -0.0020
    20       0.0015       0.0020          0.0015         0.0020
 
---- Top latentes por clase ---
+Top latentes por clase
 
 [Clase female] top 10 latentes:
-  L  1290  score=+545.0690  coef=-545.0690  palabras=[score, hey, user, best, rude, bearstow, want, forsett]
-  L  9068  score=+503.8787  coef=-503.8787  palabras=[women, woman, high, value, female, mean, transwomen, turkish]
-  L 15584  score=+503.7961  coef=-503.7961  palabras=[sprache, stache, deutsche, schwere, clear, cache, cookies, reset]
-  L  7947  score=+488.8279  coef=-488.8279  palabras=[tumblr, permitted, link, what's, account, instantly, follows, actually]
-  L 14029  score=+477.2088  coef=-477.2088  palabras=[thinking, i'm, mike, tyson, minimum, lilith, reagan, thing]
-  L  2526  score=+461.0577  coef=-461.0577  palabras=[specifically, oddly, specific, why, tom, daly, california, los]
-  L  2225  score=+447.0497  coef=-447.0497  palabras=[scare, scared, why, i'm, cute, bean, tbh, please]
-  L  5749  score=+445.3538  coef=-445.3538  palabras=[automatic, manual, automatically, posts, auto, removed, make, another]
-  L   832  score=+444.2000  coef=-444.2000  palabras=[abortion, abort, planned, parenthood, sounds, what's, doctor, it's]
-  L  2293  score=+440.0905  coef=-440.0905  palabras=[theory, polyamory, lottery, rory, mccann, that's, insult, dory]
+L  1290  score=+545.0690  coef=-545.0690  palabras=[score, hey, user, best, rude, bearstow, want, forsett]
+L  9068  score=+503.8787  coef=-503.8787  palabras=[women, woman, high, value, female, mean, transwomen, turkish]
+L 15584  score=+503.7961  coef=-503.7961  palabras=[sprache, stache, deutsche, schwere, clear, cache, cookies, reset]
+L  7947  score=+488.8279  coef=-488.8279  palabras=[tumblr, permitted, link, what's, account, instantly, follows, actually]
+L 14029  score=+477.2088  coef=-477.2088  palabras=[thinking, i'm, mike, tyson, minimum, lilith, reagan, thing]
+L  2526  score=+461.0577  coef=-461.0577  palabras=[specifically, oddly, specific, why, tom, daly, california, los]
+L  2225  score=+447.0497  coef=-447.0497  palabras=[scare, scared, why, i'm, cute, bean, tbh, please]
+L  5749  score=+445.3538  coef=-445.3538  palabras=[automatic, manual, automatically, posts, auto, removed, make, another]
+L   832  score=+444.2000  coef=-444.2000  palabras=[abortion, abort, planned, parenthood, sounds, what's, doctor, it's]
+L  2293  score=+440.0905  coef=-440.0905  palabras=[theory, polyamory, lottery, rory, mccann, that's, insult, dory]
 
 [Clase male] top 10 latentes:
-  L 12777  score=+710.4790  coef=+710.4790  palabras=[gay, mods, fake, lol, say]
-  L   465  score=+496.6115  coef=+496.6115  palabras=[gay, mods, fake, lol, marriage, say]
-  L  6135  score=+487.2416  coef=+487.2416  palabras=[man, man's, sky, people, manu, watch, manchurian, candidate]
-  L  4026  score=+485.5607  coef=+485.5607  palabras=[dick, pics, small, need, dickbutt, fight, send]
-  L  5347  score=+483.1866  coef=+483.1866  palabras=[cum, dick, obviously, big, things, cumming, want, rainbow]
-  L  6429  score=+468.3883  coef=+468.3883  palabras=[wife, first, girlfriend]
-  L 13275  score=+466.6444  coef=+466.6444  palabras=[drag, race, saved, ahs, powerful, desmond, drags, unexpected]
-  L  2236  score=+454.8791  coef=+454.8791  palabras=[for, feel, thanks, dick, right, fuck, cheating, playing]
-  L  6195  score=+452.4632  coef=+452.4632  palabras=[cash, spare, assume, typically, money, lots, cashout, fill]
-  L  1756  score=+447.5420  coef=+447.5420  palabras=[he's, right, wrong, correct, you're, she's]
+L 12777  score=+710.4790  coef=+710.4790  palabras=[gay, mods, fake, lol, say]
+L   465  score=+496.6115  coef=+496.6115  palabras=[gay, mods, fake, lol, marriage, say]
+L  6135  score=+487.2416  coef=+487.2416  palabras=[man, man's, sky, people, manu, watch, manchurian, candidate]
+L  4026  score=+485.5607  coef=+485.5607  palabras=[dick, pics, small, need, dickbutt, fight, send]
+L  5347  score=+483.1866  coef=+483.1866  palabras=[cum, dick, obviously, big, things, cumming, want, rainbow]
+L  6429  score=+468.3883  coef=+468.3883  palabras=[wife, first, girlfriend]
+L 13275  score=+466.6444  coef=+466.6444  palabras=[drag, race, saved, ahs, powerful, desmond, drags, unexpected]
+L  2236  score=+454.8791  coef=+454.8791  palabras=[for, feel, thanks, dick, right, fuck, cheating, playing]
+L  6195  score=+452.4632  coef=+452.4632  palabras=[cash, spare, assume, typically, money, lots, cashout, fill]
+L  1756  score=+447.5420  coef=+447.5420  palabras=[he's, right, wrong, correct, you're, she's]
 
 Resumen JSON guardado en: modelos/genero_sae_interpretabilidad/interpretabilidad_sae_resumen.json
 Resumen Markdown guardado en: modelos/genero_sae_interpretabilidad/interpretabilidad_sae_resumen.md

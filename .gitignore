@@ -8,3 +8,6 @@ __pycache__/
 #logs/
 wandb/
 modelos/
+
+# Large model checkpoints / tokenized data
+sae-ckpts/

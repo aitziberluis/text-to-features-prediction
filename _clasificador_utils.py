@@ -1,30 +1,17 @@
 """Utilidades comunes a los clasificadores (genero / edad / mbti)."""
 from __future__ import annotations
-
 from typing import Dict, Optional, Tuple
-
-
 def selection_score(metrics: Dict[str, float]) -> Tuple[float, float, float]:
     """Tupla usada para seleccionar el mejor modelo: (f1_macro, recall_macro, precision_macro)."""
-    return (
-        float(metrics.get("f1_macro", float("-inf"))),
-        float(metrics.get("recall_macro", float("-inf"))),
-        float(metrics.get("precision_macro", float("-inf"))),
-    )
-
-
+    return (float(metrics.get("f1_macro", float("-inf"))),float(metrics.get("recall_macro", float("-inf"))),float(metrics.get("precision_macro", float("-inf"))),)
 def select_best_per_level(
     all_results: Dict[str, Dict[str, float]],
 ) -> Dict[str, Optional[Tuple[str, Dict[str, float]]]]:
     """Devuelve el mejor run por nivel ("comentario" y "usuario").
-
-    Criterio de seleccion (de mas a menos importante): f1_macro, recall_macro,
-    precision_macro y, en caso de empate, nombre alfabetico.
     """
     best: Dict[str, Optional[Tuple[str, Dict[str, float]]]] = {
         "comentario": None,
-        "usuario": None,
-    }
+        "usuario": None, }
     for run_name, metrics in all_results.items():
         if run_name.startswith("test_"):
             continue
@@ -44,11 +31,9 @@ def select_best_per_level(
                 best[level] = (run_name, metrics)
     return best
 
-
 def print_best_per_level_eval(
     best_per_level: Dict[str, Optional[Tuple[str, Dict[str, float]]]],
 ) -> None:
-    print("\n" + "=" * 70, flush=True)
     print("MEJOR MODELO POR NIVEL EN EVAL", flush=True)
     for level in ("comentario", "usuario"):
         entry = best_per_level.get(level)
@@ -64,7 +49,7 @@ def print_best_per_level_eval(
             flush=True,
         )
 
-
+#funcion para mejor modelo resultados
 def print_best_per_level_test(
     best_per_level_test: Dict[str, Optional[Tuple[str, Dict[str, float]]]],
 ) -> None:
