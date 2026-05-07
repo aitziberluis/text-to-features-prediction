@@ -715,8 +715,6 @@ def _select_best_user_config_from_sae(
     info["run_name"] = run_name
     pooling, balance = _parse_user_run_name(run_name)
     return pooling, balance, info
-
-
 def _parse_user_run_name(run_name: str) -> Tuple[str, str]:
     """Parsea 'usuario_<pooling>_<balance>' -> (pooling, balance).
 
@@ -906,7 +904,6 @@ def _compute_top_activation_per_class(
     nonzero = class_act_stats.get("nonzero")
     if sums is None or counts is None or nonzero is None:
         return {}
-
     safe_counts = np.where(counts > 0, counts, 1).astype(np.float64)
     mean_by_class = sums / safe_counts[:, None]
     nonzero_rate_by_class = nonzero.astype(np.float64) / safe_counts[:, None]
@@ -920,7 +917,6 @@ def _compute_top_activation_per_class(
         other_mass = sums.sum(axis=0) - sums[class_idx]
         other_count = max(total_count - float(counts[class_idx]), 1.0)
         other_mean = other_mass / other_count
-
         order = np.argsort(class_mean)[::-1][:top_k]
         entries: List[Dict[str, object]] = []
         for latent in order.tolist():
@@ -953,8 +949,7 @@ def _collect_examples_for_target_latents(
     pooling: str = "mean_of_mean",
     pass_name: str = "EXAMPLES",
 ) -> Dict[int, Dict[int, Dict[str, object]]]:
-    """Recorre el dataframe y guarda los `top_examples` textos con mayor activacion
-    para cada (class_idx, latent_id) presente en `targets`. Devuelve tambien
+    """Recorre el dataframe y guarda los `top_examples` textos con mayor activacion para cada (class_idx, latent_id) presente en `targets`. Devuelve tambien
     `top_words` agregadas a partir de esos ejemplos."""
     heaps: Dict[int, Dict[int, List[Tuple[float, str]]]] = {
         class_idx: {latent: [] for latent in latents}
@@ -1005,7 +1000,7 @@ def _collect_examples_for_target_latents(
     return examples
 def _render_markdown(results: Dict[str, object]) -> str:
     lines = []
-    lines.append(f"# Interpretabilidad SAE - {results['task_name']}")
+    lines.append(f"Interpretabilidad SAE - {results['task_name']}")
     lines.append("")
     lines.append(f"Modo de almacenamiento: {results['storage_mode']}")
     lines.append(f"Pooling analizado: {results['pooling']}")
@@ -1020,12 +1015,12 @@ def _render_markdown(results: Dict[str, object]) -> str:
     )
     lines.append("")
     for class_name, latent_entries in results["top_latents_by_class"].items():
-        lines.append(f"## Clase {class_name}")
+        lines.append(f"Clase {class_name}")
         lines.append("")
         for entry in latent_entries[:10]:
             words = ", ".join(word["token"] for word in entry["top_words"][:8])
             lines.append(
-                f"- Latente {entry['latent_id']}: score={entry['class_score']:.4f}, "
+                f"Latente {entry['latent_id']}: score={entry['class_score']:.4f}, "
                 f"coef={entry['raw_coefficient']:.4f}, palabras={words}"
             )
         lines.append("")
@@ -1035,14 +1030,14 @@ def _render_markdown(results: Dict[str, object]) -> str:
         lines.append("")
         for size, ablation in ablations.items():
             lines.append(
-                f"- Top {size}: drop bal_acc={ablation['balanced_accuracy_drop']:.4f}, "
+                f"Top {size}: drop bal_acc={ablation['balanced_accuracy_drop']:.4f}, "
                 f"drop f1_macro={ablation['f1_macro_drop']:.4f}, "
                 f"drop aleatorio bal_acc={ablation['balanced_accuracy_drop_random']:.4f}"
             )
         lines.append("")
     top_by_act = results.get("top_latents_by_activation") or {}
     if top_by_act:
-        lines.append("## Top latentes mas activos por clase (independiente del clasificador)")
+        lines.append("Top latentes mas activos por clase (independiente del clasificador)")
         lines.append("")
         for class_name, entries in top_by_act.items():
             lines.append(f"### Clase {class_name}")
@@ -1053,7 +1048,7 @@ def _render_markdown(results: Dict[str, object]) -> str:
                 words = ", ".join(w["token"] for w in entry.get("top_words", [])[:8])
                 words_str = f", palabras={words}" if words else ""
                 lines.append(
-                    f"- Latente {entry['latent_id']}: mean_act={entry['mean_activation']:.4f}, "
+                    f"Latente {entry['latent_id']}: mean_act={entry['mean_activation']:.4f}, "
                     f"nonzero_rate={entry['nonzero_rate']:.4f}{contrast_str}{words_str}"
                 )
             lines.append("")

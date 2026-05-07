@@ -1,11 +1,8 @@
-[run_genero_qwen_gpu0] Inicio: Mon May  4 09:32:40 AM CEST 2026
-[run_genero_qwen_gpu0] GPU visible: 0
-[run_genero_qwen_gpu0] Tareas: 3
-
-============================================================
+Inicio: Mon May  4 09:32:40 AM CEST 2026
+GPU visible: 0
+Tareas: 3
 [2026-05-04 09:32:40] >> genero_qwen
     script: clasificacion_genero/gpt_qwen_activaciones/clasificador_genero_qwen_activaciones.py
-============================================================
 CLASIFICADOR GENERO - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
 Preparación de Dataset para SAE/Clasificador
 
@@ -175,7 +172,7 @@ Cargando split de usuarios compartido desde data/splits_genero_70_15_15/split_us
 
 Split usuarios: train=2,158 eval=463 test=463
 
-  Agregando features por usuario para mean_of_last...
+Agregando features por usuario para mean_of_last...
 ENTRENANDO: usuario_mean_of_last_sin_balanceo
 Train users: 2,158 | Eval users: 463
 Pesos: female=1.0, male=1.0
@@ -317,7 +314,6 @@ usuario_mean_of_mean_undersampling                 0.8920 0.88971 0.8907 0.8786 
 MEJOR MODELO EN EVAL
 usuario_mean_of_last_undersampling | F1 macro=0.9106 | Recall macro=0.9108 | Precision macro=0.9105
 
-======================================================================
 MEJOR MODELO POR NIVEL EN EVAL
   [comentario] comentario_last_token_sin_balanceo | F1 macro=0.6703 | Recall macro=0.6728 | Precision macro=0.6686
   [usuario] usuario_mean_of_last_undersampling | F1 macro=0.9106 | Recall macro=0.9108 | Precision macro=0.9105
@@ -351,12 +347,9 @@ male:   prec=0.9167 rec=0.9202 f1=0.9184
     accuracy                           0.91       463
    macro avg       0.91      0.91      0.91       463
 weighted avg       0.91      0.91      0.91       463
-
 Confusion matrix:
 [[178  22]
  [ 21 242]]
-
-======================================================================
 MEJOR MODELO POR NIVEL EVALUADO EN TEST
   [comentario] comentario_last_token_sin_balanceo | Accuracy=0.7125 | BalAcc=0.6640 | F1 macro=0.6647 | Recall macro=0.6640 | Precision macro=0.6655
   [usuario] usuario_mean_of_last_undersampling | Accuracy=0.9071 | BalAcc=0.9051 | F1 macro=0.9053 | Recall macro=0.9051 | Precision macro=0.9056
@@ -366,69 +359,3 @@ COMPLETADO - Mejor modelo evaluado tambien en test
 [W504 11:04:12.727659767 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
 [2026-05-04 11:04:13] OK  genero_qwen (1h 31m 33s)
 
-============================================================
-[2026-05-04 11:04:13] >> genero_qwen_sae
-    script: clasificacion_genero/gpt_qwen_activaciones/clasificador_genero_qwen_sae_activaciones.py
-============================================================
-CLASIFICADOR GENERO - REPRESENTACIONES SAE SOBRE GPT-2
-Preparación de Dataset para SAE/Clasificador
-
-1. Cargando comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-17,639,864 comentarios cargados
-
-2. Cargando autores...
-10,295 autores cargados
-
-3. Uniendo comentarios con género por autor...
-17,639,863 comentarios con info de género
-
-4. Filtrando solo género conocido (m/f)...
-7,379,659 comentarios con género m/f
-(Eliminados 10,260,204 con género unknown)
-
-5. Distribución por género:
-m: 4,920,137 comentarios (66.7%)
-f: 2,459,522 comentarios (33.3%)
-Dataset preparado y listo para usar
-Generos presentes: {'m': 4920137, 'f': 2459522}
-Cargando split de usuarios compartido desde data/splits_genero_70_15_15/split_usuarios.npz
-
-Comentarios: train=5,264,573 eval=1,116,308 test=998,778
-female: train=1,751,645 eval=394,212 test=313,665
-male:   train=3,512,928 eval=722,096 test=685,113
-SAE cargada: 16384 latentes, k=64, hookpoint=model.layers.25
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights:   0%|          | 1/398 [00:00<02:02,  3.25it/s]Loading weights:   8%|▊         | 33/398 [00:00<00:03, 98.34it/s]Loading weights:  13%|█▎        | 50/398 [00:00<00:03, 98.88it/s]Loading weights:  17%|█▋        | 67/398 [00:00<00:02, 115.86it/s]Loading weights:  21%|██        | 82/398 [00:00<00:02, 117.14it/s]Loading weights:  26%|██▌       | 103/398 [00:00<00:02, 132.08it/s]Loading weights:  31%|███▏      | 125/398 [00:01<00:01, 148.68it/s]Loading weights:  37%|███▋      | 146/398 [00:01<00:01, 160.50it/s]Loading weights:  42%|████▏     | 168/398 [00:01<00:01, 165.70it/s]Loading weights:  47%|████▋     | 189/398 [00:01<00:01, 176.70it/s]Loading weights:  53%|█████▎    | 212/398 [00:01<00:01, 181.07it/s]Loading weights:  59%|█████▉    | 234/398 [00:01<00:00, 189.04it/s]Loading weights:  64%|██████▍   | 254/398 [00:01<00:00, 191.55it/s]Loading weights:  69%|██████▉   | 274/398 [00:01<00:00, 191.31it/s]Loading weights:  74%|███████▍  | 294/398 [00:01<00:00, 186.37it/s]Loading weights:  79%|███████▊  | 313/398 [00:02<00:00, 180.38it/s]Loading weights:  84%|████████▎ | 333/398 [00:02<00:00, 180.08it/s]Loading weights:  89%|████████▉ | 355/398 [00:02<00:00, 186.45it/s]Loading weights:  95%|█████████▍| 377/398 [00:02<00:00, 184.34it/s]Loading weights: 100%|██████████| 398/398 [00:02<00:00, 159.46it/s]
-Modelo truncado a las primeras 26 capas para hook 'model.layers.25'
-torch.compile activado (dynamic=True)
-
-Representaciones SAE en streaming: num_latents=16384
-Undersampling: min_count=1,751,645 (de {0: 1751645, 1: 3512928})
-A) CLASIFICACION A NIVEL DE COMENTARIO
-  [TRAIN   0.0%] step 1/164518 (32/5,264,573) | batch=32
-  [TRAIN   4.2%] step 6894/164518 (220,608/5,264,573) | batch=32
-  [TRAIN   8.3%] step 13682/164518 (437,824/5,264,573) | batch=32
-  [TRAIN  12.5%] step 20495/164518 (655,840/5,264,573) | batch=32
-  [TRAIN  16.5%] step 27188/164518 (870,016/5,264,573) | batch=32
-  [TRAIN  20.6%] step 33842/164518 (1,082,944/5,264,573) | batch=32
-  [TRAIN  24.5%] step 40313/164518 (1,290,016/5,264,573) | batch=32
-  [TRAIN  28.4%] step 46695/164518 (1,494,240/5,264,573) | batch=32
-  [TRAIN  32.2%] step 53033/164518 (1,697,056/5,264,573) | batch=32
-  [TRAIN  36.1%] step 59444/164518 (1,902,208/5,264,573) | batch=32
-  [TRAIN  40.0%] step 65829/164518 (2,106,528/5,264,573) | batch=32
-  [TRAIN  43.9%] step 72160/164518 (2,309,120/5,264,573) | batch=32
-  [TRAIN  47.7%] step 78475/164518 (2,511,200/5,264,573) | batch=32
-  [TRAIN  51.8%] step 85289/164518 (2,729,248/5,264,573) | batch=32
-  [TRAIN  55.7%] step 91592/164518 (2,930,944/5,264,573) | batch=32
-  [TRAIN  59.1%] step 97152/164518 (3,108,864/5,264,573) | batch=32
-  [TRAIN  62.4%] step 102686/164518 (3,285,952/5,264,573) | batch=32
-  [TRAIN  65.8%] step 108211/164518 (3,462,752/5,264,573) | batch=32
-  [TRAIN  69.1%] step 113712/164518 (3,638,784/5,264,573) | batch=32
-  [TRAIN  72.5%] step 119259/164518 (3,816,288/5,264,573) | batch=32
-  [TRAIN  75.8%] step 124786/164518 (3,993,152/5,264,573) | batch=32
-  [TRAIN  79.2%] step 130376/164518 (4,172,032/5,264,573) | batch=32
-  [TRAIN  82.7%] step 136001/164518 (4,352,032/5,264,573) | batch=32
-  [TRAIN  86.1%] step 141589/164518 (4,530,848/5,264,573) | batch=32
-  [TRAIN  89.5%] step 147165/164518 (4,709,280/5,264,573) | batch=32
-  [TRAIN  93.0%] step 152956/164518 (4,894,592/5,264,573) | batch=32

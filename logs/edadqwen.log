@@ -3,10 +3,8 @@ nohup: ignoring input
 [run_edad_qwen_gpu1] GPU visible: 1
 [run_edad_qwen_gpu1] Tareas: 3
 
-============================================================
 [2026-05-04 09:12:31] >> edad_qwen
     script: clasificacion_edad/gpt_qwen_activaciones/clasificador_edad_qwen_activaciones.py
-============================================================
 `torch_dtype` is deprecated! Use `dtype` instead!
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
 CLASIFICADOR EDAD - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
@@ -36,7 +34,29 @@ Rangos de edad presentes: {'20_29': 2811112, '30_39': 1422075, '14_19': 877575, 
 
 Extrayendo activaciones de GPT-2 para 5,538,809 comentarios...
 Hookpoint: model.layers.25, batch_size: 128, workers: 16
-Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights:   0%|          | 1/398 [00:00<01:18,  5.09it/s]Loading weights:   9%|▉         | 36/398 [00:00<00:02, 145.63it/s]Loading weights:  15%|█▍        | 58/398 [00:00<00:02, 157.03it/s]Loading weights:  19%|█▉        | 77/398 [00:00<00:01, 165.51it/s]Loading weights:  24%|██▍       | 96/398 [00:00<00:01, 152.06it/s]Loading weights:  28%|██▊       | 113/398 [00:00<00:01, 153.45it/s]Loading weights:  34%|███▍      | 135/398 [00:00<00:01, 158.33it/s]Loading weights:  39%|███▉      | 157/398 [00:01<00:01, 163.69it/s]Loading weights:  45%|████▍     | 179/398 [00:01<00:01, 162.36it/s]Loading weights:  51%|█████     | 201/398 [00:01<00:01, 172.53it/s]Loading weights:  55%|█████▌    | 220/398 [00:01<00:01, 174.92it/s]Loading weights:  60%|█████▉    | 238/398 [00:01<00:00, 175.10it/s]Loading weights:  65%|██████▍   | 257/398 [00:01<00:00, 171.33it/s]Loading weights:  70%|██████▉   | 278/398 [00:01<00:00, 174.00it/s]Loading weights:  75%|███████▌  | 299/398 [00:01<00:00, 183.25it/s]Loading weights:  80%|███████▉  | 318/398 [00:01<00:00, 174.80it/s]Loading weights:  84%|████████▍ | 336/398 [00:02<00:00, 167.45it/s]Loading weights:  89%|████████▉ | 355/398 [00:02<00:00, 173.24it/s]Loading weights:  94%|█████████▍| 375/398 [00:02<00:00, 180.11it/s]Loading weights:  99%|█████████▉| 394/398 [00:02<00:00, 167.92it/s]Loading weights: 100%|██████████| 398/398 [00:02<00:00, 165.13it/s]
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   0%|          | 1/398 [00:00<01:18,  5.09it/s]
+Loading weights:   9%|▉         | 36/398 [00:00<00:02, 145.63it/s]
+Loading weights:  15%|█▍        | 58/398 [00:00<00:02, 157.03it/s]
+Loading weights:  19%|█▉        | 77/398 [00:00<00:01, 165.51it/s]
+Loading weights:  24%|██▍       | 96/398 [00:00<00:01, 152.06it/s]
+Loading weights:  28%|██▊       | 113/398 [00:00<00:01, 153.45it/s]
+Loading weights:  34%|███▍      | 135/398 [00:00<00:01, 158.33it/s]
+Loading weights:  39%|███▉      | 157/398 [00:01<00:01, 163.69it/s]
+Loading weights:  45%|████▍     | 179/398 [00:01<00:01, 162.36it/s]
+Loading weights:  51%|█████     | 201/398 [00:01<00:01, 172.53it/s]
+Loading weights:  55%|█████▌    | 220/398 [00:01<00:01, 174.92it/s]
+Loading weights:  60%|█████▉    | 238/398 [00:01<00:00, 175.10it/s]
+Loading weights:  65%|██████▍   | 257/398 [00:01<00:00, 171.33it/s]
+Loading weights:  70%|██████▉   | 278/398 [00:01<00:00, 174.00it/s]
+Loading weights:  75%|███████▌  | 299/398 [00:01<00:00, 183.25it/s]
+Loading weights:  80%|███████▉  | 318/398 [00:01<00:00, 174.80it/s]
+Loading weights:  84%|████████▍ | 336/398 [00:02<00:00, 167.45it/s]
+Loading weights:  89%|████████▉ | 355/398 [00:02<00:00, 173.24it/s]
+Loading weights:  94%|█████████▍| 375/398 [00:02<00:00, 180.11it/s]
+Loading weights:  99%|█████████▉| 394/398 [00:02<00:00, 167.92it/s]
+Loading weights: 100%|██████████| 398/398 [00:02<00:00, 165.13it/s]
 Modelo truncado a las primeras 26 capas para hook 'model.layers.25'
 torch.compile activado (dynamic=True)
 Calculando longitudes y ordenando por longitud (bucketing)...
@@ -402,7 +422,6 @@ Confusion matrix:
  [ 0  0  8 12]]
 RESUMEN DE RESULTADOS (EVAL)
 Config                                           Acc  BalAcc  F1mac F1_14_19 F1_20_29 F1_30_39 F1_40_plus
--------------------------------------------------------------------------------------------------------
 comentario_last_token_sin_balanceo            0.4232 0.28108 0.2429   0.1585   0.5812   0.1335   0.0983
 comentario_last_token_balanceo_manual         0.4182 0.30638 0.2994   0.2237   0.5617   0.2510   0.1614
 comentario_last_token_undersampling           0.3126 0.35354 0.3036   0.3529   0.2543   0.3617   0.2456
@@ -418,10 +437,9 @@ usuario_mean_of_mean_undersampling            0.3639 0.44495 0.3386   0.5610   0
 MEJOR MODELO EN EVAL
 usuario_mean_of_mean_balanceo_manual | F1 macro=0.4826 | Recall macro=0.5415 | Precision macro=0.4713
 
-======================================================================
 MEJOR MODELO POR NIVEL EN EVAL
-  [comentario] comentario_mean_undersampling | F1 macro=0.3271 | Recall macro=0.3769 | Precision macro=0.3439
-  [usuario] usuario_mean_of_mean_balanceo_manual | F1 macro=0.4826 | Recall macro=0.5415 | Precision macro=0.4713
+[comentario] comentario_mean_undersampling | F1 macro=0.3271 | Recall macro=0.3769 | Precision macro=0.3439
+[usuario] usuario_mean_of_mean_balanceo_manual | F1 macro=0.4826 | Recall macro=0.5415 | Precision macro=0.4713
 
 TEST comentario_mean_undersampling
 Accuracy: 0.2951 | Balanced Acc: 0.4023 | Precision macro: 0.3259 | Recall macro: 0.4023 | F1 macro: 0.2905 | F1 weighted: 0.2951
@@ -468,8 +486,6 @@ Confusion matrix:
  [ 49 103  38  14]
  [  8  10  37  13]
  [  0   0  10   6]]
-
-======================================================================
 MEJOR MODELO POR NIVEL EVALUADO EN TEST
   [comentario] comentario_mean_undersampling | Accuracy=0.2951 | BalAcc=0.4023 | F1 macro=0.2905 | Recall macro=0.4023 | Precision macro=0.3259
   [usuario] usuario_mean_of_mean_balanceo_manual | Accuracy=0.5616 | BalAcc=0.5609 | F1 macro=0.4880 | Recall macro=0.5609 | Precision macro=0.4788
@@ -479,10 +495,8 @@ COMPLETADO - Mejor modelo evaluado tambien en test
 [W504 16:18:57.480666291 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator())
 [2026-05-04 16:18:58] OK  edad_qwen (7h 6m 27s)
 
-============================================================
 [2026-05-04 16:18:58] >> edad_qwen_sae
     script: clasificacion_edad/gpt_qwen_activaciones/clasificador_edad_qwen_sae_activaciones.py
-============================================================
 cuda0
 CLASIFICADOR EDAD - REPRESENTACIONES SAE SOBRE GPT-2
 Preparación de Dataset para Clasificación de Edad
@@ -509,7 +523,6 @@ Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
 Dataset de edad preparado y listo para usar
 Rangos de edad presentes: {'20_29': 2811112, '30_39': 1422075, '14_19': 877575, '40_plus': 428047}
 Splits de usuarios cargados desde data/splits_edad/
-
 Comentarios: train=3,896,989 eval=939,461 test=702,359
   14_19: train=612,830 eval=168,786 test=95,959
   20_29: train=2,027,081 eval=399,466 test=384,565
@@ -517,35 +530,452 @@ Comentarios: train=3,896,989 eval=939,461 test=702,359
   40_plus: train=299,361 eval=83,981 test=44,705
 SAE cargada: 16384 latentes, k=64, hookpoint=model.layers.25
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights:   0%|          | 1/398 [00:00<01:39,  4.00it/s]Loading weights:   9%|▉         | 36/398 [00:00<00:02, 128.87it/s]Loading weights:  15%|█▍        | 58/398 [00:00<00:02, 154.16it/s]Loading weights:  20%|██        | 80/398 [00:00<00:01, 169.31it/s]Loading weights:  26%|██▌       | 102/398 [00:00<00:01, 174.46it/s]Loading weights:  31%|███       | 123/398 [00:00<00:01, 180.81it/s]Loading weights:  36%|███▌      | 143/398 [00:00<00:01, 173.17it/s]Loading weights:  42%|████▏     | 166/398 [00:01<00:01, 187.18it/s]Loading weights:  47%|████▋     | 186/398 [00:01<00:01, 184.96it/s]Loading weights:  52%|█████▏    | 206/398 [00:01<00:01, 181.86it/s]Loading weights:  57%|█████▋    | 225/398 [00:01<00:00, 173.14it/s]Loading weights:  62%|██████▏   | 246/398 [00:01<00:00, 177.61it/s]Loading weights:  67%|██████▋   | 267/398 [00:01<00:00, 182.45it/s]Loading weights:  73%|███████▎  | 289/398 [00:01<00:00, 191.75it/s]Loading weights:  78%|███████▊  | 311/398 [00:01<00:00, 190.11it/s]Loading weights:  84%|████████▎ | 333/398 [00:01<00:00, 193.16it/s]Loading weights:  89%|████████▉ | 355/398 [00:02<00:00, 192.47it/s]Loading weights:  94%|█████████▍| 375/398 [00:02<00:00, 192.97it/s]Loading weights:  99%|█████████▉| 395/398 [00:02<00:00, 186.20it/s]Loading weights: 100%|██████████| 398/398 [00:02<00:00, 175.52it/s]
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   0%|          | 1/398 [00:00<01:39,  4.00it/s]
+Loading weights:   9%|▉         | 36/398 [00:00<00:02, 128.87it/s]
+Loading weights:  15%|█▍        | 58/398 [00:00<00:02, 154.16it/s]
+Loading weights:  20%|██        | 80/398 [00:00<00:01, 169.31it/s]
+Loading weights:  26%|██▌       | 102/398 [00:00<00:01, 174.46it/s]
+Loading weights:  31%|███       | 123/398 [00:00<00:01, 180.81it/s]
+Loading weights:  36%|███▌      | 143/398 [00:00<00:01, 173.17it/s]
+Loading weights:  42%|████▏     | 166/398 [00:01<00:01, 187.18it/s]
+Loading weights:  47%|████▋     | 186/398 [00:01<00:01, 184.96it/s]
+Loading weights:  52%|█████▏    | 206/398 [00:01<00:01, 181.86it/s]
+Loading weights:  57%|█████▋    | 225/398 [00:01<00:00, 173.14it/s]
+Loading weights:  62%|██████▏   | 246/398 [00:01<00:00, 177.61it/s]
+Loading weights:  67%|██████▋   | 267/398 [00:01<00:00, 182.45it/s]
+Loading weights:  73%|███████▎  | 289/398 [00:01<00:00, 191.75it/s]
+Loading weights:  78%|███████▊  | 311/398 [00:01<00:00, 190.11it/s]
+Loading weights:  84%|████████▎ | 333/398 [00:01<00:00, 193.16it/s]
+Loading weights:  89%|████████▉ | 355/398 [00:02<00:00, 192.47it/s]
+Loading weights:  94%|█████████▍| 375/398 [00:02<00:00, 192.97it/s]
+Loading weights:  99%|█████████▉| 395/398 [00:02<00:00, 186.20it/s]
+Loading weights: 100%|██████████| 398/398 [00:02<00:00, 175.52it/s]
 Modelo truncado a las primeras 26 capas para hook 'model.layers.25'
 torch.compile activado (dynamic=True)
 
 Representaciones SAE en streaming: num_latents=16384
 Undersampling: min_count=299,361 (de {0: 612830, 1: 2027081, 2: 957717, 3: 299361})
 A) CLASIFICACION A NIVEL DE COMENTARIO
-  [TRAIN   0.0%] step 1/30446 (128/3,896,989) | batch=128
-  [TRAIN   5.5%] step 1688/30446 (216,064/3,896,989) | batch=128
-  [TRAIN  11.0%] step 3348/30446 (428,544/3,896,989) | batch=128
-  [TRAIN  16.5%] step 5025/30446 (643,200/3,896,989) | batch=128
-  [TRAIN  21.9%] step 6677/30446 (854,656/3,896,989) | batch=128
-  [TRAIN  27.3%] step 8312/30446 (1,063,936/3,896,989) | batch=128
-  [TRAIN  32.7%] step 9949/30446 (1,273,472/3,896,989) | batch=128
-  [TRAIN  38.0%] step 11565/30446 (1,480,320/3,896,989) | batch=128
-  [TRAIN  43.5%] step 13230/30446 (1,693,440/3,896,989) | batch=128
-  [TRAIN  48.6%] step 14810/30446 (1,895,680/3,896,989) | batch=128
-  [TRAIN  53.7%] step 16344/30446 (2,092,032/3,896,989) | batch=128
-  [TRAIN  58.8%] step 17893/30446 (2,290,304/3,896,989) | batch=128
-  [TRAIN  63.9%] step 19441/30446 (2,488,448/3,896,989) | batch=128
-  [TRAIN  68.9%] step 20990/30446 (2,686,720/3,896,989) | batch=128
-  [TRAIN  74.0%] step 22538/30446 (2,884,864/3,896,989) | batch=128
-  [TRAIN  79.1%] step 24087/30446 (3,083,136/3,896,989) | batch=128
-  [TRAIN  84.2%] step 25637/30446 (3,281,536/3,896,989) | batch=128
-  [TRAIN  89.3%] step 27188/30446 (3,480,064/3,896,989) | batch=128
-  [TRAIN  94.4%] step 28733/30446 (3,677,824/3,896,989) | batch=128
-  [TRAIN  99.4%] step 30274/30446 (3,875,072/3,896,989) | batch=128
-  [TRAIN 100.0%] step 30446/30446 (3,896,989/3,896,989) | batch=128
+[TRAIN   0.0%] step 1/30446 (128/3,896,989) | batch=128
+[TRAIN   5.5%] step 1688/30446 (216,064/3,896,989) | batch=128
+[TRAIN  11.0%] step 3348/30446 (428,544/3,896,989) | batch=128
+[TRAIN  16.5%] step 5025/30446 (643,200/3,896,989) | batch=128
+[TRAIN  21.9%] step 6677/30446 (854,656/3,896,989) | batch=128
+[TRAIN  27.3%] step 8312/30446 (1,063,936/3,896,989) | batch=128
+[TRAIN  32.7%] step 9949/30446 (1,273,472/3,896,989) | batch=128
+[TRAIN  38.0%] step 11565/30446 (1,480,320/3,896,989) | batch=128
+[TRAIN  43.5%] step 13230/30446 (1,693,440/3,896,989) | batch=128
+[TRAIN  48.6%] step 14810/30446 (1,895,680/3,896,989) | batch=128
+[TRAIN  53.7%] step 16344/30446 (2,092,032/3,896,989) | batch=128
+[TRAIN  58.8%] step 17893/30446 (2,290,304/3,896,989) | batch=128
+[TRAIN  63.9%] step 19441/30446 (2,488,448/3,896,989) | batch=128
+[TRAIN  68.9%] step 20990/30446 (2,686,720/3,896,989) | batch=128
+[TRAIN  74.0%] step 22538/30446 (2,884,864/3,896,989) | batch=128
+[TRAIN  79.1%] step 24087/30446 (3,083,136/3,896,989) | batch=128
+[TRAIN  84.2%] step 25637/30446 (3,281,536/3,896,989) | batch=128
+[TRAIN  89.3%] step 27188/30446 (3,480,064/3,896,989) | batch=128
+[TRAIN  94.4%] step 28733/30446 (3,677,824/3,896,989) | batch=128
+[TRAIN  99.4%] step 30274/30446 (3,875,072/3,896,989) | batch=128
+[TRAIN 100.0%] step 30446/30446 (3,896,989/3,896,989) | batch=128
 
 Pass A completado: 3,896,989 muestras procesadas.
 PASS B: Streaming datos de evaluacion
-  [EVAL   0.0%] step 1/7340 (128/939,461) | batch=128
+[EVAL   0.0%] step 1/7340 (128/939,461) | batch=128
+[EVAL  26.6%] step 1952/7340 (249,856/939,461) | batch=128
+[EVAL  52.9%] step 3883/7340 (497,024/939,461) | batch=128
+[EVAL  78.2%] step 5736/7340 (734,208/939,461) | batch=128
+[EVAL 100.0%] step 7340/7340 (939,461/939,461) | batch=128
+
+EVAL comentario_last_token_sin_balanceo
+Accuracy: 0.4270 | Balanced Acc: 0.2568 | Precision macro: 0.3739 | Recall macro: 0.2568 | F1 macro: 0.1702 | F1 weighted: 0.2706
+   14_19: prec=0.3295 rec=0.0093 f1=0.0181
+   20_29: prec=0.4299 rec=0.9843 f1=0.5985
+   30_39: prec=0.2924 rec=0.0174 f1=0.0328
+ 40_plus: prec=0.4436 rec=0.0164 f1=0.0316
+              precision    recall  f1-score   support
+
+       14_19       0.33      0.01      0.02    168786
+       20_29       0.43      0.98      0.60    399466
+       30_39       0.29      0.02      0.03    287228
+     40_plus       0.44      0.02      0.03     83981
+
+    accuracy                           0.43    939461
+   macro avg       0.37      0.26      0.17    939461
+weighted avg       0.37      0.43      0.27    939461
+
+Confusion matrix:
+[[  1567 165652   1144    423]
+ [  2308 393191   3402    565]
+ [   789 280708   4993    738]
+ [    91  74979   7535   1376]]
+
+EVAL comentario_last_token_balanceo_manual
+Accuracy: 0.4269 | Balanced Acc: 0.2611 | Precision macro: 0.3680 | Recall macro: 0.2611 | F1 macro: 0.1812 | F1 weighted: 0.2761
+   14_19: prec=0.3224 rec=0.0180 f1=0.0340
+   20_29: prec=0.4304 rec=0.9764 f1=0.5975
+   30_39: prec=0.3065 rec=0.0187 f1=0.0353
+ 40_plus: prec=0.4126 rec=0.0312 f1=0.0579
+              precision    recall  f1-score   support
+
+       14_19       0.32      0.02      0.03    168786
+       20_29       0.43      0.98      0.60    399466
+       30_39       0.31      0.02      0.04    287228
+     40_plus       0.41      0.03      0.06     83981
+
+    accuracy                           0.43    939461
+   macro avg       0.37      0.26      0.18    939461
+weighted avg       0.37      0.43      0.28    939461
+
+Confusion matrix:
+[[  3033 163728   1233    792]
+ [  4477 390034   3642   1313]
+ [  1722 278510   5375   1621]
+ [   177  73901   7286   2617]]
+
+EVAL comentario_last_token_undersampling
+Accuracy: 0.3417 | Balanced Acc: 0.3329 | Precision macro: 0.3188 | Recall macro: 0.3329 | F1 macro: 0.3129 | F1 weighted: 0.3545
+   14_19: prec=0.2751 rec=0.2678 f1=0.2714
+   20_29: prec=0.4866 rec=0.3706 f1=0.4207
+   30_39: prec=0.3693 rec=0.3421 f1=0.3551
+ 40_plus: prec=0.1440 rec=0.3513 f1=0.2043
+              precision    recall  f1-score   support
+
+       14_19       0.28      0.27      0.27    168786
+       20_29       0.49      0.37      0.42    399466
+       30_39       0.37      0.34      0.36    287228
+     40_plus       0.14      0.35      0.20     83981
+
+    accuracy                           0.34    939461
+   macro avg       0.32      0.33      0.31    939461
+weighted avg       0.38      0.34      0.35    939461
+
+Confusion matrix:
+[[ 45207  59105  34668  29806]
+ [ 76929 148029  99316  75192]
+ [ 37470  81135  98254  70369]
+ [  4724  15911  33846  29500]]
+
+EVAL comentario_mean_sin_balanceo
+Accuracy: 0.4289 | Balanced Acc: 0.2605 | Precision macro: 0.3666 | Recall macro: 0.2605 | F1 macro: 0.1823 | F1 weighted: 0.2836
+   14_19: prec=0.3232 rec=0.0156 f1=0.0297
+   20_29: prec=0.4325 rec=0.9714 f1=0.5985
+   30_39: prec=0.3597 rec=0.0375 f1=0.0679
+ 40_plus: prec=0.3512 rec=0.0174 f1=0.0332
+              precision    recall  f1-score   support
+
+       14_19       0.32      0.02      0.03    168786
+       20_29       0.43      0.97      0.60    399466
+       30_39       0.36      0.04      0.07    287228
+     40_plus       0.35      0.02      0.03     83981
+
+    accuracy                           0.43    939461
+   macro avg       0.37      0.26      0.18    939461
+weighted avg       0.38      0.43      0.28    939461
+
+Confusion matrix:
+[[  2628 163899   1922    337]
+ [  4262 388036   6319    849]
+ [  1033 273899  10775   1521]
+ [   209  71371  10936   1465]]
+
+EVAL comentario_mean_balanceo_manual
+Accuracy: 0.4278 | Balanced Acc: 0.2653 | Precision macro: 0.3604 | Recall macro: 0.2653 | F1 macro: 0.1967 | F1 weighted: 0.2920
+   14_19: prec=0.3261 rec=0.0306 f1=0.0559
+   20_29: prec=0.4334 rec=0.9560 f1=0.5964
+   30_39: prec=0.3542 rec=0.0423 f1=0.0756
+ 40_plus: prec=0.3278 rec=0.0324 f1=0.0589
+              precision    recall  f1-score   support
+
+       14_19       0.33      0.03      0.06    168786
+       20_29       0.43      0.96      0.60    399466
+       30_39       0.35      0.04      0.08    287228
+     40_plus       0.33      0.03      0.06     83981
+
+    accuracy                           0.43    939461
+   macro avg       0.36      0.27      0.20    939461
+weighted avg       0.38      0.43      0.29    939461
+
+Confusion matrix:
+[[  5157 160526   2365    738]
+ [  7849 381877   7963   1777]
+ [  2355 269666  12148   3059]
+ [   454  68991  11818   2718]]
+
+EVAL comentario_mean_undersampling
+Accuracy: 0.3445 | Balanced Acc: 0.3542 | Precision macro: 0.3313 | Recall macro: 0.3542 | F1 macro: 0.3250 | F1 weighted: 0.3561
+   14_19: prec=0.2849 rec=0.4122 f1=0.3370
+   20_29: prec=0.4835 rec=0.3389 f1=0.3985
+   30_39: prec=0.4034 rec=0.3089 f1=0.3499
+ 40_plus: prec=0.1534 rec=0.3566 f1=0.2145
+              precision    recall  f1-score   support
+
+       14_19       0.28      0.41      0.34    168786
+       20_29       0.48      0.34      0.40    399466
+       30_39       0.40      0.31      0.35    287228
+     40_plus       0.15      0.36      0.21     83981
+
+    accuracy                           0.34    939461
+   macro avg       0.33      0.35      0.32    939461
+weighted avg       0.39      0.34      0.36    939461
+
+Confusion matrix:
+[[ 69577  49282  24264  25663]
+ [117566 135389  76853  69658]
+ [ 47987  80519  88729  69993]
+ [  9047  14855  30132  29947]]
+B) CLASIFICACION A NIVEL DE USUARIO
+
+Split usuarios: train=1,626 eval=349 test=349
+
+  Agregando features por usuario para mean_of_last...
+Usuarios train: 1,626
+14_19: 279
+20_29: 959
+30_39: 317
+40_plus: 71
+Usuarios eval:  349
+ENTRENANDO: usuario_mean_of_last_sin_balanceo
+Train users: 1,626 | Eval users: 349
+Pesos de clase: ninguno (todos 1.0)
+
+EVAL usuario_mean_of_last_sin_balanceo
+Accuracy: 0.3381 | Balanced Acc: 0.3682 | Precision macro: 0.3333 | Recall macro: 0.3682 | F1 macro: 0.2972 | F1 weighted: 0.3300
+   14_19: prec=0.3458 rec=0.5606 f1=0.4277
+   20_29: prec=0.6500 rec=0.1970 f1=0.3023
+   30_39: prec=0.2941 rec=0.6154 f1=0.3980
+ 40_plus: prec=0.0435 rec=0.1000 f1=0.0606
+              precision    recall  f1-score   support
+
+       14_19       0.35      0.56      0.43        66
+       20_29       0.65      0.20      0.30       198
+       30_39       0.29      0.62      0.40        65
+     40_plus       0.04      0.10      0.06        20
+
+    accuracy                           0.34       349
+   macro avg       0.33      0.37      0.30       349
+weighted avg       0.49      0.34      0.33       349
+
+Confusion matrix:
+[[37 10 11  8]
+ [63 39 69 27]
+ [ 7  9 40  9]
+ [ 0  2 16  2]]
+ENTRENANDO: usuario_mean_of_last_balanceo_manual
+Train users: 1,626 | Eval users: 349
+Pesos de clase: 14_19=1.100, 20_29=0.850, 30_39=0.950, 40_plus=1.300
+
+EVAL usuario_mean_of_last_balanceo_manual
+Accuracy: 0.3610 | Balanced Acc: 0.4283 | Precision macro: 0.3686 | Recall macro: 0.4283 | F1 macro: 0.3382 | F1 weighted: 0.3531
+   14_19: prec=0.4000 rec=0.6061 f1=0.4819
+   20_29: prec=0.6721 rec=0.2071 f1=0.3166
+   30_39: prec=0.2910 rec=0.6000 f1=0.3920
+ 40_plus: prec=0.1111 rec=0.3000 f1=0.1622
+              precision    recall  f1-score   support
+
+       14_19       0.40      0.61      0.48        66
+       20_29       0.67      0.21      0.32       198
+       30_39       0.29      0.60      0.39        65
+     40_plus       0.11      0.30      0.16        20
+
+    accuracy                           0.36       349
+   macro avg       0.37      0.43      0.34       349
+weighted avg       0.52      0.36      0.35       349
+
+Confusion matrix:
+[[40 11  9  6]
+ [54 41 73 30]
+ [ 6  8 39 12]
+ [ 0  1 13  6]]
+Undersampling: min_count=71 (de {0: 279, 1: 959, 2: 317, 3: 71})
+ENTRENANDO: usuario_mean_of_last_undersampling
+Train users: 284 | Eval users: 349
+Pesos de clase: ninguno (todos 1.0)
+
+EVAL usuario_mean_of_last_undersampling
+Accuracy: 0.3696 | Balanced Acc: 0.4648 | Precision macro: 0.3801 | Recall macro: 0.4648 | F1 macro: 0.3559 | F1 weighted: 0.3867
+   14_19: prec=0.3875 rec=0.4697 f1=0.4247
+   20_29: prec=0.6790 rec=0.2778 f1=0.3943
+   30_39: prec=0.3125 rec=0.4615 f1=0.3727 40_plus: prec=0.1413 rec=0.6500 f1=0.2321
+              precision    recall  f1-score   support
+
+       14_19       0.39      0.47      0.42        66
+       20_29       0.68      0.28      0.39       198
+       30_39       0.31      0.46      0.37        65
+     40_plus       0.14      0.65      0.23        20
+
+    accuracy                           0.37       349
+   macro avg       0.38      0.46      0.36       349
+weighted avg       0.52      0.37      0.39       349
+
+Confusion matrix:
+[[31 16  8 11]
+ [43 55 51 49]
+ [ 6 10 30 19]
+ [ 0  0  7 13]]
+
+  Agregando features por usuario para mean_of_mean...
+Usuarios train: 1,626
+14_19: 279
+20_29: 959
+30_39: 317
+40_plus: 71
+Usuarios eval:  349
+ENTRENANDO: usuario_mean_of_mean_sin_balanceo
+Train users: 1,626 | Eval users: 349
+Pesos de clase: ninguno (todos 1.0)
+
+EVAL usuario_mean_of_mean_sin_balanceo
+Accuracy: 0.4155 | Balanced Acc: 0.4243 | Precision macro: 0.4016 | Recall macro: 0.4243 | F1 macro: 0.3725 | F1 weighted: 0.4398
+   14_19: prec=0.4839 rec=0.6818 f1=0.5660
+   20_29: prec=0.7529 rec=0.3232 f1=0.4523
+   30_39: prec=0.3107 rec=0.4923 f1=0.3810
+ 40_plus: prec=0.0588 rec=0.2000 f1=0.0909
+              precision    recall  f1-score   support
+
+       14_19       0.48      0.68      0.57        66
+       20_29       0.75      0.32      0.45       198
+       30_39       0.31      0.49      0.38        65
+     40_plus       0.06      0.20      0.09        20
+
+    accuracy                           0.42       349
+   macro avg       0.40      0.42      0.37       349
+weighted avg       0.58      0.42      0.44       349
+
+Confusion matrix:
+[[45  7  6  8]
+ [42 64 49 43]
+ [ 6 14 32 13]
+ [ 0  0 16  4]]
+ENTRENANDO: usuario_mean_of_mean_balanceo_manual
+Train users: 1,626 | Eval users: 349
+Pesos de clase: 14_19=1.100, 20_29=0.850, 30_39=0.950, 40_plus=1.300
+
+EVAL usuario_mean_of_mean_balanceo_manual
+Accuracy: 0.4097 | Balanced Acc: 0.4237 | Precision macro: 0.3986 | Recall macro: 0.4237 | F1 macro: 0.3692 | F1 weighted: 0.4405
+14_19: prec=0.4944 rec=0.6667 f1=0.5677
+20_29: prec=0.7640 rec=0.3434 f1=0.4739
+30_39: prec=0.2525 rec=0.3846 f1=0.3049 40_plus: prec=0.0833 rec=0.3000 f1=0.1304
+              precision    recall  f1-score   support
+
+       14_19       0.49      0.67      0.57        66
+       20_29       0.76      0.34      0.47       198
+       30_39       0.25      0.38      0.30        65
+     40_plus       0.08      0.30      0.13        20
+
+    accuracy                           0.41       349
+   macro avg       0.40      0.42      0.37       349
+weighted avg       0.58      0.41      0.44       349
+
+Confusion matrix:
+[[44  7  7  8]
+ [39 68 53 38]
+ [ 6 14 25 20]
+ [ 0  0 14  6]]
+Undersampling: min_count=71 (de {0: 279, 1: 959, 2: 317, 3: 71})
+ENTRENANDO: usuario_mean_of_mean_undersampling
+Train users: 284 | Eval users: 349
+Pesos de clase: ninguno (todos 1.0)
+
+EVAL usuario_mean_of_mean_undersampling
+Accuracy: 0.3352 | Balanced Acc: 0.4326 | Precision macro: 0.3422 | Recall macro: 0.4326 | F1 macro: 0.3201 | F1 weighted: 0.3414
+   14_19: prec=0.3962 rec=0.6364 f1=0.4884
+   20_29: prec=0.6133 rec=0.2323 f1=0.3370
+   30_39: prec=0.2329 rec=0.2615 f1=0.2464
+ 40_plus: prec=0.1263 rec=0.6000 f1=0.2087
+              precision    recall  f1-score   support
+
+       14_19       0.40      0.64      0.49        66
+       20_29       0.61      0.23      0.34       198
+       30_39       0.23      0.26      0.25        65
+     40_plus       0.13      0.60      0.21        20
+
+    accuracy                           0.34       349
+   macro avg       0.34      0.43      0.32       349
+weighted avg       0.47      0.34      0.34       349
+
+Confusion matrix:
+[[42  9  6  9]
+ [60 46 42 50]
+ [ 4 20 17 24]
+ [ 0  0  8 12]]
+MEJOR MODELO EN EVAL
+usuario_mean_of_mean_sin_balanceo | F1 macro=0.3725 | Recall macro=0.4243 | Precision macro=0.4016
+MEJOR MODELO POR NIVEL EN EVAL
+  [comentario] comentario_mean_undersampling | F1 macro=0.3250 | Recall macro=0.3542 | Precision macro=0.3313
+  [usuario] usuario_mean_of_mean_sin_balanceo | F1 macro=0.3725 | Recall macro=0.4243 | Precision macro=0.4016
+PASS C: Streaming datos de test (mejor por nivel)
+  [TEST   0.0%] step 1/5488 (128/702,359) | batch=128
+  [TEST  36.7%] step 2016/5488 (258,048/702,359) | batch=128
+  [TEST  72.5%] step 3980/5488 (509,440/702,359) | batch=128
+  [TEST 100.0%] step 5488/5488 (702,359/702,359) | batch=128
+
+TEST comentario_mean_undersampling
+Accuracy: 0.3458 | Balanced Acc: 0.3970 | Precision macro: 0.3289 | Recall macro: 0.3970 | F1 macro: 0.3174 | F1 weighted: 0.3658
+   14_19: prec=0.2293 rec=0.4688 f1=0.3080
+   20_29: prec=0.6192 rec=0.3296 f1=0.4302
+   30_39: prec=0.3081 rec=0.2705 f1=0.2881
+ 40_plus: prec=0.1591 rec=0.5192 f1=0.2435
+              precision    recall  f1-score   support
+
+       14_19       0.23      0.47      0.31     95959
+       20_29       0.62      0.33      0.43    384565
+       30_39       0.31      0.27      0.29    177130
+     40_plus       0.16      0.52      0.24     44705
+
+    accuracy                           0.35    702359
+   macro avg       0.33      0.40      0.32    702359
+weighted avg       0.46      0.35      0.37    702359
+
+Confusion matrix:
+[[ 44987  27259  11571  12142]
+ [110947 126752  82587  64279]
+ [ 37025  45890  47919  46296]
+ [  3244   4808  13440  23213]]
+
+TEST usuario_mean_of_mean_sin_balanceo
+Accuracy: 0.4269 | Balanced Acc: 0.4516 | Precision macro: 0.4056 | Recall macro: 0.4516 | F1 macro: 0.3828 | F1 weighted: 0.4540
+   14_19: prec=0.4405 rec=0.6066 f1=0.5103
+   20_29: prec=0.7527 rec=0.3431 f1=0.4714
+   30_39: prec=0.3558 rec=0.5441 f1=0.4302
+ 40_plus: prec=0.0735 rec=0.3125 f1=0.1190
+              precision    recall  f1-score   support
+
+       14_19       0.44      0.61      0.51        61
+       20_29       0.75      0.34      0.47       204
+       30_39       0.36      0.54      0.43        68
+     40_plus       0.07      0.31      0.12        16
+
+    accuracy                           0.43       349
+   macro avg       0.41      0.45      0.38       349
+weighted avg       0.59      0.43      0.45       349
+
+Confusion matrix:
+[[37 12  7  5]
+ [46 70 51 37]
+ [ 1  9 37 21]
+ [ 0  2  9  5]]
+MEJOR MODELO POR NIVEL EVALUADO EN TEST
+[comentario] comentario_mean_undersampling | Accuracy=0.3458 | BalAcc=0.3970 | F1 macro=0.3174 | Recall macro=0.3970 | Precision macro=0.3289
+[usuario] usuario_mean_of_mean_sin_balanceo | Accuracy=0.4269 | BalAcc=0.4516 | F1 macro=0.3828 | Recall macro=0.4516 | Precision macro=0.4056
+RESUMEN DE RESULTADOS (EVAL)
+Config                                           Acc  BalAcc  F1mac F1_14_19 F1_20_29 F1_30_39 F1_40_plus
+comentario_last_token_sin_balanceo            0.4270 0.25684 0.1702   0.0181   0.5985   0.0328   0.0316
+comentario_last_token_balanceo_manual         0.4269 0.26106 0.1812   0.0340   0.5975   0.0353   0.0579
+comentario_last_token_undersampling           0.3417 0.33294 0.3129   0.2714   0.4207   0.3551   0.2043
+comentario_mean_sin_balanceo                  0.4289 0.26048 0.1823   0.0297   0.5985   0.0679   0.0332
+comentario_mean_balanceo_manual               0.4278 0.26530 0.1967   0.0559   0.5964   0.0756   0.0589
+comentario_mean_undersampling                 0.3445 0.35416 0.3250   0.3370   0.3985   0.3499   0.2145
+usuario_mean_of_last_sin_balanceo             0.3381 0.36824 0.2972   0.4277   0.3023   0.3980   0.0606
+usuario_mean_of_last_balanceo_manual          0.3610 0.42828 0.3382   0.4819   0.3166   0.3920   0.1622
+usuario_mean_of_last_undersampling            0.3696 0.46475 0.3559   0.4247   0.3943   0.3727   0.2321
+usuario_mean_of_mean_sin_balanceo             0.4155 0.42434 0.3725   0.5660   0.4523   0.3810   0.0909
+usuario_mean_of_mean_balanceo_manual          0.4097 0.42368 0.3692   0.5677   0.4739   0.3049   0.1304
+usuario_mean_of_mean_undersampling            0.3352 0.43256 0.3201   0.4884   0.3370   0.2464   0.2087
+test_comentario_mean_undersampling            0.3458 0.39705 0.3174   0.3080   0.4302   0.2881   0.2435
+test_usuario_mean_of_mean_sin_balanceo        0.4269 0.45158 0.3828   0.5103   0.4714   0.4302   0.1190
+
+Resumen guardado en: modelos/edad_qwen_sae_activaciones/resultados_resumen.json
+COMPLETADO - Mejor modelo evaluado tambien en test
+[W505 18:08:19.341274437 AllocatorConfig.cpp:28] Warning: PYTORCH_CUDA_ALLOC_CONF is deprecated, use PYTORCH_ALLOC_CONF instead (function operator()) OK  edad_qwen_sae (25h 49m 22s)

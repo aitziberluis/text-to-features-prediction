@@ -27,7 +27,7 @@ TEXT_COLUMN = "body"
 CONTEXT_LEN = 256  #truncamos 2.5% pero ganamos velocidad y memoria obteniendo resultados muy parecidos 
 EXTRACT_BATCH_SIZE = 32
 MIN_EXTRACT_BATCH_SIZE = 4
-PROGRESS_INTERVAL = 3600
+PROGRESS_INTERVAL = 1000
 RANDOM_STATE = 42
 SGD_ALPHA = 1e-5
 TOP_K_LATENTS = 20
@@ -435,7 +435,7 @@ def _stream_sae_features(
                 now = time.time()
                 if now - last_print >= PROGRESS_INTERVAL or step == 1 or end >= n:
                     pct = 100.0 * end / max(1, n)
-                    print(f"[{pass_name} {pct:5.1f}%] step {step}/{total_steps} ({end:,}/{n:,}) | batch={current_batch_size}")
+                    print(f"[{pass_name} {pct:5.1f}%] step {step}/{total_steps} ({end:,}/{n:,}) | batch={current_batch_size}", flush=True)
                     last_print = now
 
                 yield start, end, last_np, mean_np
@@ -573,6 +573,15 @@ def _build_user_arrays(user_dict: Dict[str, List[object]], num_latents: int) -> 
         sums, count, label = user_dict[author]
         X[idx] = sums / max(int(count), 1)
         y[idx] = int(label)
+    # Sanitiza posibles inf/nan generados por acumulaciones fp16 dentro de la SAE.
+    n_bad = int((~np.isfinite(X)).sum())
+    if n_bad > 0:
+        finite_max = float(np.nanmax(np.where(np.isfinite(X), X, 0.0)))
+        finite_min = float(np.nanmin(np.where(np.isfinite(X), X, 0.0)))
+        posinf = finite_max if finite_max > 0 else 1e6
+        neginf = finite_min if finite_min < 0 else -1e6
+        print(f"[sanitize] {n_bad} valores no finitos en features de usuario -> clip a [{neginf:.3g}, {posinf:.3g}]", flush=True)
+        X = np.nan_to_num(X, nan=0.0, posinf=posinf, neginf=neginf)
     return X, y
 
 
