@@ -86,7 +86,7 @@ EVAL_SIZE = 0.15
 RANDOM_STATE = 42
 
 # entrenamiento
-EXTRACT_BATCH_SIZE = 32
+EXTRACT_BATCH_SIZE = 128
 MIN_EXTRACT_BATCH_SIZE = 4
 TRAIN_EPOCHS = 1
 SGD_ALPHA = 1e-5
@@ -96,7 +96,7 @@ SAE_DTYPE = torch.float16 if torch.cuda.is_available() else torch.float32
 CUDA_EMPTY_CACHE_EVERY = 200
 
 # progreso: imprimir cada hora (3600 s)
-PROGRESS_INTERVAL = 3600
+PROGRESS_INTERVAL = 300
 
 # configuraciones a correr
 COMMENT_POOLINGS = ["last_token", "mean"]

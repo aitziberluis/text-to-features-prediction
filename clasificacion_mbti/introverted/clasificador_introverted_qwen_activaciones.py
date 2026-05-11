@@ -272,10 +272,18 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
     last_token_path = os.path.join(ACTIVATIONS_DIR, "last_token.npy")
     mean_token_path = os.path.join(ACTIVATIONS_DIR, "mean_token.npy")
 
-    # buffer en RAM para evitar escrituras aleatorias al HDD (procesamos en
-    # orden de longitud y escribimos por indice original).
-    last_token_full = np.empty((n, hidden_size), dtype=np.float32)
-    mean_token_full = np.empty((n, hidden_size), dtype=np.float32)
+    # Buffers respaldados por disco (float16) para evitar OOM de RAM con
+    # datasets grandes: a float32 dos arrays (n, hidden_size) cuestan
+    # ~318 GiB para n~15.5M y hidden=2560, lo que mata el proceso. Con
+    # open_memmap los writes van directos al .npy en disco y solo se
+    # mantienen en RAM las paginas activas (cache del SO).
+    STORAGE_DTYPE = np.float16
+    last_token_full = np.lib.format.open_memmap(
+        last_token_path, mode="w+", dtype=STORAGE_DTYPE, shape=(n, hidden_size)
+    )
+    mean_token_full = np.lib.format.open_memmap(
+        mean_token_path, mode="w+", dtype=STORAGE_DTYPE, shape=(n, hidden_size)
+    )
 
     textos = df["text"].tolist()
 
@@ -324,8 +332,8 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
                 mean_np = np.nan_to_num(mean_tok.float().cpu().numpy(), nan=0.0, posinf=0.0, neginf=0.0)
                 idx_np = original_idx.numpy()
 
-                last_token_full[idx_np] = last_np
-                mean_token_full[idx_np] = mean_np
+                last_token_full[idx_np] = last_np.astype(STORAGE_DTYPE, copy=False)
+                mean_token_full[idx_np] = mean_np.astype(STORAGE_DTYPE, copy=False)
 
                 now = time.time()
                 if now - last_print >= PROGRESS_INTERVAL or step == 0 or step == total_steps - 1:
@@ -340,9 +348,11 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
         handle.remove()
 
     print(f"Volcando activaciones a {ACTIVATIONS_DIR}/")
-    np.save(last_token_path, last_token_full)
-    np.save(mean_token_path, mean_token_full)
+    # Memmaps ya estan en disco: solo flush + cerrar referencias.
+    last_token_full.flush()
+    mean_token_full.flush()
     del last_token_full, mean_token_full
+    gc.collect()
 
     # guardar labels y authors
     labels = df["label"].to_numpy().astype(np.int8)
@@ -358,6 +368,7 @@ def _extraer_y_guardar_activaciones(df: pd.DataFrame) -> None:
         "model": MODEL, "hookpoint": HOOKPOINT, "context_len": CONTEXT_LEN,
         "hidden_size": hidden_size, "n_comments": n,
         "trait": TRAIT_NAME, "num_classes": NUM_CLASSES,
+        "storage_dtype": str(np.dtype(STORAGE_DTYPE)),
     }
     with open(os.path.join(ACTIVATIONS_DIR, "meta.json"), "w") as f:
         json.dump(meta, f, indent=2)
@@ -926,6 +937,17 @@ def main():
             },
         }, f, ensure_ascii=False, indent=2)
     print(f"\nResumen guardado en: {summary_path}")
+
+    # Limpieza: borrar activaciones gigantes en /hdd para no saturar disco.
+    # last_token.npy + mean_token.npy ~159 GiB cada cadena.
+    for _fname in ("last_token.npy", "mean_token.npy"):
+        _fp = os.path.join(ACTIVATIONS_DIR, _fname)
+        if os.path.exists(_fp):
+            try:
+                os.remove(_fp)
+                print(f"[cleanup] eliminado {_fp}")
+            except OSError as _e:
+                print(f"[cleanup] no pude eliminar {_fp}: {_e}")
 
     print("COMPLETADO - Mejor modelo evaluado tambien en test")
 
