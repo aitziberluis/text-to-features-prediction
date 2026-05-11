@@ -11,3 +11,10 @@ modelos/
 
 # Large model checkpoints / tokenized data
 sae-ckpts/
+
+# leaked key, never recommit
+/a
+/a.pub
+id_rsa*
+id_ed25519*
+*.pem
