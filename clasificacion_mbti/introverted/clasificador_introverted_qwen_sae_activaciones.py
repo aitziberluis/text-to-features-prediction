@@ -76,6 +76,9 @@ NUM_CLASSES = 2
 # directorio compartido para los indices de split (comun a GPT y SAE)
 SPLITS_DIR = f"data/splits_{TRAIT_NAME}"
 
+# directorio de salida para artefactos y resumen
+OUTPUT_DIR = f"modelos/{TRAIT_NAME}_qwen_sae_activaciones"
+
 # splits
 TEST_SIZE = 0.15
 EVAL_SIZE = 0.15
