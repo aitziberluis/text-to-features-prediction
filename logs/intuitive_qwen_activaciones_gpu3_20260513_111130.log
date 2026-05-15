@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/aitziber.l/TFM/clasificacion_mbti/intuitive/clasificador_intuitive_qwen_activaciones.py", line 33, in <module>
+    import pandas as pd
+ModuleNotFoundError: No module named 'pandas'

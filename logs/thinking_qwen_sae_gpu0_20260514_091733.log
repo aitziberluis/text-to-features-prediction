@@ -1,0 +1,64 @@
+nohup: ignoring input
+CLASIFICADOR THINKING - SAE SOBRE GPT-2 (STREAMING)
+Preparación de Dataset para Clasificación de THINKING
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+17,639,864 comentarios cargados
+
+2. Cargando autores...
+10,295 autores cargados
+
+3. Filtrando autores con 'thinking' conocido...
+9,080 autores con thinking conocido
+(Eliminados 1,215 autores con thinking nulo)
+
+4. Uniendo comentarios con thinking por autor...
+15,581,291 comentarios con info de thinking
+(Eliminados 2,058,573 comentarios sin thinking conocido)
+
+5. Distribución de thinking:
+1: 11,388,118 comentarios (73.1%)
+0: 4,193,173 comentarios (26.9%)
+Dataset de thinking preparado y listo para usar
+Distribucion de thinking: {1: 11388118, 0: 4193173}
+Splits de usuarios cargados desde data/splits_thinking/
+
+Comentarios: train=10,992,938 eval=2,435,982 test=2,152,371
+0: train=2,997,939 eval=609,330 test=585,904
+1: train=7,994,999 eval=1,826,652 test=1,566,467
+SAE cargada: 16384 latentes, k=64, hookpoint=model.layers.25
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights:   0%|          | 1/398 [00:00<01:24,  4.71it/s]Loading weights:   9%|▉         | 36/398 [00:00<00:02, 139.64it/s]Loading weights:  15%|█▍        | 58/398 [00:00<00:02, 160.44it/s]Loading weights:  20%|██        | 80/398 [00:00<00:01, 174.25it/s]Loading weights:  25%|██▌       | 100/398 [00:00<00:01, 180.00it/s]Loading weights:  30%|███       | 120/398 [00:00<00:01, 179.27it/s]Loading weights:  35%|███▍      | 139/398 [00:00<00:01, 174.44it/s]Loading weights:  40%|███▉      | 158/398 [00:00<00:01, 174.67it/s]Loading weights:  45%|████▌     | 181/398 [00:01<00:01, 186.69it/s]Loading weights:  51%|█████     | 201/398 [00:01<00:01, 183.79it/s]Loading weights:  56%|█████▋    | 224/398 [00:01<00:00, 192.16it/s]Loading weights:  62%|██████▏   | 245/398 [00:01<00:00, 190.10it/s]Loading weights:  67%|██████▋   | 267/398 [00:01<00:00, 181.27it/s]Loading weights:  73%|███████▎  | 289/398 [00:01<00:00, 190.74it/s]Loading weights:  78%|███████▊  | 309/398 [00:01<00:00, 192.47it/s]Loading weights:  83%|████████▎ | 329/398 [00:01<00:00, 194.31it/s]Loading weights:  88%|████████▊ | 349/398 [00:01<00:00, 194.66it/s]Loading weights:  93%|█████████▎| 369/398 [00:02<00:00, 182.38it/s]Loading weights:  97%|█████████▋| 388/398 [00:02<00:00, 178.74it/s]Loading weights: 100%|██████████| 398/398 [00:02<00:00, 179.24it/s]
+Modelo truncado a las primeras 26 capas para hook 'model.layers.25'
+torch.compile activado (dynamic=True)
+num_latents=16384
+Undersampling: min_count=2,997,939 (de {0: 2997939, 1: 7994999})
+Undersampling: 5,995,878 muestras seleccionadas de 10,992,938
+PASS A: Streaming datos de entrenamiento
+  [TRAIN   0.0%] step 1/85883 (128/10,992,938) | batch=128
+  [TRAIN   1.7%] step 1453/85883 (185,984/10,992,938) | batch=128
+  [TRAIN   3.4%] step 2883/85883 (369,024/10,992,938) | batch=128
+  [TRAIN   5.0%] step 4267/85883 (546,176/10,992,938) | batch=128
+  [TRAIN   6.6%] step 5673/85883 (726,144/10,992,938) | batch=128
+  [TRAIN   8.2%] step 7076/85883 (905,728/10,992,938) | batch=128
+  [TRAIN   9.8%] step 8446/85883 (1,081,088/10,992,938) | batch=128
+  [TRAIN  11.5%] step 9848/85883 (1,260,544/10,992,938) | batch=128
+  [TRAIN  13.1%] step 11257/85883 (1,440,896/10,992,938) | batch=128
+  [TRAIN  14.7%] step 12639/85883 (1,617,792/10,992,938) | batch=128
+  [TRAIN  16.3%] step 14017/85883 (1,794,176/10,992,938) | batch=128
+  [TRAIN  18.0%] step 15419/85883 (1,973,632/10,992,938) | batch=128
+  [TRAIN  19.5%] step 16782/85883 (2,148,096/10,992,938) | batch=128
+  [TRAIN  21.2%] step 18174/85883 (2,326,272/10,992,938) | batch=128
+  [TRAIN  22.8%] step 19582/85883 (2,506,496/10,992,938) | batch=128
+  [TRAIN  24.4%] step 20945/85883 (2,680,960/10,992,938) | batch=128
+  [TRAIN  26.0%] step 22367/85883 (2,862,976/10,992,938) | batch=128
+  [TRAIN  27.7%] step 23753/85883 (3,040,384/10,992,938) | batch=128
+  [TRAIN  29.3%] step 25136/85883 (3,217,408/10,992,938) | batch=128
+  [TRAIN  30.9%] step 26533/85883 (3,396,224/10,992,938) | batch=128
+  [TRAIN  32.5%] step 27903/85883 (3,571,584/10,992,938) | batch=128
+  [TRAIN  34.1%] step 29291/85883 (3,749,248/10,992,938) | batch=128
+  [TRAIN  35.7%] step 30686/85883 (3,927,808/10,992,938) | batch=128
+  [TRAIN  37.3%] step 32038/85883 (4,100,864/10,992,938) | batch=128
+  [TRAIN  38.9%] step 33450/85883 (4,281,600/10,992,938) | batch=128
+  [TRAIN  40.6%] step 34843/85883 (4,459,904/10,992,938) | batch=128

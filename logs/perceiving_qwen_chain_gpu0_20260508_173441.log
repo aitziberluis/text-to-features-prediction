@@ -34,7 +34,34 @@ Extrayendo activaciones de GPT-2 para 15,582,276 comentarios
 Hookpoint: model.layers.25, batch_size: 128, workers: 16
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
 `torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights:   0%|          | 1/398 [00:00<04:04,  1.63it/s]Loading weights:  12%|█▏        | 46/398 [00:00<00:04, 84.69it/s]Loading weights:  18%|█▊        | 71/398 [00:01<00:03, 86.66it/s]Loading weights:  22%|██▏       | 89/398 [00:01<00:03, 99.29it/s]Loading weights:  27%|██▋       | 106/398 [00:01<00:03, 96.49it/s]Loading weights:  30%|███       | 120/398 [00:01<00:02, 102.11it/s]Loading weights:  34%|███▎      | 134/398 [00:01<00:02, 106.88it/s]Loading weights:  37%|███▋      | 147/398 [00:01<00:02, 93.94it/s] Loading weights:  40%|███▉      | 159/398 [00:01<00:02, 95.94it/s]Loading weights:  43%|████▎     | 170/398 [00:01<00:02, 97.86it/s]Loading weights:  48%|████▊     | 190/398 [00:02<00:01, 112.08it/s]Loading weights:  51%|█████     | 202/398 [00:02<00:01, 108.78it/s]Loading weights:  54%|█████▍    | 214/398 [00:02<00:01, 108.34it/s]Loading weights:  59%|█████▉    | 234/398 [00:02<00:01, 118.29it/s]Loading weights:  62%|██████▏   | 246/398 [00:02<00:01, 115.39it/s]Loading weights:  67%|██████▋   | 266/398 [00:02<00:00, 134.77it/s]Loading weights:  70%|███████   | 280/398 [00:02<00:01, 113.36it/s]Loading weights:  73%|███████▎  | 292/398 [00:02<00:00, 110.75it/s]Loading weights:  76%|███████▋  | 304/398 [00:03<00:00, 109.39it/s]Loading weights:  80%|████████  | 319/398 [00:03<00:00, 119.47it/s]Loading weights:  83%|████████▎ | 332/398 [00:03<00:00, 121.42it/s]Loading weights:  87%|████████▋ | 345/398 [00:03<00:00, 98.19it/s] Loading weights:  90%|████████▉ | 357/398 [00:03<00:00, 102.38it/s]Loading weights:  92%|█████████▏| 368/398 [00:03<00:00, 101.87it/s]Loading weights:  95%|█████████▌| 379/398 [00:03<00:00, 100.98it/s]Loading weights: 100%|██████████| 398/398 [00:03<00:00, 102.09it/s]
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   0%|          | 1/398 [00:00<04:04,  1.63it/s]
+Loading weights:  12%|█▏        | 46/398 [00:00<00:04, 84.69it/s]
+Loading weights:  18%|█▊        | 71/398 [00:01<00:03, 86.66it/s]
+Loading weights:  22%|██▏       | 89/398 [00:01<00:03, 99.29it/s]
+Loading weights:  27%|██▋       | 106/398 [00:01<00:03, 96.49it/s]
+Loading weights:  30%|███       | 120/398 [00:01<00:02, 102.11it/s]
+Loading weights:  34%|███▎      | 134/398 [00:01<00:02, 106.88it/s]
+Loading weights:  37%|███▋      | 147/398 [00:01<00:02, 93.94it/s] 
+Loading weights:  40%|███▉      | 159/398 [00:01<00:02, 95.94it/s]
+Loading weights:  43%|████▎     | 170/398 [00:01<00:02, 97.86it/s]
+Loading weights:  48%|████▊     | 190/398 [00:02<00:01, 112.08it/s]
+Loading weights:  51%|█████     | 202/398 [00:02<00:01, 108.78it/s]
+Loading weights:  54%|█████▍    | 214/398 [00:02<00:01, 108.34it/s]
+Loading weights:  59%|█████▉    | 234/398 [00:02<00:01, 118.29it/s]
+Loading weights:  62%|██████▏   | 246/398 [00:02<00:01, 115.39it/s]
+Loading weights:  67%|██████▋   | 266/398 [00:02<00:00, 134.77it/s]
+Loading weights:  70%|███████   | 280/398 [00:02<00:01, 113.36it/s]
+Loading weights:  73%|███████▎  | 292/398 [00:02<00:00, 110.75it/s]
+Loading weights:  76%|███████▋  | 304/398 [00:03<00:00, 109.39it/s]
+Loading weights:  80%|████████  | 319/398 [00:03<00:00, 119.47it/s]
+Loading weights:  83%|████████▎ | 332/398 [00:03<00:00, 121.42it/s]
+Loading weights:  87%|████████▋ | 345/398 [00:03<00:00, 98.19it/s] 
+Loading weights:  90%|████████▉ | 357/398 [00:03<00:00, 102.38it/s]
+Loading weights:  92%|█████████▏| 368/398 [00:03<00:00, 101.87it/s]
+Loading weights:  95%|█████████▌| 379/398 [00:03<00:00, 100.98it/s]
+Loading weights: 100%|██████████| 398/398 [00:03<00:00, 102.09it/s]
 Modelo truncado a las primeras 26 capas para hook 'model.layers.25'
 torch.compile activado (dynamic=True)
 Calculando longitudes y ordenando por longitud (bucketing)
@@ -442,7 +469,27 @@ Comentarios: train=10,998,355 eval=2,452,738 test=2,131,183
 1: train=6,340,601 eval=1,407,801 test=1,215,300
 SAE cargada: 16384 latentes, k=64, hookpoint=model.layers.25
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights:   0%|          | 1/398 [00:00<01:59,  3.32it/s]Loading weights:   8%|▊         | 33/398 [00:00<00:03, 102.45it/s]Loading weights:  13%|█▎        | 51/398 [00:00<00:02, 124.05it/s]Loading weights:  18%|█▊        | 71/398 [00:00<00:02, 141.81it/s]Loading weights:  23%|██▎       | 91/398 [00:00<00:02, 151.30it/s]Loading weights:  28%|██▊       | 113/398 [00:00<00:01, 164.20it/s]Loading weights:  34%|███▍      | 137/398 [00:00<00:01, 174.02it/s]Loading weights:  39%|███▉      | 157/398 [00:01<00:01, 177.53it/s]Loading weights:  44%|████▍     | 176/398 [00:01<00:01, 167.60it/s]Loading weights:  51%|█████     | 201/398 [00:01<00:01, 182.71it/s]Loading weights:  56%|█████▌    | 223/398 [00:01<00:00, 187.83it/s]Loading weights:  62%|██████▏   | 245/398 [00:01<00:00, 173.78it/s]Loading weights:  67%|██████▋   | 267/398 [00:01<00:00, 176.91it/s]Loading weights:  73%|███████▎  | 290/398 [00:01<00:00, 188.18it/s]Loading weights:  78%|███████▊  | 311/398 [00:01<00:00, 178.15it/s]Loading weights:  84%|████████▍ | 335/398 [00:02<00:00, 188.76it/s]Loading weights:  89%|████████▉ | 355/398 [00:02<00:00, 178.91it/s]Loading weights:  95%|█████████▍| 377/398 [00:02<00:00, 181.36it/s]Loading weights: 100%|██████████| 398/398 [00:02<00:00, 168.19it/s]
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   0%|          | 1/398 [00:00<01:59,  3.32it/s]
+Loading weights:   8%|▊         | 33/398 [00:00<00:03, 102.45it/s]
+Loading weights:  13%|█▎        | 51/398 [00:00<00:02, 124.05it/s]
+Loading weights:  18%|█▊        | 71/398 [00:00<00:02, 141.81it/s]
+Loading weights:  23%|██▎       | 91/398 [00:00<00:02, 151.30it/s]
+Loading weights:  28%|██▊       | 113/398 [00:00<00:01, 164.20it/s]
+Loading weights:  34%|███▍      | 137/398 [00:00<00:01, 174.02it/s]
+Loading weights:  39%|███▉      | 157/398 [00:01<00:01, 177.53it/s]
+Loading weights:  44%|████▍     | 176/398 [00:01<00:01, 167.60it/s]
+Loading weights:  51%|█████     | 201/398 [00:01<00:01, 182.71it/s]
+Loading weights:  56%|█████▌    | 223/398 [00:01<00:00, 187.83it/s]
+Loading weights:  62%|██████▏   | 245/398 [00:01<00:00, 173.78it/s]
+Loading weights:  67%|██████▋   | 267/398 [00:01<00:00, 176.91it/s]
+Loading weights:  73%|███████▎  | 290/398 [00:01<00:00, 188.18it/s]
+Loading weights:  78%|███████▊  | 311/398 [00:01<00:00, 178.15it/s]
+Loading weights:  84%|████████▍ | 335/398 [00:02<00:00, 188.76it/s]
+Loading weights:  89%|████████▉ | 355/398 [00:02<00:00, 178.91it/s]
+Loading weights:  95%|█████████▍| 377/398 [00:02<00:00, 181.36it/s]
+Loading weights: 100%|██████████| 398/398 [00:02<00:00, 168.19it/s]
 Modelo truncado a las primeras 26 capas para hook 'model.layers.25'
 torch.compile activado (dynamic=True)
 num_latents=16384
@@ -518,3 +565,309 @@ PASS B: Streaming datos de evaluacion
   [EVAL  46.4%] step 35550/76649 (1,137,600/2,452,738) | batch=32
   [EVAL  55.5%] step 42515/76649 (1,360,480/2,452,738) | batch=32
   [EVAL  65.5%] step 50186/76649 (1,605,952/2,452,738) | batch=32
+  [EVAL  73.5%] step 56326/76649 (1,802,432/2,452,738) | batch=32
+  [EVAL  81.6%] step 62568/76649 (2,002,176/2,452,738) | batch=32
+  [EVAL  89.8%] step 68796/76649 (2,201,472/2,452,738) | batch=32
+  [EVAL  97.9%] step 75046/76649 (2,401,472/2,452,738) | batch=32
+  [EVAL 100.0%] step 76649/76649 (2,452,738/2,452,738) | batch=32
+A) CLASIFICACION A NIVEL DE COMENTARIO
+
+EVAL comentario_last_token_sin_balanceo
+Accuracy: 0.5107 | Balanced Acc: 0.5231 | Precision macro: 0.5232 | Recall macro: 0.5231 | F1 macro: 0.5107 | F1 weighted: 0.5102
+       0: prec=0.4455 rec=0.6070 f1=0.5138
+       1: prec=0.6009 rec=0.4393 f1=0.5075
+              precision    recall  f1-score   support
+
+           0       0.45      0.61      0.51   1044937
+           1       0.60      0.44      0.51   1407801
+
+    accuracy                           0.51   2452738
+   macro avg       0.52      0.52      0.51   2452738
+weighted avg       0.53      0.51      0.51   2452738
+
+Confusion matrix:
+[[634240 410697]
+ [789423 618378]]
+
+EVAL comentario_last_token_balanceo_manual
+Accuracy: 0.5137 | Balanced Acc: 0.5190 | Precision macro: 0.5186 | Recall macro: 0.5190 | F1 macro: 0.5129 | F1 weighted: 0.5159
+       0: prec=0.4434 rec=0.5542 f1=0.4927
+       1: prec=0.5938 rec=0.4838 f1=0.5332
+              precision    recall  f1-score   support
+
+           0       0.44      0.55      0.49   1044937
+           1       0.59      0.48      0.53   1407801
+
+    accuracy                           0.51   2452738
+   macro avg       0.52      0.52      0.51   2452738
+weighted avg       0.53      0.51      0.52   2452738
+
+Confusion matrix:
+[[579064 465873]
+ [726772 681029]]
+
+EVAL comentario_last_token_undersampling
+Accuracy: 0.5143 | Balanced Acc: 0.5175 | Precision macro: 0.5172 | Recall macro: 0.5175 | F1 macro: 0.5128 | F1 weighted: 0.5168
+       0: prec=0.4425 rec=0.5394 f1=0.4862
+       1: prec=0.5918 rec=0.4956 f1=0.5395
+              precision    recall  f1-score   support
+
+           0       0.44      0.54      0.49   1044937
+           1       0.59      0.50      0.54   1407801
+
+    accuracy                           0.51   2452738
+   macro avg       0.52      0.52      0.51   2452738
+weighted avg       0.53      0.51      0.52   2452738
+
+Confusion matrix:
+[[563666 481271]
+ [710030 697771]]
+
+EVAL comentario_mean_sin_balanceo
+Accuracy: 0.5322 | Balanced Acc: 0.5256 | Precision macro: 0.5253 | Recall macro: 0.5256 | F1 macro: 0.5251 | F1 weighted: 0.5337
+       0: prec=0.4537 rec=0.4810 f1=0.4670
+       1: prec=0.5968 rec=0.5702 f1=0.5832
+              precision    recall  f1-score   support
+
+           0       0.45      0.48      0.47   1044937
+           1       0.60      0.57      0.58   1407801
+
+    accuracy                           0.53   2452738
+   macro avg       0.53      0.53      0.53   2452738
+weighted avg       0.54      0.53      0.53   2452738
+
+Confusion matrix:
+[[502607 542330]
+ [605089 802712]]
+
+EVAL comentario_mean_balanceo_manual
+Accuracy: 0.5262 | Balanced Acc: 0.5217 | Precision macro: 0.5213 | Recall macro: 0.5217 | F1 macro: 0.5206 | F1 weighted: 0.5283
+       0: prec=0.4487 rec=0.4910 f1=0.4689
+       1: prec=0.5938 rec=0.5523 f1=0.5723
+              precision    recall  f1-score   support
+
+           0       0.45      0.49      0.47   1044937
+           1       0.59      0.55      0.57   1407801
+
+    accuracy                           0.53   2452738
+   macro avg       0.52      0.52      0.52   2452738
+weighted avg       0.53      0.53      0.53   2452738
+
+Confusion matrix:
+[[513058 531879]
+ [630250 777551]]
+
+EVAL comentario_mean_undersampling
+Accuracy: 0.5236 | Balanced Acc: 0.5216 | Precision macro: 0.5211 | Recall macro: 0.5216 | F1 macro: 0.5196 | F1 weighted: 0.5261
+       0: prec=0.4479 rec=0.5082 f1=0.4761
+       1: prec=0.5944 rec=0.5350 f1=0.5631
+              precision    recall  f1-score   support
+
+           0       0.45      0.51      0.48   1044937
+           1       0.59      0.53      0.56   1407801
+
+    accuracy                           0.52   2452738
+   macro avg       0.52      0.52      0.52   2452738
+weighted avg       0.53      0.52      0.53   2452738
+
+Confusion matrix:
+[[531000 513937]
+ [654631 753170]]
+B) CLASIFICACION A NIVEL DE USUARIO
+
+  Usuarios mean_of_last: train=6,351 eval=1,361
+    0: train=2,619 eval=576
+    1: train=3,732 eval=785
+ENTRENANDO: usuario_mean_of_last_sin_balanceo
+Train users: 6,351 | Eval users: 1,361
+
+EVAL usuario_mean_of_last_sin_balanceo
+Accuracy: 0.5650 | Balanced Acc: 0.5668 | Precision macro: 0.5652 | Recall macro: 0.5668 | F1 macro: 0.5625 | F1 weighted: 0.5676
+       0: prec=0.4883 rec=0.5781 f1=0.5294
+       1: prec=0.6421 rec=0.5554 f1=0.5956
+              precision    recall  f1-score   support
+
+           0       0.49      0.58      0.53       576
+           1       0.64      0.56      0.60       785
+
+    accuracy                           0.57      1361
+   macro avg       0.57      0.57      0.56      1361
+weighted avg       0.58      0.57      0.57      1361
+
+Confusion matrix:
+[[333 243]
+ [349 436]]
+ENTRENANDO: usuario_mean_of_last_balanceo_manual
+Train users: 6,351 | Eval users: 1,361
+
+EVAL usuario_mean_of_last_balanceo_manual
+Accuracy: 0.5533 | Balanced Acc: 0.5582 | Precision macro: 0.5569 | Recall macro: 0.5582 | F1 macro: 0.5520 | F1 weighted: 0.5557
+       0: prec=0.4775 rec=0.5903 f1=0.5280
+       1: prec=0.6364 rec=0.5261 f1=0.5760
+              precision    recall  f1-score   support
+
+           0       0.48      0.59      0.53       576
+           1       0.64      0.53      0.58       785
+
+    accuracy                           0.55      1361
+   macro avg       0.56      0.56      0.55      1361
+weighted avg       0.57      0.55      0.56      1361
+
+Confusion matrix:
+[[340 236]
+ [372 413]]
+Undersampling: min_count=2,619 (de {0: 2619, 1: 3732})
+ENTRENANDO: usuario_mean_of_last_undersampling
+Train users: 5,238 | Eval users: 1,361
+
+EVAL usuario_mean_of_last_undersampling
+Accuracy: 0.5738 | Balanced Acc: 0.5760 | Precision macro: 0.5742 | Recall macro: 0.5760 | F1 macro: 0.5715 | F1 weighted: 0.5764
+       0: prec=0.4971 rec=0.5903 f1=0.5397
+       1: prec=0.6514 rec=0.5618 f1=0.6033
+              precision    recall  f1-score   support
+
+           0       0.50      0.59      0.54       576
+           1       0.65      0.56      0.60       785
+
+    accuracy                           0.57      1361
+   macro avg       0.57      0.58      0.57      1361
+weighted avg       0.59      0.57      0.58      1361
+
+Confusion matrix:
+[[340 236]
+ [344 441]]
+
+  Usuarios mean_of_mean: train=6,351 eval=1,361
+    0: train=2,619 eval=576
+    1: train=3,732 eval=785
+ENTRENANDO: usuario_mean_of_mean_sin_balanceo
+Train users: 6,351 | Eval users: 1,361
+
+EVAL usuario_mean_of_mean_sin_balanceo
+Accuracy: 0.5915 | Balanced Acc: 0.5890 | Precision macro: 0.5872 | Recall macro: 0.5890 | F1 macro: 0.5868 | F1 weighted: 0.5935
+       0: prec=0.5156 rec=0.5729 f1=0.5428
+       1: prec=0.6588 rec=0.6051 f1=0.6308
+              precision    recall  f1-score   support
+
+           0       0.52      0.57      0.54       576
+           1       0.66      0.61      0.63       785
+
+    accuracy                           0.59      1361
+   macro avg       0.59      0.59      0.59      1361
+weighted avg       0.60      0.59      0.59      1361
+
+Confusion matrix:
+[[330 246]
+ [310 475]]
+ENTRENANDO: usuario_mean_of_mean_balanceo_manual
+Train users: 6,351 | Eval users: 1,361
+
+EVAL usuario_mean_of_mean_balanceo_manual
+Accuracy: 0.5849 | Balanced Acc: 0.5856 | Precision macro: 0.5836 | Recall macro: 0.5856 | F1 macro: 0.5818 | F1 weighted: 0.5873
+       0: prec=0.5082 rec=0.5903 f1=0.5462
+       1: prec=0.6590 rec=0.5809 f1=0.6175
+              precision    recall  f1-score   support
+
+           0       0.51      0.59      0.55       576
+           1       0.66      0.58      0.62       785
+
+    accuracy                           0.58      1361
+   macro avg       0.58      0.59      0.58      1361
+weighted avg       0.60      0.58      0.59      1361
+
+Confusion matrix:
+[[340 236]
+ [329 456]]
+Undersampling: min_count=2,619 (de {0: 2619, 1: 3732})
+ENTRENANDO: usuario_mean_of_mean_undersampling
+Train users: 5,238 | Eval users: 1,361
+
+EVAL usuario_mean_of_mean_undersampling
+Accuracy: 0.5768 | Balanced Acc: 0.5781 | Precision macro: 0.5763 | Recall macro: 0.5781 | F1 macro: 0.5740 | F1 weighted: 0.5793
+       0: prec=0.5000 rec=0.5868 f1=0.5399
+       1: prec=0.6526 rec=0.5694 f1=0.6082
+              precision    recall  f1-score   support
+
+           0       0.50      0.59      0.54       576
+           1       0.65      0.57      0.61       785
+
+    accuracy                           0.58      1361
+   macro avg       0.58      0.58      0.57      1361
+weighted avg       0.59      0.58      0.58      1361
+
+Confusion matrix:
+[[338 238]
+ [338 447]]
+MEJOR MODELO EN EVAL
+usuario_mean_of_mean_sin_balanceo | F1 macro=0.5868 | Recall macro=0.5890 | Precision macro=0.5872
+MEJOR MODELO POR NIVEL EN EVAL
+  [comentario] comentario_mean_sin_balanceo | F1 macro=0.5251 | Recall macro=0.5256 | Precision macro=0.5253
+  [usuario] usuario_mean_of_mean_sin_balanceo | F1 macro=0.5868 | Recall macro=0.5890 | Precision macro=0.5872
+PASS C: Streaming datos de test (mejor por nivel)
+  [TEST   0.0%] step 1/66600 (32/2,131,183) | batch=32
+  [TEST  11.4%] step 7591/66600 (242,912/2,131,183) | batch=32
+  [TEST  22.4%] step 14887/66600 (476,384/2,131,183) | batch=32
+  [TEST  32.9%] step 21913/66600 (701,216/2,131,183) | batch=32
+  [TEST  43.9%] step 29268/66600 (936,576/2,131,183) | batch=32
+  [TEST  54.6%] step 36378/66600 (1,164,096/2,131,183) | batch=32
+  [TEST  65.8%] step 43837/66600 (1,402,784/2,131,183) | batch=32
+  [TEST  75.1%] step 49989/66600 (1,599,648/2,131,183) | batch=32
+  [TEST  84.9%] step 56543/66600 (1,809,376/2,131,183) | batch=32
+  [TEST  94.7%] step 63084/66600 (2,018,688/2,131,183) | batch=32
+  [TEST 100.0%] step 66600/66600 (2,131,183/2,131,183) | batch=32
+
+TEST comentario_mean_sin_balanceo
+Accuracy: 0.5114 | Balanced Acc: 0.5023 | Precision macro: 0.5023 | Recall macro: 0.5023 | F1 macro: 0.5023 | F1 weighted: 0.5118
+       0: prec=0.4323 rec=0.4373 f1=0.4348
+       1: prec=0.5722 rec=0.5673 f1=0.5698
+              precision    recall  f1-score   support
+
+           0       0.43      0.44      0.43    915883
+           1       0.57      0.57      0.57   1215300
+
+    accuracy                           0.51   2131183
+   macro avg       0.50      0.50      0.50   2131183
+weighted avg       0.51      0.51      0.51   2131183
+
+Confusion matrix:
+[[400470 515413]
+ [525810 689490]]
+
+TEST usuario_mean_of_mean_sin_balanceo
+Accuracy: 0.6175 | Balanced Acc: 0.6109 | Precision macro: 0.6091 | Recall macro: 0.6109 | F1 macro: 0.6095 | F1 weighted: 0.6191
+       0: prec=0.5357 rec=0.5727 f1=0.5536
+       1: prec=0.6825 rec=0.6491 f1=0.6654
+              precision    recall  f1-score   support
+
+           0       0.54      0.57      0.55       564
+           1       0.68      0.65      0.67       798
+
+    accuracy                           0.62      1362
+   macro avg       0.61      0.61      0.61      1362
+weighted avg       0.62      0.62      0.62      1362
+
+Confusion matrix:
+[[323 241]
+ [280 518]]
+
+======================================================================
+MEJOR MODELO POR NIVEL EVALUADO EN TEST
+  [comentario] comentario_mean_sin_balanceo | Accuracy=0.5114 | BalAcc=0.5023 | F1 macro=0.5023 | Recall macro=0.5023 | Precision macro=0.5023
+  [usuario] usuario_mean_of_mean_sin_balanceo | Accuracy=0.6175 | BalAcc=0.6109 | F1 macro=0.6095 | Recall macro=0.6109 | Precision macro=0.6091
+RESUMEN DE RESULTADOS (EVAL)
+Config                                           Acc  BalAcc  F1mac     F1_0     F1_1
+-------------------------------------------------------------------------------------
+comentario_last_token_sin_balanceo            0.5107 0.52311 0.5107   0.5138   0.5075
+comentario_last_token_balanceo_manual         0.5137 0.51896 0.5129   0.4927   0.5332
+comentario_last_token_undersampling           0.5143 0.51754 0.5128   0.4862   0.5395
+comentario_mean_sin_balanceo                  0.5322 0.52559 0.5251   0.4670   0.5832
+comentario_mean_balanceo_manual               0.5262 0.52166 0.5206   0.4689   0.5723
+comentario_mean_undersampling                 0.5236 0.52158 0.5196   0.4761   0.5631
+usuario_mean_of_last_sin_balanceo             0.5650 0.56677 0.5625   0.5294   0.5956
+usuario_mean_of_last_balanceo_manual          0.5533 0.55820 0.5520   0.5280   0.5760
+usuario_mean_of_last_undersampling            0.5738 0.57603 0.5715   0.5397   0.6033
+usuario_mean_of_mean_sin_balanceo             0.5915 0.58901 0.5868   0.5428   0.6308
+usuario_mean_of_mean_balanceo_manual          0.5849 0.58558 0.5818   0.5462   0.6175
+usuario_mean_of_mean_undersampling            0.5768 0.57812 0.5740   0.5399   0.6082
+test_comentario_mean_sin_balanceo             0.5114 0.50230 0.5023   0.4348   0.5698
+test_usuario_mean_of_mean_sin_balanceo        0.6175 0.61091 0.6095   0.5536   0.6654
