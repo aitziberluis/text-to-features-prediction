@@ -1,80 +1,135 @@
-TFM
+Uso de activaciones originales frente a representaciones SAE en la inferencia de características demográficas y personales a partir de comentarios textuales (proyecto TFM Aitziber Luis Villamil)
 ===
 
-Proyecto de clasificacion e interpretabilidad de modelos de texto.
+Desarrollo de métodos que no solo sean capaces de predecir características personales y demográficas a partir de texto, sino que también permitan interpretar las representaciones internas utilizadas para ello o que se pueda analizar porque se ha obtenido ese resultado (el uso de SAE)
 
-Objetivo
---------
+Resumen
+-------
 
-Extraer representaciones de lenguaje natural de un corpus de comentarios y usar esas representaciones para:
+Este repositorio implementa un flujo de trabajo para:
 
-- entrenar un autoencoder sparse (SAE) sobre activaciones de modelos causales.
-- clasificar genero y edad del autor.
-- clasificar dimensiones MBTI (introverted, intuitive, thinking, perceiving).
-- evaluar interpretabilidad de las activaciones y la calidad de las capas intermedias.
+- limpiar y unir comentarios con perfiles de autor.
+- entrenar un autoencoder sparse (SAE) sobre activaciones de modelos causales (en este caso hay código para entrenar modelo de QWEN y de GPT-2).
+- extraer activaciones de capas intermedias de GPT-2 y Qwen.
+- clasificar genero, edad y dimensiones MBTI (rasgos de personalidad de perceptivo, intuitivo, introvertido, racional).
+- analizar la interpretabilidad de las representaciones y los latentes.
 
-Estructura principal
---------------------
-
-- `preprocesamiento.py` - carga y normaliza datos de comentarios y perfiles de autor.
-- `tiny_sae.py` - implementacion del autoencoder sparse y funciones de entrenamiento.
-- `sae_gpt.py` - entrenamiento SAE sobre GPT-2 y preparacion de tokenizacion.
-- `sae_qwen.py` - entrenamiento SAE sobre Qwen y mejoras de rendimiento CUDA.
-- `find_best_layer.py` - barrido de capas para seleccionar la mejor capa de activacion.
-- `interpretabilidad_sae_common.py` - funciones compartidas para análisis interpretativo.
-- `interpretabilidad_sae_qwen_common.py` - funciones de interpretabilidad específicas para Qwen.
-- `clasificacion_edad/` - scripts para clasificar rangos de edad con distintas fuentes de activaciones.
-- `clasificacion_genero/` - scripts para clasificar genero.
-- `clasificacion_mbti/` - scripts para clasificar dimensiones MBTI.
-- `data/` - datos de entrada: comentarios y perfiles de autor.
-- `figuras/` - gráficos generados.
-- `logs/` - registros de entrenamiento y evaluacion.
-- `sae-ckpts/` - checkpoints de SAE entrenados.
-- `modelos/` - resultados de modelos y salidas de clasificadores.
-- `wandb/` - datos de Weights & Biases si se usa seguimiento de experimentos.
+Estructura y carpetas
+---------------------
+- `preprocesamiento.py` - carga, limpia y normaliza datos.
+- `tiny_sae.py` - definicion de la SAE y funciones de entrenamiento.
+- `sae_gpt.py` - entrenamiento SAE sobre GPT-2.
+- `sae_qwen.py` - entrenamiento SAE sobre Qwen.
+- `find_best_layer.py` - encontrar la capa que mejores resultados puede dar para esta tarea (se ha usado sobre el modelo de QWEN).
+- `interpretabilidad_sae_common.py` - analisis de latentes SAE.
+- `interpretabilidad_sae_qwen_common.py` - analisis SAE/Qwen.
+- `clasificacion_edad/` - experimentos de edad.
+- `clasificacion_genero/` - experimentos de genero.
+- `clasificacion_mbti/` - experimentos MBTI.
+- `data/` - datos de entrada.
+- `figuras/` - graficos generados.
+- `logs/` - registros de ejecucion.
+- `modelos/` - resultados de clasificadores.
+- `sae-ckpts/` - checkpoints SAE.
+- `wandb/` - artefactos de seguimiento opcional.
 
 Datos esperados
 ---------------
+(Datos personales y con dimensiones muy grandes por eso no estan subidos)
+- `data/all_comments_since_2015.csv`
+  - columnas: `author`, `body`
+- `data/author_profiles.csv`
+  - columnas: `author`, `gender`, `is_female`, `age`, `introverted`, `intuitive`, `thinking`, `perceiving`
 
-- `data/all_comments_since_2015.csv` - dataset de comentarios.
-  - columna de texto esperada: `body`.
-  - columna de autor esperada: `author` o equivalente.
-- `data/author_profiles.csv` - perfiles de autor.
-  - columna de autor: `author`.
-  - columnas de genero: `gender`, `is_female`.
-  - columna de edad: `age`.
-  - columnas MBTI: `introverted`, `intuitive`, `thinking`, `perceiving`.
+`preprocesamiento.py` valida los datos, normaliza `author`, filtra cuerpos vacios y crea datasets de entrenamiento.
 
-Tareas principales
+Flujos principales
 ------------------
 
-1. preparacion de datos
-   - carga comentarios limpios y perfiles de autor.
+1. Preparacion de datos
+   - `preprocesamiento.py` carga comentarios y perfiles.
    - normaliza genero y edad.
    - une comentarios con etiquetas por autor.
 
-2. entrenamiento SAE
-   - `sae_gpt.py` usa GPT-2 y `tiny_sae.py` para entrenar un autoencoder sparse.
-   - `sae_qwen.py` usa Qwen y optimizaciones de CUDA / flash attention.
+2. Entrenamiento SAE
+   - `sae_gpt.py` entrena la SAE usando GPT-2.
+   - `sae_qwen.py` entrena la SAE usando Qwen.
+   - `tiny_sae.py` define la arquitectura SAE y `train_sae`.
 
-3. extracción de activaciones
-   - `find_best_layer.py` prueba capas intermedias de un modelo causal.
-   - clasificacion basada en activaciones GPT/Qwen y en representaciones SAE.
+3. Extraccion de activaciones
+   - `find_best_layer.py` extrae y evalua activaciones por capa.
+   - permite elegir la mejor capa para genero, edad y MBTI (se ha usado para elegir la mejor capa del modelo de QWEN).
 
-4. clasificación y evaluacion
-   - carpetas `clasificacion_edad`, `clasificacion_genero`, `clasificacion_mbti`.
-   - se entrena y evalua clasificación sobre datos de usuario y datos de comentario.
-   - se comparan configuraciones con y sin balanceo de clases.
+4. Clasificacion y evaluacion
+   - `clasificacion_edad/`, `clasificacion_genero/`, `clasificacion_mbti/`.
+   - los scripts entrenan clasificadores lineales sobre activaciones y representaciones SAE.
+   - tambien generan analisis de interpretabilidad y ablaciones.
 
-Uso básico
------------
+5. Interpretabilidad
+   - `interpretabilidad_sae_common.py` agrupa resultados por usuario.
+   - selecciona latentes relevantes y calcula metricas de comportamiento.
+   - guarda resúmenes JSON y markdown.
 
-1. colocar los CSV en `data/`.
-2. revisar y ajustar rutas en los scripts o variables de entorno.
-3. ejecutar `preprocesamiento.py` para verificar carga y limpiar columnas.
-4. entrenar SAE con `sae_gpt.py` o `sae_qwen.py`.
-5. ejecutar los experimentos de clasificación en las carpetas correspondientes.
-6. revisar `logs/`, `figuras/` y `modelos/`.
+Ejecucion recomendada
+---------------------
+
+1. validar datos
+
+```sh
+cd TFM
+python3 preprocesamiento.py
+```
+
+2. entrenar SAE con GPT-2
+
+```sh
+cd TFM
+python3 sae_gpt.py
+```
+
+3. entrenar SAE con Qwen
+
+```sh
+cd TFM
+python3 sae_qwen.py
+```
+
+4. ejecutar barrido de capas
+
+```sh
+cd TFM
+python3 find_best_layer.py
+```
+
+5. clasificacion de genero
+
+```sh
+cd TFM/clasificacion_genero/gpt_qwen_activaciones
+python3 clasificador_genero_gpt_activaciones.py
+```
+
+6. interpretabilidad de genero
+
+```sh
+cd TFM/clasificacion_genero/gpt_qwen_activaciones
+python3 interpretabilidad_genero_sae.py
+```
+
+7. clasificacion de edad
+
+```sh
+cd TFM/clasificacion_edad/gpt_qwen_activaciones
+python3 clasificador_edad_qwen_sae_activaciones.py
+```
+
+8. clasificacion MBTI
+
+```sh
+cd TFM/clasificacion_mbti/introverted
+python3 clasificador_introverted_sae_activaciones.py
+```
+
+
 
 Dependencias
 ------------
@@ -93,17 +148,9 @@ Dependencias
 - einops
 - safetensors
 
-Notas de entorno
-----------------
-
-- muchos scripts leen variables de entorno para control de batch size, device y rutas.
-- se recomienda `cuda` cuando haya GPU disponible.
-- los checkpoints pueden guardarse fuera del directorio del proyecto en discos rápidos.
-
-Puntos de atención
-------------------
-
-- `preprocesamiento.py` es el punto central para unir comentarios y autor.
-- `find_best_layer.py` ayuda a elegir la capa de activacion con mejor performance.
-- los experimentos de MBTI son binarias por cada dimensión.
-- `sae-ckpts/` y `logs/` contienen resultados que pueden ocupar espacio.
+Notas
+-----
+- proyecto orientado a GPU; training y extraccion de activaciones pueden ser costosos.
+- los checkpoints y activaciones pueden ocupar mucho espacio en disco.
+- los experimentos MBTI son binarias para cada dimension.
+- `wandb/` es opcional y se usa solo si se habilita seguimiento con weights and biases.
