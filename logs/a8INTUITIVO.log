@@ -42,7 +42,7 @@ Activaciones: hidden_size=768, comentarios=15,596,767 0: 2,043,267 (13.1%) 1: 13
 # A) CLASIFICACION A NIVEL DE COMENTARIO
 Splits de usuarios cargados desde data/splits_intuitive/
 Split de comentarios (por usuario) guardado en data/splits_intuitive/split_comentarios_por_usuario.npz
-  Sin leakage: cada usuario aparece en un unico split.
+Sin leakage: cada usuario aparece en un unico split.
 
 Split comentarios: train=10,728,331 eval=2,279,220 test=2,589,216
 0: train=1,433,866 eval=287,766
@@ -56,20 +56,20 @@ Pesos de clase: ninguno (todos 1.0)
 
 EVAL comentario_last_token_sin_balanceo
 Accuracy: 0.8735 | Balanced Acc: 0.5001 | Precision macro: 0.5315 | Recall macro: 0.5001 | F1 macro: 0.4668 | F1 weighted: 0.8149
-         0: prec=0.1893 rec=0.0005 f1=0.0011
-         1: prec=0.8738 rec=0.9997 f1=0.9325
-              precision    recall  f1-score   support
+0: prec=0.1893 rec=0.0005 f1=0.0011
+1: prec=0.8738 rec=0.9997 f1=0.9325
+precision    recall  f1-score   support
 
-           0       0.19      0.00      0.00    287766
-           1       0.87      1.00      0.93   1991454
+0       0.19      0.00      0.00    287766
+1       0.87      1.00      0.93   1991454
 
-    accuracy                           0.87   2279220
-   macro avg       0.53      0.50      0.47   2279220
+accuracy                           0.87   2279220
+macro avg       0.53      0.50      0.47   2279220
 weighted avg       0.79      0.87      0.81   2279220
 
 Confusion matrix:
 [[    152  287614]
- [    651 1990803]]
+[    651 1990803]]
 ENTRENANDO: comentario_last_token_balanceo_manual
 Train: 10,728,331 | Eval: 2,279,220
 Pesos de clase: 0=1.100, 1=0.900
@@ -77,20 +77,20 @@ Pesos de clase: 0=1.100, 1=0.900
 
 EVAL comentario_last_token_balanceo_manual
 Accuracy: 0.8732 | Balanced Acc: 0.5002 | Precision macro: 0.5301 | Recall macro: 0.5002 | F1 macro: 0.4675 | F1 weighted: 0.8149
-         0: prec=0.1864 rec=0.0013 f1=0.0027
-         1: prec=0.8738 rec=0.9992 f1=0.9323
-              precision    recall  f1-score   support
+0: prec=0.1864 rec=0.0013 f1=0.0027
+1: prec=0.8738 rec=0.9992 f1=0.9323
+precision    recall  f1-score   support
 
-           0       0.19      0.00      0.00    287766
-           1       0.87      1.00      0.93   1991454
+0       0.19      0.00      0.00    287766
+1       0.87      1.00      0.93   1991454
 
-    accuracy                           0.87   2279220
-   macro avg       0.53      0.50      0.47   2279220
+accuracy                           0.87   2279220
+macro avg       0.53      0.50      0.47   2279220
 weighted avg       0.79      0.87      0.81   2279220
 
 Confusion matrix:
 [[    385  287381]
- [   1681 1989773]]
+[   1681 1989773]]
 Undersampling: min_count=1,433,866 (de {0: 1433866, 1: 9294465})
 ENTRENANDO: comentario_last_token_undersampling
 Train: 2,867,732 | Eval: 2,279,220
@@ -99,20 +99,20 @@ Pesos de clase: ninguno (todos 1.0)
 
 EVAL comentario_last_token_undersampling
 Accuracy: 0.5502 | Balanced Acc: 0.5265 | Precision macro: 0.5118 | Recall macro: 0.5265 | F1 macro: 0.4509 | F1 weighted: 0.6254
-         0: prec=0.1393 rec=0.4947 f1=0.2174
-         1: prec=0.8843 rec=0.5582 f1=0.6844
-              precision    recall  f1-score   support
+0: prec=0.1393 rec=0.4947 f1=0.2174
+1: prec=0.8843 rec=0.5582 f1=0.6844
+precision    recall  f1-score   support
 
-           0       0.14      0.49      0.22    287766
-           1       0.88      0.56      0.68   1991454
+0       0.14      0.49      0.22    287766
+1       0.88      0.56      0.68   1991454
 
-    accuracy                           0.55   2279220
-   macro avg       0.51      0.53      0.45   2279220
+accuracy                           0.55   2279220
+macro avg       0.51      0.53      0.45   2279220
 weighted avg       0.79      0.55      0.63   2279220
 
 Confusion matrix:
 [[ 142369  145397]
- [ 879784 1111670]]
+[ 879784 1111670]]
 
 Ajustando StandardScaler para mean (incremental)...
 Scaler ajustado sobre 10,728,331 muestras
@@ -123,20 +123,20 @@ Pesos de clase: ninguno (todos 1.0)
 
 EVAL comentario_mean_sin_balanceo
 Accuracy: 0.8733 | Balanced Acc: 0.5003 | Precision macro: 0.5418 | Recall macro: 0.5003 | F1 macro: 0.4674 | F1 weighted: 0.8150
-         0: prec=0.2097 rec=0.0012 f1=0.0025
-         1: prec=0.8738 rec=0.9993 f1=0.9324
-              precision    recall  f1-score   support
+0: prec=0.2097 rec=0.0012 f1=0.0025
+1: prec=0.8738 rec=0.9993 f1=0.9324
+precision    recall  f1-score   support
 
-           0       0.21      0.00      0.00    287766
-           1       0.87      1.00      0.93   1991454
+0       0.21      0.00      0.00    287766
+1       0.87      1.00      0.93   1991454
 
-    accuracy                           0.87   2279220
-   macro avg       0.54      0.50      0.47   2279220
+accuracy                           0.87   2279220
+macro avg       0.54      0.50      0.47   2279220
 weighted avg       0.79      0.87      0.81   2279220
 
 Confusion matrix:
 [[    358  287408]
- [   1349 1990105]]
+[   1349 1990105]]
 ENTRENANDO: comentario_mean_balanceo_manual
 Train: 10,728,331 | Eval: 2,279,220
 Pesos de clase: 0=1.100, 1=0.900
@@ -144,20 +144,20 @@ Pesos de clase: 0=1.100, 1=0.900
 
 EVAL comentario_mean_balanceo_manual
 Accuracy: 0.8728 | Balanced Acc: 0.5004 | Precision macro: 0.5302 | Recall macro: 0.5004 | F1 macro: 0.4683 | F1 weighted: 0.8149
-         0: prec=0.1866 rec=0.0023 f1=0.0046
-         1: prec=0.8738 rec=0.9985 f1=0.9320
-              precision    recall  f1-score   support
+0: prec=0.1866 rec=0.0023 f1=0.0046
+1: prec=0.8738 rec=0.9985 f1=0.9320
+precision    recall  f1-score   support
 
-           0       0.19      0.00      0.00    287766
-           1       0.87      1.00      0.93   1991454
+0       0.19      0.00      0.00    287766
+1       0.87      1.00      0.93   1991454
 
-    accuracy                           0.87   2279220
-   macro avg       0.53      0.50      0.47   2279220
+accuracy                           0.87   2279220
+macro avg       0.53      0.50      0.47   2279220
 weighted avg       0.79      0.87      0.81   2279220
 
 Confusion matrix:
 [[    669  287097]
- [   2917 1988537]]
+[   2917 1988537]]
 Undersampling: min_count=1,433,866 (de {0: 1433866, 1: 9294465})
 ENTRENANDO: comentario_mean_undersampling
 Train: 2,867,732 | Eval: 2,279,220
@@ -166,20 +166,20 @@ Pesos de clase: ninguno (todos 1.0)
 
 EVAL comentario_mean_undersampling
 Accuracy: 0.5508 | Balanced Acc: 0.5320 | Precision macro: 0.5143 | Recall macro: 0.5320 | F1 macro: 0.4530 | F1 weighted: 0.6259
-         0: prec=0.1419 rec=0.5069 f1=0.2218
-         1: prec=0.8866 rec=0.5571 f1=0.6843
-              precision    recall  f1-score   support
+0: prec=0.1419 rec=0.5069 f1=0.2218
+1: prec=0.8866 rec=0.5571 f1=0.6843
+precision    recall  f1-score   support
 
-           0       0.14      0.51      0.22    287766
-           1       0.89      0.56      0.68   1991454
+0       0.14      0.51      0.22    287766
+1       0.89      0.56      0.68   1991454
 
-    accuracy                           0.55   2279220
-   macro avg       0.51      0.53      0.45   2279220
+accuracy                           0.55   2279220
+macro avg       0.51      0.53      0.45   2279220
 weighted avg       0.79      0.55      0.63   2279220
 
 Confusion matrix:
 [[ 145879  141887]
- [ 882005 1109449]]
+[ 882005 1109449]]
 
 
 # B) CLASIFICACION A NIVEL DE USUARIO
@@ -195,40 +195,40 @@ Pesos de clase: ninguno (todos 1.0)
 
 EVAL usuario_mean_of_last_sin_balanceo
 Accuracy: 0.8745 | Balanced Acc: 0.5090 | Precision macro: 0.6212 | Recall macro: 0.5090 | F1 macro: 0.4888 | F1 weighted: 0.8234
-         0: prec=0.3636 rec=0.0238 f1=0.0447
-         1: prec=0.8787 rec=0.9941 f1=0.9329
-              precision    recall  f1-score   support
+0: prec=0.3636 rec=0.0238 f1=0.0447
+1: prec=0.8787 rec=0.9941 f1=0.9329
+precision    recall  f1-score   support
 
-           0       0.36      0.02      0.04       168
-           1       0.88      0.99      0.93      1195
+0       0.36      0.02      0.04       168
+1       0.88      0.99      0.93      1195
 
-    accuracy                           0.87      1363
-   macro avg       0.62      0.51      0.49      1363
+accuracy                           0.87      1363
+macro avg       0.62      0.51      0.49      1363
 weighted avg       0.82      0.87      0.82      1363
 
 Confusion matrix:
 [[   4  164]
- [   7 1188]]
+[   7 1188]]
 ENTRENANDO: usuario_mean_of_last_balanceo_manual
 Train users: 6,357 | Eval users: 1,363
 Pesos de clase: 0=1.100, 1=0.900
 
 EVAL usuario_mean_of_last_balanceo_manual
 Accuracy: 0.8767 | Balanced Acc: 0.5333 | Precision macro: 0.6920 | Recall macro: 0.5333 | F1 macro: 0.5338 | F1 weighted: 0.8351
-         0: prec=0.5000 rec=0.0774 f1=0.1340
-         1: prec=0.8841 rec=0.9891 f1=0.9336
-              precision    recall  f1-score   support
+0: prec=0.5000 rec=0.0774 f1=0.1340
+1: prec=0.8841 rec=0.9891 f1=0.9336
+precision    recall  f1-score   support
 
-           0       0.50      0.08      0.13       168
-           1       0.88      0.99      0.93      1195
+0       0.50      0.08      0.13       168
+1       0.88      0.99      0.93      1195
 
-    accuracy                           0.88      1363
-   macro avg       0.69      0.53      0.53      1363
+accuracy                           0.88      1363
+macro avg       0.69      0.53      0.53      1363
 weighted avg       0.84      0.88      0.84      1363
 
 Confusion matrix:
 [[  13  155]
- [  13 1182]]
+[  13 1182]]
 Undersampling: min_count=707 (de {0: 707, 1: 5650})
 ENTRENANDO: usuario_mean_of_last_undersampling
 Train users: 1,414 | Eval users: 1,363
@@ -236,76 +236,76 @@ Pesos de clase: ninguno (todos 1.0)
 
 EVAL usuario_mean_of_last_undersampling
 Accuracy: 0.5583 | Balanced Acc: 0.6100 | Precision macro: 0.5476 | Recall macro: 0.6100 | F1 macro: 0.4786 | F1 weighted: 0.6322
-         0: prec=0.1722 rec=0.6786 f1=0.2747
-         1: prec=0.9230 rec=0.5414 f1=0.6825
-              precision    recall  f1-score   support
+0: prec=0.1722 rec=0.6786 f1=0.2747
+1: prec=0.9230 rec=0.5414 f1=0.6825
+precision    recall  f1-score   support
 
-           0       0.17      0.68      0.27       168
-           1       0.92      0.54      0.68      1195
+0       0.17      0.68      0.27       168
+1       0.92      0.54      0.68      1195
 
-    accuracy                           0.56      1363
-   macro avg       0.55      0.61      0.48      1363
+accuracy                           0.56      1363
+macro avg       0.55      0.61      0.48      1363
 weighted avg       0.83      0.56      0.63      1363
 
 Confusion matrix:
 [[114  54]
- [548 647]]
+[548 647]]
 Agregando features por usuario para mean_of_mean...
 ENTRENANDO: usuario_mean_of_mean_sin_balanceo Train users: 6,357 | Eval users: 1,363 Pesos de clase: ninguno (todos 1.0)
 
 EVAL usuario_mean_of_mean_sin_balanceo
 Accuracy: 0.8767 | Balanced Acc: 0.5256 | Precision macro: 0.6912 | Recall macro: 0.5256 | F1 macro: 0.5201 | F1 weighted: 0.8318
-         0: prec=0.5000 rec=0.0595 f1=0.1064
-         1: prec=0.8824 rec=0.9916 f1=0.9338
-              precision    recall  f1-score   support
+0: prec=0.5000 rec=0.0595 f1=0.1064
+1: prec=0.8824 rec=0.9916 f1=0.9338
+precision    recall  f1-score   support
 
-           0       0.50      0.06      0.11       168
-           1       0.88      0.99      0.93      1195
+0       0.50      0.06      0.11       168
+1       0.88      0.99      0.93      1195
 
-    accuracy                           0.88      1363
-   macro avg       0.69      0.53      0.52      1363
+accuracy                           0.88      1363
+macro avg       0.69      0.53      0.52      1363
 weighted avg       0.84      0.88      0.83      1363
 
 Confusion matrix:
 [[  10  158]
- [  10 1185]]
+[  10 1185]]
 ENTRENANDO: usuario_mean_of_mean_balanceo_manual Train users: 6,357 | Eval users: 1,363 Pesos de clase: 0=1.100, 1=0.900
 
 EVAL usuario_mean_of_mean_balanceo_manual
 Accuracy: 0.8745 | Balanced Acc: 0.5294 | Precision macro: 0.6638 | Recall macro: 0.5294 | F1 macro: 0.5278 | F1 weighted: 0.8327
-         0: prec=0.4444 rec=0.0714 f1=0.1231
-         1: prec=0.8832 rec=0.9874 f1=0.9324
-              precision    recall  f1-score   support
+0: prec=0.4444 rec=0.0714 f1=0.1231
+1: prec=0.8832 rec=0.9874 f1=0.9324
+precision    recall  f1-score   support
 
-           0       0.44      0.07      0.12       168
-           1       0.88      0.99      0.93      1195
+0       0.44      0.07      0.12       168
+1       0.88      0.99      0.93      1195
 
-    accuracy                           0.87      1363
-   macro avg       0.66      0.53      0.53      1363
+accuracy                           0.87      1363
+macro avg       0.66      0.53      0.53      1363
 weighted avg       0.83      0.87      0.83      1363
 
 Confusion matrix:
 [[  12  156]
- [  15 1180]]
+[  15 1180]]
 Undersampling: min_count=707 (de {0: 707, 1: 5650})
 ENTRENANDO: usuario_mean_of_mean_undersampling Train users: 1,414 | Eval users: 1,363 Pesos de clase: ninguno (todos 1.0)
 
 EVAL usuario_mean_of_mean_undersampling
 Accuracy: 0.5664 | Balanced Acc: 0.6299 | Precision macro: 0.5562 | Recall macro: 0.6299 | F1 macro: 0.4885 | F1 weighted: 0.6389
-         0: prec=0.1810 rec=0.7143 f1=0.2888
-         1: prec=0.9314 rec=0.5456 f1=0.6881
-              precision    recall  f1-score   support
+0: prec=0.1810 rec=0.7143 f1=0.2888
+1: prec=0.9314 rec=0.5456 f1=0.6881
+precision    recall  f1-score   support
 
-           0       0.18      0.71      0.29       168
-           1       0.93      0.55      0.69      1195
+0       0.18      0.71      0.29       168
+1       0.93      0.55      0.69      1195
 
-    accuracy                           0.57      1363
-   macro avg       0.56      0.63      0.49      1363
+accuracy                           0.57      1363
+macro avg       0.56      0.63      0.49      1363
 weighted avg       0.84      0.57      0.64      1363
 
 Confusion matrix:
 [[120  48]
- [543 652]]
+[543 652]]
 RESUMEN DE RESULTADOS (EVAL)
 comentario_last_token_sin_balanceo            0.8735 0.50010 0.4668   0.0011   0.9325
 comentario_last_token_balanceo_manual         0.8732 0.50025 0.4675   0.0027   0.9323
@@ -327,35 +327,35 @@ Mejor Modelo por Nivel en EVAL
 
 TEST comentario_mean_balanceo_manual
 Accuracy: 0.8749 | Balanced Acc: 0.5001 | Precision macro: 0.5076 | Recall macro: 0.5001 | F1 macro: 0.4680 | F1 weighted: 0.8177
-         0: prec=0.1394 rec=0.0014 f1=0.0028
-         1: prec=0.8758 rec=0.9987 f1=0.9332
-              precision    recall  f1-score   support
+0: prec=0.1394 rec=0.0014 f1=0.0028
+1: prec=0.8758 rec=0.9987 f1=0.9332
+precision    recall  f1-score   support
 
-           0       0.14      0.00      0.00    321635
-           1       0.88      1.00      0.93   2267581
+0       0.14      0.00      0.00    321635
+1       0.88      1.00      0.93   2267581
 
-    accuracy                           0.87   2589216
-   macro avg       0.51      0.50      0.47   2589216
+accuracy                           0.87   2589216
+macro avg       0.51      0.50      0.47   2589216
 weighted avg       0.78      0.87      0.82   2589216
 Confusion matrix:
 [[    461  321174]
- [   2847 2264734]]
+[   2847 2264734]]
 TEST usuario_mean_of_last_balanceo_manual
 Accuracy: 0.8826 | Balanced Acc: 0.5060 | Precision macro: 0.5691 | Recall macro: 0.5060 | F1 macro: 0.4868 | F1 weighted: 0.8357
-         0: prec=0.2500 rec=0.0195 f1=0.0361
-         1: prec=0.8882 rec=0.9926 f1=0.9375
-              precision    recall  f1-score   support
+0: prec=0.2500 rec=0.0195 f1=0.0361
+1: prec=0.8882 rec=0.9926 f1=0.9375
+precision    recall  f1-score   support
 
-           0       0.25      0.02      0.04       154
-           1       0.89      0.99      0.94      1209
+0       0.25      0.02      0.04       154
+1       0.89      0.99      0.94      1209
 
-    accuracy                           0.88      1363
-   macro avg       0.57      0.51      0.49      1363
+accuracy                           0.88      1363
+macro avg       0.57      0.51      0.49      1363
 weighted avg       0.82      0.88      0.84      1363
 
 Confusion matrix:
 [[   3  151]
- [   9 1200]]
+[   9 1200]]
 
 
 Mejor Modelo por Nivel Evaluado en TEST [comentario] comentario_mean_balanceo_manual | Accuracy=0.8749 | BalAcc=0.5001 | F1 macro=0.4680 | Recall macro=0.5001 | Precision macro=0.5076 [usuario] usuario_mean_of_last_balanceo_manual | Accuracy=0.8826 | BalAcc=0.5060 | F1 macro=0.4868 | Recall macro=0.5060 | Precision macro=0.5691
@@ -415,105 +415,105 @@ Pass A completado: 10,728,331 muestras procesadas.
 # A) CLASIFICACION A NIVEL DE COMENTARIO
 EVAL comentario_last_token_sin_balanceo
 Accuracy: 0.2971 | Balanced Acc: 0.4938 | Precision macro: 0.4962 | Recall macro: 0.4938 | F1 macro: 0.2891 | F1 weighted: 0.3454
-         0: prec=0.1245 rec=0.7570 f1=0.2138
-         1: prec=0.8679 rec=0.2307 f1=0.3645
-              precision    recall  f1-score   support
+0: prec=0.1245 rec=0.7570 f1=0.2138
+1: prec=0.8679 rec=0.2307 f1=0.3645
+precision    recall  f1-score   support
 
-           0       0.12      0.76      0.21    287766
-           1       0.87      0.23      0.36   1991454
+0       0.12      0.76      0.21    287766
+1       0.87      0.23      0.36   1991454
 
-    accuracy                           0.30   2279220
-   macro avg       0.50      0.49      0.29   2279220
+accuracy                           0.30   2279220
+macro avg       0.50      0.49      0.29   2279220
 weighted avg       0.77      0.30      0.35   2279220
 
 Confusion matrix:
 [[ 217840   69926]
- [1532112  459342]]
+[1532112  459342]]
 
 EVAL comentario_last_token_balanceo_manual
 Accuracy: 0.2963 | Balanced Acc: 0.4944 | Precision macro: 0.4965 | Recall macro: 0.4944 | F1 macro: 0.2885 | F1 weighted: 0.3441
-         0: prec=0.1246 rec=0.7593 f1=0.2141
-         1: prec=0.8684 rec=0.2294 f1=0.3629
-              precision    recall  f1-score   support
+0: prec=0.1246 rec=0.7593 f1=0.2141
+1: prec=0.8684 rec=0.2294 f1=0.3629
+precision    recall  f1-score   support
 
-           0       0.12      0.76      0.21    287766
-           1       0.87      0.23      0.36   1991454
+0       0.12      0.76      0.21    287766
+1       0.87      0.23      0.36   1991454
 
-    accuracy                           0.30   2279220
-   macro avg       0.50      0.49      0.29   2279220
+accuracy                           0.30   2279220
+macro avg       0.50      0.49      0.29   2279220
 weighted avg       0.77      0.30      0.34   2279220
 
 Confusion matrix:
 [[ 218510   69256]
- [1534609  456845]]
+[1534609  456845]]
 
 EVAL comentario_last_token_undersampling
 Accuracy: 0.5027 | Balanced Acc: 0.5247 | Precision macro: 0.5109 | Recall macro: 0.5247 | F1 macro: 0.4273 | F1 weighted: 0.5826
-         0: prec=0.1369 rec=0.5541 f1=0.2196
-         1: prec=0.8849 rec=0.4953 f1=0.6351
-              precision    recall  f1-score   support
+0: prec=0.1369 rec=0.5541 f1=0.2196
+1: prec=0.8849 rec=0.4953 f1=0.6351
+precision    recall  f1-score   support
 
-           0       0.14      0.55      0.22    287766
-           1       0.88      0.50      0.64   1991454
+0       0.14      0.55      0.22    287766
+1       0.88      0.50      0.64   1991454
 
-    accuracy                           0.50   2279220
-   macro avg       0.51      0.52      0.43   2279220
+accuracy                           0.50   2279220
+macro avg       0.51      0.52      0.43   2279220
 weighted avg       0.79      0.50      0.58   2279220
 
 Confusion matrix:
 [[ 159451  128315]
- [1005163  986291]]
+[1005163  986291]]
 
 EVAL comentario_mean_sin_balanceo
 Accuracy: 0.6159 | Balanced Acc: 0.4948 | Precision macro: 0.4974 | Recall macro: 0.4948 | F1 macro: 0.4644 | F1 weighted: 0.6774
-         0: prec=0.1229 rec=0.3327 f1=0.1795
-         1: prec=0.8720 rec=0.6569 f1=0.7493
-              precision    recall  f1-score   support
+0: prec=0.1229 rec=0.3327 f1=0.1795
+1: prec=0.8720 rec=0.6569 f1=0.7493
+precision    recall  f1-score   support
 
-           0       0.12      0.33      0.18    287766
-           1       0.87      0.66      0.75   1991454
+0       0.12      0.33      0.18    287766
+1       0.87      0.66      0.75   1991454
 
-    accuracy                           0.62   2279220
-   macro avg       0.50      0.49      0.46   2279220
+accuracy                           0.62   2279220
+macro avg       0.50      0.49      0.46   2279220
 weighted avg       0.78      0.62      0.68   2279220
 
 Confusion matrix:
 [[  95743  192023]
- [ 683324 1308130]]
+[ 683324 1308130]]
 
 EVAL comentario_mean_balanceo_manual
 Accuracy: 0.6157 | Balanced Acc: 0.4955 | Precision macro: 0.4978 | Recall macro: 0.4955 | F1 macro: 0.4646 | F1 weighted: 0.6772
-         0: prec=0.1234 rec=0.3347 f1=0.1803
-         1: prec=0.8722 rec=0.6563 f1=0.7490
-              precision    recall  f1-score   support
+0: prec=0.1234 rec=0.3347 f1=0.1803
+1: prec=0.8722 rec=0.6563 f1=0.7490
+precision    recall  f1-score   support
 
-           0       0.12      0.33      0.18    287766
-           1       0.87      0.66      0.75   1991454
+0       0.12      0.33      0.18    287766
+1       0.87      0.66      0.75   1991454
 
-    accuracy                           0.62   2279220
-   macro avg       0.50      0.50      0.46   2279220
+accuracy                           0.62   2279220
+macro avg       0.50      0.50      0.46   2279220
 weighted avg       0.78      0.62      0.68   2279220
 
 Confusion matrix:
 [[  96327  191439]
- [ 684518 1306936]]
+[ 684518 1306936]]
 
 EVAL comentario_mean_undersampling
 Accuracy: 0.5452 | Balanced Acc: 0.5268 | Precision macro: 0.5119 | Recall macro: 0.5268 | F1 macro: 0.4487 | F1 weighted: 0.6211
-         0: prec=0.1392 rec=0.5021 f1=0.2180
-         1: prec=0.8846 rec=0.5514 f1=0.6794
-              precision    recall  f1-score   support
+0: prec=0.1392 rec=0.5021 f1=0.2180
+1: prec=0.8846 rec=0.5514 f1=0.6794
+precision    recall  f1-score   support
 
-           0       0.14      0.50      0.22    287766
-           1       0.88      0.55      0.68   1991454
+0       0.14      0.50      0.22    287766
+1       0.88      0.55      0.68   1991454
 
-    accuracy                           0.55   2279220
-   macro avg       0.51      0.53      0.45   2279220
+accuracy                           0.55   2279220
+macro avg       0.51      0.53      0.45   2279220
 weighted avg       0.79      0.55      0.62   2279220
 
 Confusion matrix:
 [[ 144477  143289]
- [ 893276 1098178]]
+[ 893276 1098178]]
 
 
 # B) CLASIFICACION A NIVEL DE USUARIO
@@ -527,115 +527,115 @@ Train users: 6,357 | Eval users: 1,363
 
 EVAL usuario_mean_of_last_sin_balanceo
 Accuracy: 0.5928 | Balanced Acc: 0.5120 | Precision macro: 0.5055 | Recall macro: 0.5120 | F1 macro: 0.4620 | F1 weighted: 0.6619
-         0: prec=0.1300 rec=0.4048 f1=0.1968
-         1: prec=0.8810 rec=0.6192 f1=0.7273
-              precision    recall  f1-score   support
+0: prec=0.1300 rec=0.4048 f1=0.1968
+1: prec=0.8810 rec=0.6192 f1=0.7273
+precision    recall  f1-score   support
 
-           0       0.13      0.40      0.20       168
-           1       0.88      0.62      0.73      1195
+0       0.13      0.40      0.20       168
+1       0.88      0.62      0.73      1195
 
-    accuracy                           0.59      1363
-   macro avg       0.51      0.51      0.46      1363
+accuracy                           0.59      1363
+macro avg       0.51      0.51      0.46      1363
 weighted avg       0.79      0.59      0.66      1363
 
 Confusion matrix:
 [[ 68 100]
- [455 740]]
+[455 740]]
 ENTRENANDO: usuario_mean_of_last_balanceo_manual
 Train users: 6,357 | Eval users: 1,363
 
 EVAL usuario_mean_of_last_balanceo_manual
 Accuracy: 0.6067 | Balanced Acc: 0.5430 | Precision macro: 0.5197 | Recall macro: 0.5430 | F1 macro: 0.4800 | F1 weighted: 0.6734
-         0: prec=0.1475 rec=0.4583 f1=0.2232
-         1: prec=0.8918 rec=0.6276 f1=0.7367
-              precision    recall  f1-score   support
+0: prec=0.1475 rec=0.4583 f1=0.2232
+1: prec=0.8918 rec=0.6276 f1=0.7367
+precision    recall  f1-score   support
 
-           0       0.15      0.46      0.22       168
-           1       0.89      0.63      0.74      1195
+0       0.15      0.46      0.22       168
+1       0.89      0.63      0.74      1195
 
-    accuracy                           0.61      1363
-   macro avg       0.52      0.54      0.48      1363
+accuracy                           0.61      1363
+macro avg       0.52      0.54      0.48      1363
 weighted avg       0.80      0.61      0.67      1363
 
 Confusion matrix:
 [[ 77  91]
- [445 750]]
+[445 750]]
 Undersampling: min_count=707 (de {0: 707, 1: 5650})
 ENTRENANDO: usuario_mean_of_last_undersampling
 Train users: 1,414 | Eval users: 1,363
 
 EVAL usuario_mean_of_last_undersampling
 Accuracy: 0.5099 | Balanced Acc: 0.5747 | Precision macro: 0.5324 | Recall macro: 0.5747 | F1 macro: 0.4428 | F1 weighted: 0.5885
-         0: prec=0.1537 rec=0.6607 f1=0.2494
-         1: prec=0.9111 rec=0.4887 f1=0.6362
-              precision    recall  f1-score   support
+0: prec=0.1537 rec=0.6607 f1=0.2494
+1: prec=0.9111 rec=0.4887 f1=0.6362
+precision    recall  f1-score   support
 
-           0       0.15      0.66      0.25       168
-           1       0.91      0.49      0.64      1195
+0       0.15      0.66      0.25       168
+1       0.91      0.49      0.64      1195
 
-    accuracy                           0.51      1363
-   macro avg       0.53      0.57      0.44      1363
+accuracy                           0.51      1363
+macro avg       0.53      0.57      0.44      1363
 weighted avg       0.82      0.51      0.59      1363
 
 Confusion matrix:
 [[111  57]
- [611 584]]
+[611 584]]
 
 Usuarios mean_of_mean: train=6,357 eval=1,3630: train=707 eval=168 1: train=5,650 eval=1,195
 ENTRENANDO: usuario_mean_of_mean_sin_balanceo Train users: 6,357 | Eval users: 1,363
 
 EVAL usuario_mean_of_mean_sin_balanceo
 Accuracy: 0.6552 | Balanced Acc: 0.5757 | Precision macro: 0.5366 | Recall macro: 0.5757 | F1 macro: 0.5138 | F1 weighted: 0.7113
-         0: prec=0.1717 rec=0.4702 f1=0.2516
-         1: prec=0.9014 rec=0.6812 f1=0.7760
-              precision    recall  f1-score   support
+0: prec=0.1717 rec=0.4702 f1=0.2516
+1: prec=0.9014 rec=0.6812 f1=0.7760
+precision    recall  f1-score   support
 
-           0       0.17      0.47      0.25       168
-           1       0.90      0.68      0.78      1195
+0       0.17      0.47      0.25       168
+1       0.90      0.68      0.78      1195
 
-    accuracy                           0.66      1363
-   macro avg       0.54      0.58      0.51      1363
+accuracy                           0.66      1363
+macro avg       0.54      0.58      0.51      1363
 weighted avg       0.81      0.66      0.71      1363
 
 Confusion matrix:
 [[ 79  89]
- [381 814]]ENTRENANDO: usuario_mean_of_mean_balanceo_manualTrain users: 6,357 | Eval users: 1,363
+[381 814]]ENTRENANDO: usuario_mean_of_mean_balanceo_manualTrain users: 6,357 | Eval users: 1,363
 
 EVAL usuario_mean_of_mean_balanceo_manual
 Accuracy: 0.6317 | Balanced Acc: 0.5879 | Precision macro: 0.5405 | Recall macro: 0.5879 | F1 macro: 0.5082 | F1 weighted: 0.6939
-         0: prec=0.1738 rec=0.5298 f1=0.2618
-         1: prec=0.9072 rec=0.6460 f1=0.7546
-              precision    recall  f1-score   support
+0: prec=0.1738 rec=0.5298 f1=0.2618
+1: prec=0.9072 rec=0.6460 f1=0.7546
+precision    recall  f1-score   support
 
-           0       0.17      0.53      0.26       168
-           1       0.91      0.65      0.75      1195
+0       0.17      0.53      0.26       168
+1       0.91      0.65      0.75      1195
 
-    accuracy                           0.63      1363
-   macro avg       0.54      0.59      0.51      1363
+accuracy                           0.63      1363
+macro avg       0.54      0.59      0.51      1363
 weighted avg       0.82      0.63      0.69      1363
 
 Confusion matrix:
 [[ 89  79]
- [423 772]]Undersampling: min_count=707 (de {0: 707, 1: 5650})
+[423 772]]Undersampling: min_count=707 (de {0: 707, 1: 5650})
 ENTRENANDO: usuario_mean_of_mean_undersampling
 Train users: 1,414 | Eval users: 1,363
 
 EVAL usuario_mean_of_mean_undersampling
 Accuracy: 0.5620 | Balanced Acc: 0.6453 | Precision macro: 0.5628 | Recall macro: 0.6453 | F1 macro: 0.4900 | F1 weighted: 0.6344
-         0: prec=0.1859 rec=0.7560 f1=0.2985
-         1: prec=0.9397 rec=0.5347 f1=0.6816
-              precision    recall  f1-score   support
+0: prec=0.1859 rec=0.7560 f1=0.2985
+1: prec=0.9397 rec=0.5347 f1=0.6816
+precision    recall  f1-score   support
 
-           0       0.19      0.76      0.30       168
-           1       0.94      0.53      0.68      1195
+0       0.19      0.76      0.30       168
+1       0.94      0.53      0.68      1195
 
-    accuracy                           0.56      1363
-   macro avg       0.56      0.65      0.49      1363
+accuracy                           0.56      1363
+macro avg       0.56      0.65      0.49      1363
 weighted avg       0.85      0.56      0.63      1363
 
 Confusion matrix:
 [[127  41]
- [556 639]]
+[556 639]]
 MEJOR MODELO EN EVAL
 usuario_mean_of_mean_sin_balanceo | F1 macro=0.5138 | Recall macro=0.5757 | Precision macro=0.5366
 Mejor Modelo por Nivel en EVAL
@@ -647,15 +647,15 @@ Mejor Modelo por Nivel en EVAL
 
 TEST comentario_mean_balanceo_manual
 Accuracy: 0.6156 | Balanced Acc: 0.5086 | Precision macro: 0.5041 | Recall macro: 0.5086 | F1 macro: 0.4696 | F1 weighted: 0.6787
-         0: prec=0.1295 rec=0.3662 f1=0.1914
-         1: prec=0.8787 rec=0.6510 f1=0.7479
-              precision    recall  f1-score   support
+0: prec=0.1295 rec=0.3662 f1=0.1914
+1: prec=0.8787 rec=0.6510 f1=0.7479
+precision    recall  f1-score   support
 
-           0       0.13      0.37      0.19    321635
-           1       0.88      0.65      0.75   2267581
+0       0.13      0.37      0.19    321635
+1       0.88      0.65      0.75   2267581
 
-    accuracy                           0.62   2589216
-   macro avg       0.50      0.51      0.47   2589216
+accuracy                           0.62   2589216
+macro avg       0.50      0.51      0.47   2589216
 weighted avg       0.79      0.62      0.68   2589216
 
 Confusion matrix:
@@ -664,20 +664,20 @@ Confusion matrix:
 
 TEST usuario_mean_of_mean_sin_balanceo
 Accuracy: 0.6398 | Balanced Acc: 0.5618 | Precision macro: 0.5272 | Recall macro: 0.5618 | F1 macro: 0.4949 | F1 weighted: 0.7043
-         0: prec=0.1482 rec=0.4610 f1=0.2243
-         1: prec=0.9061 rec=0.6625 f1=0.7654
-              precision    recall  f1-score   support
+0: prec=0.1482 rec=0.4610 f1=0.2243
+1: prec=0.9061 rec=0.6625 f1=0.7654
+precision    recall  f1-score   support
 
-           0       0.15      0.46      0.22       154
-           1       0.91      0.66      0.77      1209
+0       0.15      0.46      0.22       154
+1       0.91      0.66      0.77      1209
 
-    accuracy                           0.64      1363
-   macro avg       0.53      0.56      0.49      1363
+accuracy                           0.64      1363
+macro avg       0.53      0.56      0.49      1363
 weighted avg       0.82      0.64      0.70      1363
 
 Confusion matrix:
 [[ 71  83]
- [408 801]]
+[408 801]]
 Mejor Modelo por Nivel Evaluado en TEST[comentario] comentario_mean_balanceo_manual | Accuracy=0.6156 | BalAcc=0.5086 | F1 macro=0.4696 | Recall macro=0.5086 | Precision macro=0.5041[usuario] usuario_mean_of_mean_sin_balanceo | Accuracy=0.6398 | BalAcc=0.5618 | F1 macro=0.4949 | Recall macro=0.5618 | Precision macro=0.5272
 RESUMEN DE RESULTADOS (EVAL)
 Config                                           Acc  BalAcc  F1mac     F1_0     F1_1

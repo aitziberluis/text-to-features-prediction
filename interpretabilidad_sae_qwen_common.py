@@ -25,8 +25,9 @@ PATH_COMENTARIOS = "data/all_comments_since_2015.csv"
 PATH_AUTORES = "data/author_profiles.csv"
 TEXT_COLUMN = "body"
 CONTEXT_LEN = 256  #truncamos 2.5% pero ganamos velocidad y memoria obteniendo resultados muy parecidos 
-EXTRACT_BATCH_SIZE = 32
+EXTRACT_BATCH_SIZE = 128
 MIN_EXTRACT_BATCH_SIZE = 4
+MAX_EXAMPLES_SCAN = 2_000_000  # cap para la pasada TRAIN_TOPACT_EXAMPLES: solo necesitamos ~40 latentes x 8 ejemplos
 PROGRESS_INTERVAL = 1000
 RANDOM_STATE = 42
 SGD_ALPHA = 1e-5
@@ -105,7 +106,12 @@ def run_posthoc_analysis(config: SaeInterpretabilityConfig) -> Dict[str, object]
         if latents:
             activation_targets[class_idx] = latents
     if activation_targets:
-        activation_examples = _collect_examples_for_target_latents(df=df_train,tokenizer=tokenizer,model=model,sae=sae,hookpoint_module=hookpoint_module,num_latents=num_latents,targets=activation_targets,top_examples=config.top_examples_per_latent,pooling=best_pooling,pass_name="TRAIN_TOPACT_EXAMPLES",)
+        if len(df_train) > MAX_EXAMPLES_SCAN:
+            df_examples_scan = df_train.sample(n=MAX_EXAMPLES_SCAN, random_state=RANDOM_STATE).reset_index(drop=True)
+            print(f"TRAIN_TOPACT_EXAMPLES: usando muestra de {MAX_EXAMPLES_SCAN:,}/{len(df_train):,} comentarios", flush=True)
+        else:
+            df_examples_scan = df_train
+        activation_examples = _collect_examples_for_target_latents(df=df_examples_scan,tokenizer=tokenizer,model=model,sae=sae,hookpoint_module=hookpoint_module,num_latents=num_latents,targets=activation_targets,top_examples=config.top_examples_per_latent,pooling=best_pooling,pass_name="TRAIN_TOPACT_EXAMPLES",)
     else:
         activation_examples = None
     top_by_activation = _compute_top_activation_per_class(class_act_stats,config.class_names,top_k=config.top_k_latents,examples_by_class_idx=activation_examples,)
@@ -592,11 +598,8 @@ def _fit_user_model(
     balance_name: str = "balanceado",
     manual_weights: Optional[Sequence[float]] = None,
 ) -> Tuple[StandardScaler, SGDClassifier]:
-    """Replica el entrenamiento del clasificador SAE a nivel usuario.
-
-    balance_name: 'sin_balanceo', 'balanceado' / 'balanceo_manual', 'undersampling'.
-    manual_weights: pesos por rango de frecuencia (de menos a mas frecuente).
-        Si None y se requiere balanceo, se usa inverso-frecuencia clasico.
+    """Replica el entrenamiento del clasificador SAE a nivel usuario. balance_name: 'sin_balanceo', 'balanceado' / 'balanceo_manual', 'undersampling'.
+    manual_weights: pesos por rango de frecuencia (de menos a mas frecuente). Si None y se requiere balanceo, se usa inverso-frecuencia clasico.
     """
     X_used = X_train
     y_used = y_train

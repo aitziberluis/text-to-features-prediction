@@ -1,0 +1,286 @@
+nohup: ignoring input
+Preparación de Dataset para Clasificación de Edad
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+17,639,864 comentarios cargados
+
+2. Cargando autores...
+10,295 autores cargados
+
+3. Uniendo comentarios con edad por autor...
+17,639,863 comentarios con info de edad
+
+4. Filtrando solo edad conocida (rangos válidos)...
+5,538,809 comentarios con rango de edad válido
+(Eliminados 12,101,054 comentarios con edad nula/fuera de rango)
+
+5. Distribución por rango de edad:
+20_29: 2,811,112 comentarios (50.8%)
+30_39: 1,422,075 comentarios (25.7%)
+14_19: 877,575 comentarios (15.8%)
+40_plus: 428,047 comentarios (7.7%)
+Dataset de edad preparado y listo para usar
+Train comments: 3,896,989 | Eval comments: 939,461
+SAE cargada: 16384 latentes, k=64, hookpoint=model.layers.25
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   0%|          | 1/398 [00:00<01:51,  3.57it/s]
+Loading weights:   9%|▉         | 36/398 [00:00<00:03, 113.90it/s]
+Loading weights:  15%|█▍        | 58/398 [00:00<00:02, 133.48it/s]
+Loading weights:  19%|█▉        | 76/398 [00:00<00:02, 145.03it/s]
+Loading weights:  24%|██▎       | 94/398 [00:00<00:02, 148.01it/s]
+Loading weights:  28%|██▊       | 113/398 [00:00<00:01, 157.51it/s]
+Loading weights:  34%|███▍      | 135/398 [00:00<00:01, 158.13it/s]
+Loading weights:  39%|███▉      | 157/398 [00:01<00:01, 171.16it/s]
+Loading weights:  45%|████▍     | 178/398 [00:01<00:01, 181.71it/s]
+Loading weights:  49%|████▉     | 197/398 [00:01<00:01, 170.34it/s]
+Loading weights:  54%|█████▍    | 215/398 [00:01<00:01, 164.00it/s]
+Loading weights:  59%|█████▉    | 234/398 [00:01<00:00, 170.17it/s]
+Loading weights:  64%|██████▍   | 256/398 [00:01<00:00, 165.17it/s]
+Loading weights:  70%|██████▉   | 278/398 [00:01<00:00, 176.58it/s]
+Loading weights:  75%|███████▌  | 300/398 [00:01<00:00, 180.27it/s]
+Loading weights:  81%|████████  | 322/398 [00:02<00:00, 170.09it/s]
+Loading weights:  87%|████████▋ | 345/398 [00:02<00:00, 175.98it/s]
+Loading weights:  92%|█████████▏| 366/398 [00:02<00:00, 174.17it/s]
+Loading weights:  98%|█████████▊| 389/398 [00:02<00:00, 185.58it/s]
+Loading weights: 100%|██████████| 398/398 [00:02<00:00, 163.51it/s]
+Modelo truncado a las primeras 26 capas para hook 'model.layers.25'
+torch.compile activado (dynamic=True)
+num_latents=16384
+[SAE-best] pooling='mean_of_mean' balance='sin_balanceo' (source=best_per_level.usuario, run='usuario_mean_of_mean_sin_balanceo')
+[TRAIN   0.0%] step 1/121781 (32/3,896,989) | batch=32
+[TRAIN   2.3%] step 2747/121781 (87,904/3,896,989) | batch=32
+[TRAIN   4.4%] step 5354/121781 (171,328/3,896,989) | batch=32
+[TRAIN   6.6%] step 7989/121781 (255,648/3,896,989) | batch=32
+[TRAIN   8.7%] step 10608/121781 (339,456/3,896,989) | batch=32
+[TRAIN  10.9%] step 13240/121781 (423,680/3,896,989) | batch=32
+[TRAIN  13.1%] step 15905/121781 (508,960/3,896,989) | batch=32
+[TRAIN  15.2%] step 18477/121781 (591,264/3,896,989) | batch=32
+[TRAIN  17.3%] step 21115/121781 (675,680/3,896,989) | batch=32
+[TRAIN  19.5%] step 23736/121781 (759,552/3,896,989) | batch=32
+[TRAIN  21.6%] step 26338/121781 (842,816/3,896,989) | batch=32
+[TRAIN  23.8%] step 28923/121781 (925,536/3,896,989) | batch=32
+[TRAIN  25.9%] step 31568/121781 (1,010,176/3,896,989) | batch=32
+[TRAIN  28.1%] step 34194/121781 (1,094,208/3,896,989) | batch=32
+[TRAIN  30.2%] step 36804/121781 (1,177,728/3,896,989) | batch=32
+[TRAIN  32.3%] step 39379/121781 (1,260,128/3,896,989) | batch=32
+[TRAIN  34.5%] step 41964/121781 (1,342,848/3,896,989) | batch=32
+[TRAIN  36.6%] step 44534/121781 (1,425,088/3,896,989) | batch=32
+[TRAIN  38.7%] step 47161/121781 (1,509,152/3,896,989) | batch=32
+[TRAIN  40.9%] step 49789/121781 (1,593,248/3,896,989) | batch=32
+[TRAIN  43.3%] step 52781/121781 (1,688,992/3,896,989) | batch=32
+[TRAIN  45.4%] step 55341/121781 (1,770,912/3,896,989) | batch=32
+[TRAIN  47.3%] step 57658/121781 (1,845,056/3,896,989) | batch=32
+[TRAIN  49.2%] step 59976/121781 (1,919,232/3,896,989) | batch=32
+[TRAIN  51.1%] step 62279/121781 (1,992,928/3,896,989) | batch=32
+[TRAIN  53.0%] step 64594/121781 (2,067,008/3,896,989) | batch=32
+[TRAIN  54.9%] step 66893/121781 (2,140,576/3,896,989) | batch=32
+[TRAIN  56.8%] step 69206/121781 (2,214,592/3,896,989) | batch=32
+[TRAIN  58.7%] step 71510/121781 (2,288,320/3,896,989) | batch=32
+[TRAIN  60.6%] step 73826/121781 (2,362,432/3,896,989) | batch=32
+[TRAIN  62.5%] step 76139/121781 (2,436,448/3,896,989) | batch=32
+[TRAIN  64.4%] step 78433/121781 (2,509,856/3,896,989) | batch=32
+[TRAIN  66.3%] step 80752/121781 (2,584,064/3,896,989) | batch=32
+[TRAIN  68.2%] step 83058/121781 (2,657,856/3,896,989) | batch=32
+[TRAIN  70.1%] step 85368/121781 (2,731,776/3,896,989) | batch=32
+[TRAIN  72.0%] step 87687/121781 (2,805,984/3,896,989) | batch=32
+[TRAIN  73.9%] step 89998/121781 (2,879,936/3,896,989) | batch=32
+[TRAIN  75.8%] step 92307/121781 (2,953,824/3,896,989) | batch=32
+[TRAIN  77.7%] step 94620/121781 (3,027,840/3,896,989) | batch=32
+[TRAIN  79.6%] step 96916/121781 (3,101,312/3,896,989) | batch=32
+[TRAIN  81.5%] step 99212/121781 (3,174,784/3,896,989) | batch=32
+[TRAIN  83.4%] step 101517/121781 (3,248,544/3,896,989) | batch=32
+[TRAIN  85.3%] step 103822/121781 (3,322,304/3,896,989) | batch=32
+[TRAIN  87.1%] step 106126/121781 (3,396,032/3,896,989) | batch=32
+[TRAIN  89.0%] step 108425/121781 (3,469,600/3,896,989) | batch=32
+[TRAIN  90.9%] step 110731/121781 (3,543,392/3,896,989) | batch=32
+[TRAIN  92.8%] step 113038/121781 (3,617,216/3,896,989) | batch=32
+[TRAIN  94.7%] step 115344/121781 (3,691,008/3,896,989) | batch=32
+[TRAIN  96.6%] step 117632/121781 (3,764,224/3,896,989) | batch=32
+[TRAIN  98.5%] step 119930/121781 (3,837,760/3,896,989) | batch=32
+[TRAIN 100.0%] step 121781/121781 (3,896,989/3,896,989) | batch=32
+[sanitize] 160 valores no finitos en features de usuario -> clip a [-0.000138, 868]
+[EVAL   0.0%] step 1/29359 (32/939,461) | batch=32
+[EVAL   9.1%] step 2678/29359 (85,696/939,461) | batch=32
+[EVAL  18.1%] step 5302/29359 (169,664/939,461) | batch=32
+[EVAL  27.1%] step 7947/29359 (254,304/939,461) | batch=32
+[EVAL  36.1%] step 10589/29359 (338,848/939,461) | batch=32
+[EVAL  45.4%] step 13337/29359 (426,784/939,461) | batch=32
+[EVAL  53.8%] step 15794/29359 (505,408/939,461) | batch=32
+[EVAL  61.9%] step 18179/29359 (581,728/939,461) | batch=32
+[EVAL  70.1%] step 20568/29359 (658,176/939,461) | batch=32
+[EVAL  78.3%] step 22987/29359 (735,584/939,461) | batch=32
+[EVAL  86.6%] step 25420/29359 (813,440/939,461) | batch=32
+[EVAL  94.9%] step 27869/29359 (891,808/939,461) | batch=32
+[EVAL 100.0%] step 29359/29359 (939,461/939,461) | batch=32
+[TRAIN_TOPACT_EXAMPLES   0.0%] step 1/121781 (32/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES   2.3%] step 2746/121781 (87,872/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES   4.4%] step 5362/121781 (171,584/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES   6.6%] step 8006/121781 (256,192/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES   8.7%] step 10642/121781 (340,544/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  10.9%] step 13285/121781 (425,120/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  13.1%] step 15959/121781 (510,688/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  15.2%] step 18548/121781 (593,536/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  17.4%] step 21197/121781 (678,304/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  19.6%] step 23830/121781 (762,560/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  21.7%] step 26445/121781 (846,240/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  23.9%] step 29053/121781 (929,696/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  26.0%] step 31700/121781 (1,014,400/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  28.2%] step 34339/121781 (1,098,848/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  30.3%] step 36954/121781 (1,182,528/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  32.5%] step 39536/121781 (1,265,152/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  34.6%] step 42139/121781 (1,348,448/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  36.7%] step 44671/121781 (1,429,472/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  38.8%] step 47305/121781 (1,513,760/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  41.0%] step 49923/121781 (1,597,536/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  43.5%] step 52934/121781 (1,693,888/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  45.5%] step 55463/121781 (1,774,816/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  47.4%] step 57771/121781 (1,848,672/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  49.3%] step 60075/121781 (1,922,400/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  51.2%] step 62360/121781 (1,995,520/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  53.1%] step 64663/121781 (2,069,216/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  55.0%] step 66948/121781 (2,142,336/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  56.9%] step 69245/121781 (2,215,840/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  58.7%] step 71540/121781 (2,289,280/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  60.6%] step 73845/121781 (2,363,040/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  62.5%] step 76149/121781 (2,436,768/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  64.4%] step 78434/121781 (2,509,888/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  66.3%] step 80746/121781 (2,583,872/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  68.2%] step 83052/121781 (2,657,664/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  70.1%] step 85365/121781 (2,731,680/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  72.0%] step 87686/121781 (2,805,952/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  73.9%] step 90003/121781 (2,880,096/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  75.8%] step 92315/121781 (2,954,080/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  77.7%] step 94635/121781 (3,028,320/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  79.6%] step 96918/121781 (3,101,376/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  81.5%] step 99214/121781 (3,174,848/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  83.4%] step 101516/121781 (3,248,512/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  85.3%] step 103821/121781 (3,322,272/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  87.1%] step 106127/121781 (3,396,064/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  89.0%] step 108428/121781 (3,469,696/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  90.9%] step 110739/121781 (3,543,648/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  92.8%] step 113051/121781 (3,617,632/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  94.7%] step 115360/121781 (3,691,520/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  96.6%] step 117647/121781 (3,764,704/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES  98.5%] step 119948/121781 (3,838,336/3,896,989) | batch=32
+[TRAIN_TOPACT_EXAMPLES 100.0%] step 121781/121781 (3,896,989/3,896,989) | batch=32
+[sanitize] 62 valores no finitos en features de usuario -> clip a [-4.43e-06, 519]
+interpretabilidad SAE - edad_qwen
+Modo de almacenamiento:streaming_without_feature_cache
+Pooling analizado:mean_of_mean
+Balance analizado:sin_balanceo
+Fuente seleccion SAE: best_per_level.usuario (run='usuario_mean_of_mean_sin_balanceo')
+Comentarios train/eval: 3,896,989 / 939,461
+Usuarios train/eval: 1,626 / 349
+Latentes SAE: 16,384
+Metricas en EVAL (nivel usuario, mean_of_mean, sin_balanceo)
+Exactitud=0.5473 | Balancedexactitud=0.4396 | F1 macro=0.4273 | F1 weighted=0.5532
+14_19: precision=0.5263 recall=0.6061 f1=0.5634
+20_29: precision=0.6977 recall=0.6061 f1=0.6486
+30_39: precision=0.3452 recall=0.4462 f1=0.3893
+40_plus: precision=0.1176 recall=0.1000 f1=0.1081
+Ablacion (drops vs baseline)
+Top   BalAccDrop    F1macDrop   BalAccDropRnd   F1macDropRnd
+5      -0.0001      -0.0043         -0.0063        -0.0045
+10       0.0326       0.0289         -0.0051        -0.0045
+20       0.0212       0.0179         -0.0239        -0.0215
+
+Top latentes por clase
+
+[Clase 14_19] top 10 latentes:
+L  8847  score=+964.6490  coef=+964.6490  palabras=[half, senior, year, english, highschool, junior, i'm, don't]
+L  7257  score=+776.1766  coef=+776.1766  palabras=[school, two, schools]
+L  4424  score=+742.8542  coef=+742.8542  palabras=[]
+L 10268  score=+723.9732  coef=+723.9732  palabras=[haha]
+L 10794  score=+667.2917  coef=+667.2917  palabras=[class, don't, i'm, pretty, i've, for, writing, usually]
+L  1769  score=+640.0374  coef=+640.0374  palabras=[try]
+L  4108  score=+609.3158  coef=+609.3158  palabras=[school, scho, scholes, somewhat, mostly, youtube, channel, life]
+L 13707  score=+587.3940  coef=+587.3940  palabras=[legal, you're, yeah, it's, rated, older, beer, age]
+L 12184  score=+578.3708  coef=+578.3708  palabras=[rip, details, said, clever, beautiful]
+L   784  score=+555.4060  coef=+555.4060  palabras=[life, playing, video, game, romanticises, deadliest, conflict, history]
+
+[Clase 20_29] top 10 latentes:
+L  1739  score=+688.3179  coef=+688.3179  palabras=[emergency, crisis, averted, induction, port, lmao, idiot, fees]
+L 12847  score=+675.9873  coef=+675.9873  palabras=[given, pretty, fast, length, double, points, tentacles, age]
+L   497  score=+659.2968  coef=+659.2968  palabras=[maybe, using, you're, i'm, making, fun, for, soccer]
+L  3608  score=+621.6454  coef=+621.6454  palabras=[]
+L  6853  score=+618.3937  coef=+618.3937  palabras=[towards, end, display, outputs, lower, power, homeward, bound]
+L 15727  score=+581.3305  coef=+581.3305  palabras=[happened, poor, able, poisoned, head, shoulders, bill, needs]
+L 14385  score=+578.1063  coef=+578.1063  palabras=[hurt, hurts, brain, post, feelings]
+L   583  score=+560.1002  coef=+560.1002  palabras=[band, zizekdelrey, bandcamp, horses, forband, bandaid, good, row]
+L 13430  score=+531.5317  coef=+531.5317  palabras=[url, google, source, ved, web, rct, usg, aovvaw]
+L  3751  score=+530.3893  coef=+530.3893  palabras=[since, it's, gay, day, born, expensive, money, dodge]
+
+[Clase 30_39] top 10 latentes:
+L 15812  score=+702.9966  coef=+702.9966  palabras=[back, people, time, for, maybe, far, enough, we're]
+L 15797  score=+630.1810  coef=+630.1810  palabras=[tumblr, media, avo, jpg, doooooom, msm, ocv, smirk]
+L 10824  score=+610.6484  coef=+610.6484  palabras=[week, dynamo, garrido, spend, vee, it's, good, for]
+L 10999  score=+610.5235  coef=+610.5235  palabras=[support, keep, exes, music, man, evh, bring, someone]
+L  5566  score=+607.4985  coef=+607.4985  palabras=[compound, program, lifts, minutes, butters, sentence, chicken, wings]
+L  5934  score=+592.9151  coef=+592.9151  palabras=[there's, terms, outward, building, think, we're, optimizing, technology]
+L  1527  score=+588.3753  coef=+588.3753  palabras=[ama, redditgoogleokc, lol, okcupid, keep, okc, weird]
+L   354  score=+579.8977  coef=+579.8977  palabras=[]
+L  9629  score=+553.5809  coef=+553.5809  palabras=[]
+L  4597  score=+548.8976  coef=+548.8976  palabras=[took, things, response, okay, total, non, reaction, executor]
+
+[Clase 40_plus] top 10 latentes:
+L  4062  score=+735.2243  coef=+735.2243  palabras=[]
+L  6298  score=+718.4172  coef=+718.4172  palabras=[]
+L 10334  score=+705.5054  coef=+705.5054  palabras=[reading, aloud, read, for, learn, sometimes, elderly, early]
+L 11108  score=+598.9879  coef=+598.9879  palabras=[]
+L  8613  score=+560.0048  coef=+560.0048  palabras=[boulevard, laryngeal, nerve, wordpress, read, basically, post, think]
+L 10818  score=+555.9313  coef=+555.9313  palabras=[]
+L   925  score=+525.7662  coef=+525.7662  palabras=[pricing, graphic, handbook, guidelines, for, questions, often, consider]
+L 11446  score=+525.1307  coef=+525.1307  palabras=[kids, lot, you're, totally, gung, parent, couldn't, imagine]
+L 10255  score=+508.9607  coef=+508.9607  palabras=[things, right, people, won't, sure, you've, done, anything]
+L 10129  score=+490.6738  coef=+490.6738  palabras=[]
+
+Top latentes mas activos por clase (independiente del clasificador)
+[Clase 14_19] top 10 latentes por activacion media:
+L 10241  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, depends]
+L   280  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, depends]
+L  2022  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg]
+L 16160  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, depends]
+L  8727  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, depends]
+L  3067  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, depends]
+L  7114  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, depends]
+L  6303  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg]
+L  5532  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, depends]
+L  4035  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, depends]
+[Clase 20_29] top 10 latentes por activacion media:
+L  6480  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[access, slick, ocus, switch, office, sleep, rip]
+L 16160  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[thank, access, slick, ocus, switch]
+L  3067  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, access, ocus, slick]
+L  8712  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, access, ocus, slick, switch]
+L  9655  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[access, ocus, switch, slick, uploaded, office, rip]
+L  2155  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, access, ocus, switch, slick, office]
+L  2128  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, access, slick, ocus]
+L  1752  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, access, slick, ocus, switch]
+L  6215  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, access, ocus, slick, switch]
+L   864  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, access, ocus, slick, switch]
+[lase 30_39] top 10 latentes por activacion media:
+L 12654  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahaha, breathes, heavily, depends, apple, laugh, luck, reality]
+L  8301  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[cool, depends, laugh, apple, luck, combat]
+L 11780  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[depends, luck, apple, laugh, reality, combat, yum]
+L  1715  mean_act=+71.4444  nonzero_rate=1.0000 contrast=+0.6174 palabras=[fuck, everyone, for, arbitrarily, determined, opinion, science, fail]
+L  6215  mean_act=+28.1820  nonzero_rate=1.0000 contrast=-inf palabras=[depends, luck, apple, reality, laugh, combat, spiel, yum]
+L  1752  mean_act=+28.0190  nonzero_rate=1.0000 contrast=-inf palabras=[depends, luck, apple, reality, laugh, combat, pop, marketing]
+L  6303  mean_act=+27.6802  nonzero_rate=1.0000 contrast=-inf palabras=[depends, luck, apple, reality, laugh, combat, pop, marketing]
+L  5565  mean_act=+25.9669  nonzero_rate=1.0000 contrast=-inf palabras=[depends, luck, apple, reality, laugh, spiel, yum, combat]
+L 15641  mean_act=+25.8394  nonzero_rate=1.0000 contrast=-inf palabras=[depends, luck, apple, reality, laugh, combat, yum, marketing]
+L  2022  mean_act=+22.8229  nonzero_rate=1.0000 contrast=-inf palabras=[depends, luck, reality, apple, laugh, combat, pop, yum]
+[Clase 40_plus] top 10 latentes por activacion media:
+L 12654  mean_act=+109.3535  nonzero_rate=1.0000 contrast=-inf palabras=[cool, close, jesus, enough]
+L  1715  mean_act=+71.7976  nonzero_rate=1.0000 contrast=+0.8870 palabras=[people, you're, want, capitalism, communist, thinks, entitled, peoples']
+L 11780  mean_act=+63.9003  nonzero_rate=1.0000 contrast=-inf palabras=[cool, close, enough, jesus]
+L  8301  mean_act=+44.4838  nonzero_rate=1.0000 contrast=-inf palabras=[cool, close, notif, boom]
+L  6215  mean_act=+22.8935  nonzero_rate=1.0000 contrast=-inf palabras=[cool, close, enough, boom]
+L  1752  mean_act=+22.7613  nonzero_rate=1.0000 contrast=-inf palabras=[cool, boom, close]
+L  6303  mean_act=+22.4925  nonzero_rate=1.0000 contrast=-inf palabras=[cool, boom, close]
+L  5565  mean_act=+21.0951  nonzero_rate=1.0000 contrast=-inf palabras=[cool, close, enough, boom]
+L 15641  mean_act=+20.9927  nonzero_rate=1.0000 contrast=-inf palabras=[cool, boom, close]
+L  2022  mean_act=+18.5414  nonzero_rate=1.0000 contrast=-inf palabras=[cool, close, enough, boom]
+
+Resumen JSON guardado en: modelos/edad_qwen_sae_interpretabilidad/interpretabilidad_sae_resumen.json
+Resumen Markdown guardado en: modelos/edad_qwen_sae_interpretabilidad/interpretabilidad_sae_resumen.md

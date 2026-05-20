@@ -1,34 +1,0 @@
-Preparación de Dataset para Clasificación de INTROVERTED
-
-1. Cargando comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-17,639,864 comentarios cargados
-
-2. Cargando autores...
-10,295 autores cargados
-
-3. Filtrando autores con 'introverted' conocido...
-9,078 autores con introverted conocido
-(Eliminados 1,217 autores con introverted nulo)
-
-4. Uniendo comentarios con introverted por autor...
-15,569,453 comentarios con info de introverted
-(Eliminados 2,070,411 comentarios sin introverted conocido)
-
-5. Distribución de introverted:
-1: 12,357,911 comentarios (79.4%)
-0: 3,211,542 comentarios (20.6%)
-Dataset de introverted preparado y listo para usar
-Train comments: 10,696,781 | Eval comments: 2,475,331
-SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights:  39%|███▉      | 58/148 [00:00<00:00, 563.57it/s]Loading weights:  91%|█████████ | 134/148 [00:00<00:00, 658.47it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 518.02it/s]
-Modelo truncado a las primeras 9 capas (skip h.9..h.11)
-torch.compile activado (dynamic=True)
-num_latents=16384
-[SAE-best] pooling='mean_of_mean' balance='balanceado' (source=default_no_json, run='None')
-[TRAIN   0.0%] step 1/334275 (32/10,696,781) | batch=32
-[TRAIN  38.4%] step 128384/334275 (4,108,288/10,696,781) | batch=32
-[TRAIN  74.9%] step 250339/334275 (8,010,848/10,696,781) | batch=32
-[TRAIN 100.0%] step 334275/334275 (10,696,781/10,696,781) | batch=32
-[EVAL   0.0%] step 1/77355 (32/2,475,331) | batch=32

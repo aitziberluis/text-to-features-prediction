@@ -1,0 +1,217 @@
+[chain] inicio: Tue May 12 06:08:39 PM CEST 2026
+[chain] GPU física: 1 (visible como cuda:0 dentro del proceso)
+Preparación de Dataset para Clasificación de INTROVERTED
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+17,639,864 comentarios cargados
+
+2. Cargando autores...
+10,295 autores cargados
+
+3. Filtrando autores con 'introverted' conocido...
+9,078 autores con introverted conocido
+(Eliminados 1,217 autores con introverted nulo)
+
+4. Uniendo comentarios con introverted por autor...
+15,569,453 comentarios con info de introverted
+(Eliminados 2,070,411 comentarios sin introverted conocido)
+5. Dstribución de introverted:
+1: 12,357,911 comentarios (79.4%)
+0: 3,211,542 comentarios (20.6%)
+Dataset de introverted preparado y listo para usar
+Train comments: 10,696,781 | Eval comments: 2,475,331
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1427.58it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1420.87it/s]
+Modelo truncado a las primeras 9 capas (skip h.9..h.11)
+torch.compile activado (dynamic=True)
+num_latents=16384
+[SAE-best] pooling='mean_of_mean' balance='balanceado' (source=default_no_json, run='None')
+[TRAIN   0.0%] step 1/334275 (32/10,696,781) | batch=32
+[TRAIN  31.0%] step 103662/334275 (3,317,184/10,696,781) | batch=32
+[TRAIN  67.6%] step 226015/334275 (7,232,480/10,696,781) | batch=32
+[TRAIN  97.4%] step 325595/334275 (10,419,040/10,696,781) | batch=32
+[TRAIN 100.0%] step 334275/334275 (10,696,781/10,696,781) | batch=32
+[EVAL   0.0%] step 1/77355 (32/2,475,331) | batch=32
+[EVAL 100.0%] step 77355/77355 (2,475,331/2,475,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   0.0%] step 1/334275 (32/10,696,781) | batch=32
+[TRAIN_TOPACT_EXAMPLES  33.0%] step 110332/334275 (3,530,624/10,696,781) | batch=32
+[TRAIN_TOPACT_EXAMPLES  72.5%] step 242468/334275 (7,758,976/10,696,781) | batch=32
+[TRAIN_TOPACT_EXAMPLES 100.0%] step 334275/334275 (10,696,781/10,696,781) | batch=32
+interpretabilidad SAE - introverted
+Modo de almacenamiento:streaming_without_feature_cache
+Pooling analizado:mean_of_mean
+Balance analizado:balanceado
+Fuente seleccion SAE: default_no_json (run='None')
+Comentarios train/eval: 10,696,781 / 2,475,331
+Usuarios train/eval: 6,354 / 1,362
+Latentes SAE: 16,384
+Metricas en EVAL (nivel usuario, mean_of_mean, balanceado)
+Exactitud=0.7533 | Balancedexactitud=0.5920 | F1 macro=0.6007 | F1 weighted=0.7326 0: precision=0.4532 recall=0.2902 f1=0.3538 1: precision=0.8059 recall=0.8938 f1=0.8475
+
+Ablacion (drops vs baseline)
+Top   BalAccDrop    F1macDrop   BalAccDropRnd   F1macDropRnd
+5       0.0142       0.0162          0.0013         0.0018
+10       0.0164       0.0187          0.0127         0.0142
+20       0.0206       0.0237          0.0091         0.0099
+Top latentes por clase
+
+[Clase 0] top 10 latentes:
+L 15609  score=+763.0128  coef=-763.0128  palabras=[enfp, entp, you're, maybe]
+L   828  score=+515.2243  coef=-515.2243  palabras=[entj, maybe, welcome, entjland, tom, likely, identifies, esfp]
+L  2937  score=+373.8600  coef=-373.8600  palabras=[untz, unfalsifiable, uncivilized, claim, stop, uncivil, completely, unfuckable]
+L  6334  score=+354.1040  coef=-354.1040  palabras=[entp, enfp, maybe, sounds, eternalenvy]
+L 12655  score=+334.4626  coef=-334.4626  palabras=[estp, i'd, say, maybe, estj, explore, analyze, i'm]
+L 15461  score=+326.7860  coef=-326.7860  palabras=[bowler, mitchell, origin, pearce, player, foles, pro, dae]
+L 13088  score=+323.4020  coef=-323.4020  palabras=[kidnap, capture, aye, don't, ball, abducted, become, falconers]
+L 12262  score=+319.9162  coef=-319.9162  palabras=[fun, it's, sounds, marriage]
+L  4618  score=+314.9355  coef=-314.9355  palabras=[bad, recommendations, sql, query, mate, for, blog, check]
+L  4185  score=+310.2677  coef=-310.2677  palabras=[started, start, few, days, ago, dan, whole, thing]
+
+[Clase 1] top 10 latentes:
+L  8044  score=+374.1989  coef=+374.1989  palabras=[stare, probably, staring, walls, dead, chuck, norris, stared]
+L  6921  score=+341.0504  coef=+341.0504  palabras=[intp, baseball, inflation, inclusiveor, infp]
+L 12736  score=+331.1536  coef=+331.1536  palabras=[cam, jordan, camry, chevy, camaro, nsa, spider, yep]
+L  3534  score=+314.9405  coef=+314.9405  palabras=[pint, stringlordint, intendant, vet, inte, intouchables, maginto, intp]
+L  8040  score=+312.8303  coef=+312.8303  palabras=[phones, see, they're, still, aren't, girls, freeze, time]
+L  6235  score=+312.8054  coef=+312.8054  palabras=[independent, independently, wen, financially, love, endeavor, sounds, aggressively]
+L  1943  score=+312.2335  coef=+312.2335  palabras=[bang, tizzy, chitty, yeah, bangs, gonna]
+L  2370  score=+306.3391  coef=+306.3391  palabras=[job, jobs]
+L  8374  score=+301.9179  coef=+301.9179  palabras=[incest, lasted, baited, deleted, join, congratulations, seventhed]
+L  1525  score=+295.5706  coef=+295.5706  palabras=[fill, filled, cum, gotta, dex, shit, double, eat]
+
+Top latentes mas activos por clase (independiente del clasificador)
+[Clase 0] top 10 latentes por activacion media:
+L 11265  mean_act=+113.9151  nonzero_rate=1.0000 contrast=+2.8072 palabras=[mouth, plate, rice, games]
+L 12117  mean_act=+90.4890  nonzero_rate=1.0000 contrast=+0.9240 palabras=[aries, mouth, plate]
+L  4808  mean_act=+80.2487  nonzero_rate=1.0000 contrast=+0.8930 palabras=[girls, mouth, plate, dad]
+L 10130  mean_act=+44.7942  nonzero_rate=1.0000 contrast=+1.1217 palabras=[ouch, mouth, lust]
+L  4882  mean_act=+33.2009  nonzero_rate=1.0000 contrast=+0.8307 palabras=[mouth, games, plate]
+L  2371  mean_act=+27.0570  nonzero_rate=1.0000 contrast=+0.6782 palabras=[zing, mouth, plate]
+L  5394  mean_act=+22.6946  nonzero_rate=1.0000 contrast=+0.5656
+L 14277  mean_act=+22.6023  nonzero_rate=1.0000 contrast=+0.5649 palabras=[zing, games]
+L 10257  mean_act=+21.0981  nonzero_rate=1.0000 contrast=+0.5244 palabras=[dad, plate, games, rice]
+L  2155  mean_act=+20.7335  nonzero_rate=1.0000 contrast=+0.5185 palabras=[zing, games, plate]
+[Clase 1] top 10 latentes por activacion media:
+L 11265  mean_act=+111.1079  nonzero_rate=1.0000 contrast=-2.8072 palabras=[allo, pell, mouth, cock]
+L 12117  mean_act=+89.5650  nonzero_rate=1.0000 contrast=-0.9240 palabras=[allo, mouth, aries]
+L  4808  mean_act=+79.3558  nonzero_rate=1.0000 contrast=-0.8930 palabras=[dad, allo, cards, mouth]
+L 10130  mean_act=+43.6725  nonzero_rate=1.0000 contrast=-1.1217 palabras=[numbers, pell, mouth, wise]
+L  4882  mean_act=+32.3703  nonzero_rate=1.0000 contrast=-0.8307 palabras=[allo, pell]
+L  2371  mean_act=+26.3787  nonzero_rate=1.0000 contrast=-0.6782 palabras=[allo, cock, mouth]
+L  5394  mean_act=+22.1290  nonzero_rate=1.0000 contrast=-0.5656 palabras=[allo, bats]
+L 14277  mean_act=+22.0375  nonzero_rate=1.0000 contrast=-0.5649 palabras=[zing, allo]
+L 10257  mean_act=+20.5737  nonzero_rate=1.0000 contrast=-0.5244 palabras=[dad, allo, taker, cards]
+L  2155  mean_act=+20.2150  nonzero_rate=1.0000 contrast=-0.5185 palabras=[games, allo, pell, cock]
+
+Resumen JSON guardado en: modelos/introverted_sae_interpretabilidad/interpretabilidad_sae_resumen.json
+Resumen Markdown guardado en: modelos/introverted_sae_interpretabilidad/interpretabilidad_sae_resumen.md
+Preparación de Dataset para Clasificación de PERCEIVING
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+17,639,864 comentarios cargados
+2. Cargando autores...10,295 autores cargados
+3. Filtrando autores con 'perceiving' conocido...
+9,074 autores con perceiving conocido
+(Eliminados 1,221 autores con perceiving nulo)
+4. Uniendo comentarios con perceiving por autor...
+15,582,276 comentarios con info de perceiving
+(Eliminados 2,057,588 comentarios sin perceiving conocido)
+
+5. Distribución de perceiving:
+1: 8,963,702 comentarios (57.5%)
+0: 6,618,574 comentarios (42.5%)
+Dataset de perceiving preparado y listo para usar
+Train comments: 10,998,355 | Eval comments: 2,452,738
+SAE cargada: 16384 latentes, k=64, hookpoint=transformer.h.8
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1273.28it/s]
+Loading weights: 100%|██████████| 148/148 [00:00<00:00, 1269.86it/s]
+Modelo truncado a las primeras 9 capas (skip h.9..h.11)
+torch.compile activado (dynamic=True)
+num_latents=16384
+[SAE-best] pooling='mean_of_mean' balance='sin_balanceo' (source=best_per_level.usuario, run='usuario_mean_of_mean_sin_balanceo')
+[TRAIN   0.0%] step 1/343699 (32/10,998,355) | batch=32
+[TRAIN  37.7%] step 129557/343699 (4,145,824/10,998,355) | batch=32
+[TRAIN  74.2%] step 254903/343699 (8,156,896/10,998,355) | batch=32
+[TRAIN 100.0%] step 343699/343699 (10,998,355/10,998,355) | batch=32
+[EVAL   0.0%] step 1/76649 (32/2,452,738) | batch=32
+[EVAL 100.0%] step 76649/76649 (2,452,738/2,452,738) | batch=32
+[TRAIN_TOPACT_EXAMPLES   0.0%] step 1/343699 (32/10,998,355) | batch=32
+[TRAIN_TOPACT_EXAMPLES  41.2%] step 141500/343699 (4,528,000/10,998,355) | batch=32
+[TRAIN_TOPACT_EXAMPLES  80.1%] step 275237/343699 (8,807,584/10,998,355) | batch=32
+[TRAIN_TOPACT_EXAMPLES 100.0%] step 343699/343699 (10,998,355/10,998,355) | batch=32
+interpretabilidad SAE - perceiving
+Modo de almacenamiento:streaming_without_feature_cache
+Pooling analizado:mean_of_mean
+Balance analizado:sin_balanceo
+Fuente seleccion SAE: best_per_level.usuario (run='usuario_mean_of_mean_sin_balanceo')
+Comentarios train/eval: 10,998,355 / 2,452,738
+Usuarios train/eval: 6,351 / 1,361
+Latentes SAE: 16,384
+
+Metricas en EVAL (nivel usuario, mean_of_mean, sin_balanceo)
+Exactitud=0.6113 | Balancedexactitud=0.5937 | F1 macro=0.5941 | F1 weighted=0.6070
+0: precision=0.5465 recall=0.4792 f1=0.5106
+1: precision=0.6495 recall=0.7083 f1=0.6776
+
+Ablacion (drops vs baseline)
+Top   BalAccDrop    F1macDrop   BalAccDropRnd   F1macDropRnd
+5       0.0052       0.0052          0.0003         0.0004
+10       0.0084       0.0087          0.0013         0.0013
+20       0.0167       0.0170          0.0055         0.0058
+
+Top latentes por clase
+
+[Clase 0] top 10 latentes:
+L  1784  score=+499.5266  coef=-499.5266  palabras=[infj, i'm, aka, she's, isn't, sam, harris, intj]
+L 15683  score=+419.9329  coef=-419.9329  palabras=[intj, double]
+L 15703  score=+362.7914  coef=-362.7914  palabras=[onion, onions, man, holy, french, dip, spring, gotta]
+L 13689  score=+341.3730  coef=-341.3730  palabras=[infamous, love, infographics, luigi, infrared, term, influencer, check]
+L 12445  score=+327.1566  coef=-327.1566  palabras=[cake, happy, day, ice, cream, pound, love, birthday]
+L 10879  score=+291.8528  coef=-291.8528  palabras=[ayn, rand, cynical, twyn, rivers, read, wynonna, rider]
+L 12216  score=+286.5648  coef=-286.5648  palabras=[intj, entj]
+L 12340  score=+272.8994  coef=-272.8994  palabras=[efficient, efficiency, german, maybe, everyone, cares, optimistic, seems]
+L  2052  score=+271.5051  coef=-271.5051  palabras=[point, chopin, come, dark, side, proceed, towards, face]
+L  6336  score=+271.0893  coef=-271.0893  palabras=[plan, dental, great, god's, follow, good, sounds, solid]
+
+[Clase 1] top 10 latentes:
+L  6841  score=+474.5908  coef=+474.5908  palabras=[intp, infp, classic, fellow, women, favorite]
+L  4440  score=+453.5603  coef=+453.5603  palabras=[intp, istpintp, extp]
+L  9994  score=+351.1812  coef=+351.1812  palabras=[give, you're, giving, gotta, team, chance, tldr, lol]
+L  6921  score=+342.0707  coef=+342.0707  palabras=[link, invention, infer, inanimate]
+L 10985  score=+322.5240  coef=+322.5240  palabras=[class, dance, pure, spinning, german, flashback, gym, star]
+L 14811  score=+319.5249  coef=+319.5249  palabras=[usual, shalimar, shady, spot, lsd, seems, find, one]
+L 15609  score=+307.3012  coef=+307.3012  palabras=[entp, classic, enough, basically, probably, enfj, entps, swimmingly]
+L  5768  score=+304.0247  coef=+304.0247  palabras=[universe, steven, inner, miss, wrong, bro, wraps, alternative]
+L  5815  score=+301.8925  coef=+301.8925  palabras=[procrastination, procrastinating, professional, procrastinate, master, keep, embrassing, sad]
+L   891  score=+294.9363  coef=+294.9363  palabras=[rollercoaster, roller, emotional, coaster, dat, lol, goddamn, called]
+
+Top latentes mas activos por clase (independiente del clasificador)
+[Clase 0] top 10 latentes por activacion media:
+L 11265  mean_act=+107.9098  nonzero_rate=1.0000 contrast=-7.4334 palabras=[lan, cock, cards]
+L 12117  mean_act=+88.2732  nonzero_rate=1.0000 contrast=-2.9004 palabras=[aries, games, mans]
+L  4808  mean_act=+78.4167  nonzero_rate=1.0000 contrast=-2.0973 palabras=[cards, mans, dad, lan, cock, example, italy]
+L 10130  mean_act=+42.4405  nonzero_rate=1.0000 contrast=-2.8673 palabras=[ouch, wise, alien, tight, reason]
+L  4882  mean_act=+31.4113  nonzero_rate=1.0000 contrast=-2.2207 palabras=[cards, lan]
+L  2371  mean_act=+25.5986  nonzero_rate=1.0000 contrast=-1.8073 palabras=[cock, lan, cards]
+L  5394  mean_act=+21.4716  nonzero_rate=1.0000 contrast=-1.5222 palabras=[bats, mans, lan]
+L 14277  mean_act=+21.3844  nonzero_rate=1.0000 contrast=-1.5152 palabras=[zing, games, lan, cards]
+L 10257  mean_act=+19.9660  nonzero_rate=1.0000 contrast=-1.4085 palabras=[games, lan, dad, cards, bats, cock]
+L  2155  mean_act=+19.6164  nonzero_rate=1.0000 contrast=-1.3869 palabras=[games, zing, cock, lan, cards]
+[Clase 1] top 10 latentes por activacion media:
+L 11265  mean_act=+115.3431  nonzero_rate=1.0000 contrast=+7.4334 palabras=[allo, pell, mouth]
+L 12117  mean_act=+91.1736  nonzero_rate=1.0000 contrast=+2.9004 palabras=[allo, mouth]
+L  4808  mean_act=+80.5140  nonzero_rate=1.0000 contrast=+2.0973 palabras=[allo, mouth, dad]
+L 10130  mean_act=+45.3078  nonzero_rate=1.0000 contrast=+2.8673 palabras=[continue, pell, mouth, numbers, lust, ouch]
+L  4882  mean_act=+33.6320  nonzero_rate=1.0000 contrast=+2.2207 palabras=[allo, pell]
+L  2371  mean_act=+27.4060  nonzero_rate=1.0000 contrast=+1.8073 palabras=[allo, cock, mouth]
+L  5394  mean_act=+22.9938  nonzero_rate=1.0000 contrast=+1.5222 palabras=[allo, claw]
+L 14277  mean_act=+22.8996  nonzero_rate=1.0000 contrast=+1.5152 palabras=[allo]
+L 10257  mean_act=+21.3745  nonzero_rate=1.0000 contrast=+1.4085 palabras=[dad, allo]
+L  2155  mean_act=+21.0033  nonzero_rate=1.0000 contrast=+1.3869 palabras=[allo, pell, cock]

@@ -1,0 +1,413 @@
+nohup: ignoring input
+Preparación de Dataset para Clasificación de INTUITIVE
+
+1. Cargando comentarios...
+Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
+17,639,864 comentarios cargados
+
+2. Cargando autores...
+10,295 autores cargados
+
+3. Filtrando autores con 'intuitive' conocido...
+9,083 autores con intuitive conocido
+(Eliminados 1,212 autores con intuitive nulo)
+
+4. Uniendo comentarios con intuitive por autor...
+15,596,767 comentarios con info de intuitive
+(Eliminados 2,043,097 comentarios sin intuitive conocido)
+
+5. Distribución de intuitive:
+1: 13,553,500 comentarios (86.9%)
+0: 2,043,267 comentarios (13.1%)
+Dataset de intuitive preparado y listo para usar
+Train comments: 10,728,331 | Eval comments: 2,279,220
+SAE cargada: 16384 latentes, k=64, hookpoint=model.layers.25
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   0%|          | 1/398 [00:00<01:36,  4.11it/s]
+Loading weights:   9%|▉         | 36/398 [00:00<00:02, 125.47it/s]
+Loading weights:  15%|█▍        | 58/398 [00:00<00:02, 146.69it/s]
+Loading weights:  20%|██        | 80/398 [00:00<00:02, 158.21it/s]
+Loading weights:  26%|██▌       | 102/398 [00:00<00:01, 164.29it/s]
+Loading weights:  31%|███       | 124/398 [00:00<00:01, 174.85it/s]
+Loading weights:  37%|███▋      | 146/398 [00:00<00:01, 183.23it/s]
+Loading weights:  42%|████▏     | 168/398 [00:01<00:01, 175.07it/s]
+Loading weights:  48%|████▊     | 190/398 [00:01<00:01, 181.15it/s]
+Loading weights:  53%|█████▎    | 209/398 [00:01<00:01, 179.03it/s]
+Loading weights:  58%|█████▊    | 231/398 [00:01<00:00, 190.08it/s]
+Loading weights:  63%|██████▎   | 251/398 [00:01<00:00, 181.23it/s]
+Loading weights:  68%|██████▊   | 270/398 [00:01<00:00, 177.62it/s]
+Loading weights:  73%|███████▎  | 290/398 [00:01<00:00, 182.87it/s]
+Loading weights:  78%|███████▊  | 311/398 [00:01<00:00, 189.87it/s]
+Loading weights:  84%|████████▎ | 333/398 [00:01<00:00, 190.63it/s]
+Loading weights:  89%|████████▉ | 356/398 [00:02<00:00, 198.84it/s]
+Loading weights:  95%|█████████▍| 378/398 [00:02<00:00, 203.98it/s]
+Loading weights: 100%|██████████| 398/398 [00:02<00:00, 178.72it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Modelo truncado a las primeras 26 capas para hook 'model.layers.25'
+torch.compile activado (dynamic=True)
+num_latents=16384
+[SAE-best] pooling='mean_of_mean' balance='balanceo_manual' (source=best_per_level.usuario, run='usuario_mean_of_mean_balanceo_manual')
+[TRAIN   0.0%] step 1/335261 (32/10,728,331) | batch=32
+[TRAIN   0.9%] step 3044/335261 (97,408/10,728,331) | batch=32
+[TRAIN   1.8%] step 5870/335261 (187,840/10,728,331) | batch=32
+[TRAIN   2.6%] step 8662/335261 (277,184/10,728,331) | batch=32
+[TRAIN   3.4%] step 11452/335261 (366,464/10,728,331) | batch=32
+[TRAIN   4.2%] step 14232/335261 (455,424/10,728,331) | batch=32
+[TRAIN   5.0%] step 16915/335261 (541,280/10,728,331) | batch=32
+[TRAIN   5.9%] step 19632/335261 (628,224/10,728,331) | batch=32
+[TRAIN   6.7%] step 22360/335261 (715,520/10,728,331) | batch=32
+[TRAIN   7.5%] step 25137/335261 (804,384/10,728,331) | batch=32
+[TRAIN   8.3%] step 27760/335261 (888,320/10,728,331) | batch=32
+[TRAIN   9.1%] step 30373/335261 (971,936/10,728,331) | batch=32
+[TRAIN   9.9%] step 33034/335261 (1,057,088/10,728,331) | batch=32
+[TRAIN  10.7%] step 35753/335261 (1,144,096/10,728,331) | batch=32
+[TRAIN  11.5%] step 38580/335261 (1,234,560/10,728,331) | batch=32
+[TRAIN  12.3%] step 41364/335261 (1,323,648/10,728,331) | batch=32
+[TRAIN  13.2%] step 44134/335261 (1,412,288/10,728,331) | batch=32
+[TRAIN  14.0%] step 46836/335261 (1,498,752/10,728,331) | batch=32
+[TRAIN  14.8%] step 49557/335261 (1,585,824/10,728,331) | batch=32
+[TRAIN  15.6%] step 52146/335261 (1,668,672/10,728,331) | batch=32
+[TRAIN  16.4%] step 54973/335261 (1,759,136/10,728,331) | batch=32
+[TRAIN  17.2%] step 57754/335261 (1,848,128/10,728,331) | batch=32
+[TRAIN  18.0%] step 60402/335261 (1,932,864/10,728,331) | batch=32
+[TRAIN  18.8%] step 63021/335261 (2,016,672/10,728,331) | batch=32
+[TRAIN  19.6%] step 65561/335261 (2,097,952/10,728,331) | batch=32
+[TRAIN  20.4%] step 68261/335261 (2,184,352/10,728,331) | batch=32
+[TRAIN  21.1%] step 70888/335261 (2,268,416/10,728,331) | batch=32
+[TRAIN  22.0%] step 73597/335261 (2,355,104/10,728,331) | batch=32
+[TRAIN  22.8%] step 76320/335261 (2,442,240/10,728,331) | batch=32
+[TRAIN  23.5%] step 78918/335261 (2,525,376/10,728,331) | batch=32
+[TRAIN  24.3%] step 81519/335261 (2,608,608/10,728,331) | batch=32
+[TRAIN  25.1%] step 84175/335261 (2,693,600/10,728,331) | batch=32
+[TRAIN  25.9%] step 86884/335261 (2,780,288/10,728,331) | batch=32
+[TRAIN  26.7%] step 89535/335261 (2,865,120/10,728,331) | batch=32
+[TRAIN  27.5%] step 92171/335261 (2,949,472/10,728,331) | batch=32
+[TRAIN  28.3%] step 94747/335261 (3,031,904/10,728,331) | batch=32
+[TRAIN  29.0%] step 97372/335261 (3,115,904/10,728,331) | batch=32
+[TRAIN  29.9%] step 100110/335261 (3,203,520/10,728,331) | batch=32
+[TRAIN  30.7%] step 102810/335261 (3,289,920/10,728,331) | batch=32
+[TRAIN  31.5%] step 105466/335261 (3,374,912/10,728,331) | batch=32
+[TRAIN  32.3%] step 108131/335261 (3,460,192/10,728,331) | batch=32
+[TRAIN  33.0%] step 110691/335261 (3,542,112/10,728,331) | batch=32
+[TRAIN  33.8%] step 113479/335261 (3,631,328/10,728,331) | batch=32
+[TRAIN  34.7%] step 116210/335261 (3,718,720/10,728,331) | batch=32
+[TRAIN  35.5%] step 119012/335261 (3,808,384/10,728,331) | batch=32
+[TRAIN  36.3%] step 121731/335261 (3,895,392/10,728,331) | batch=32
+[TRAIN  37.1%] step 124354/335261 (3,979,328/10,728,331) | batch=32
+[TRAIN  37.9%] step 127006/335261 (4,064,192/10,728,331) | batch=32
+[TRAIN  38.7%] step 129864/335261 (4,155,648/10,728,331) | batch=32
+[TRAIN  39.6%] step 132599/335261 (4,243,168/10,728,331) | batch=32
+[TRAIN  40.4%] step 135403/335261 (4,332,896/10,728,331) | batch=32
+[TRAIN  41.2%] step 138109/335261 (4,419,488/10,728,331) | batch=32
+[TRAIN  41.9%] step 140639/335261 (4,500,448/10,728,331) | batch=32
+[TRAIN  42.8%] step 143498/335261 (4,591,936/10,728,331) | batch=32
+[TRAIN  43.6%] step 146228/335261 (4,679,296/10,728,331) | batch=32
+[TRAIN  44.4%] step 148997/335261 (4,767,904/10,728,331) | batch=32
+[TRAIN  45.2%] step 151647/335261 (4,852,704/10,728,331) | batch=32
+[TRAIN  46.0%] step 154206/335261 (4,934,592/10,728,331) | batch=32
+[TRAIN  46.8%] step 156905/335261 (5,020,960/10,728,331) | batch=32
+[TRAIN  47.6%] step 159557/335261 (5,105,824/10,728,331) | batch=32
+[TRAIN  48.4%] step 162204/335261 (5,190,528/10,728,331) | batch=32
+[TRAIN  49.2%] step 164883/335261 (5,276,256/10,728,331) | batch=32
+[TRAIN  50.0%] step 167492/335261 (5,359,744/10,728,331) | batch=32
+[TRAIN  50.7%] step 170103/335261 (5,443,296/10,728,331) | batch=32
+[TRAIN  51.5%] step 172812/335261 (5,529,984/10,728,331) | batch=32
+[TRAIN  52.4%] step 175554/335261 (5,617,728/10,728,331) | batch=32
+[TRAIN  53.2%] step 178193/335261 (5,702,176/10,728,331) | batch=32
+[TRAIN  53.9%] step 180819/335261 (5,786,208/10,728,331) | batch=32
+[TRAIN  54.7%] step 183307/335261 (5,865,824/10,728,331) | batch=32
+[TRAIN  55.5%] step 186016/335261 (5,952,512/10,728,331) | batch=32
+[TRAIN  56.3%] step 188778/335261 (6,040,896/10,728,331) | batch=32
+[TRAIN  57.1%] step 191427/335261 (6,125,664/10,728,331) | batch=32
+[TRAIN  57.9%] step 194062/335261 (6,209,984/10,728,331) | batch=32
+[TRAIN  58.7%] step 196662/335261 (6,293,184/10,728,331) | batch=32
+[TRAIN  59.6%] step 199730/335261 (6,391,360/10,728,331) | batch=32
+[TRAIN  60.4%] step 202450/335261 (6,478,400/10,728,331) | batch=32
+[TRAIN  61.3%] step 205450/335261 (6,574,400/10,728,331) | batch=32
+[TRAIN  62.2%] step 208639/335261 (6,676,448/10,728,331) | batch=32
+[TRAIN  63.1%] step 211697/335261 (6,774,304/10,728,331) | batch=32
+[TRAIN  63.9%] step 214255/335261 (6,856,160/10,728,331) | batch=32
+[TRAIN  64.7%] step 216980/335261 (6,943,360/10,728,331) | batch=32
+[TRAIN  65.4%] step 219265/335261 (7,016,480/10,728,331) | batch=32
+[TRAIN  66.1%] step 221446/335261 (7,086,272/10,728,331) | batch=32
+[TRAIN  66.7%] step 223627/335261 (7,156,064/10,728,331) | batch=32
+[TRAIN  67.4%] step 225807/335261 (7,225,824/10,728,331) | batch=32
+[TRAIN  68.0%] step 227985/335261 (7,295,520/10,728,331) | batch=32
+[TRAIN  68.7%] step 230167/335261 (7,365,344/10,728,331) | batch=32
+[TRAIN  69.3%] step 232354/335261 (7,435,328/10,728,331) | batch=32
+[TRAIN  70.0%] step 234572/335261 (7,506,304/10,728,331) | batch=32
+[TRAIN  70.7%] step 236947/335261 (7,582,304/10,728,331) | batch=32
+[TRAIN  71.4%] step 239313/335261 (7,658,016/10,728,331) | batch=32
+[TRAIN  72.1%] step 241676/335261 (7,733,632/10,728,331) | batch=32
+[TRAIN  72.8%] step 244035/335261 (7,809,120/10,728,331) | batch=32
+[TRAIN  73.5%] step 246388/335261 (7,884,416/10,728,331) | batch=32
+[TRAIN  74.2%] step 248744/335261 (7,959,808/10,728,331) | batch=32
+[TRAIN  74.9%] step 251091/335261 (8,034,912/10,728,331) | batch=32
+[TRAIN  75.6%] step 253445/335261 (8,110,240/10,728,331) | batch=32
+[TRAIN  76.3%] step 255800/335261 (8,185,600/10,728,331) | batch=32
+[TRAIN  77.0%] step 258148/335261 (8,260,736/10,728,331) | batch=32
+[TRAIN  77.7%] step 260532/335261 (8,337,024/10,728,331) | batch=32
+[TRAIN  78.4%] step 262899/335261 (8,412,768/10,728,331) | batch=32
+[TRAIN  79.1%] step 265248/335261 (8,487,936/10,728,331) | batch=32
+[TRAIN  79.8%] step 267615/335261 (8,563,680/10,728,331) | batch=32
+[TRAIN  80.5%] step 269981/335261 (8,639,392/10,728,331) | batch=32
+[TRAIN  81.2%] step 272349/335261 (8,715,168/10,728,331) | batch=32
+[TRAIN  81.9%] step 274699/335261 (8,790,368/10,728,331) | batch=32
+[TRAIN  82.6%] step 277066/335261 (8,866,112/10,728,331) | batch=32
+[TRAIN  83.3%] step 279435/335261 (8,941,920/10,728,331) | batch=32
+[TRAIN  84.1%] step 281790/335261 (9,017,280/10,728,331) | batch=32
+[TRAIN  84.8%] step 284155/335261 (9,092,960/10,728,331) | batch=32
+[TRAIN  85.5%] step 286517/335261 (9,168,544/10,728,331) | batch=32
+[TRAIN  86.2%] step 288855/335261 (9,243,360/10,728,331) | batch=32
+[TRAIN  86.9%] step 291202/335261 (9,318,464/10,728,331) | batch=32
+[TRAIN  87.6%] step 293554/335261 (9,393,728/10,728,331) | batch=32
+[TRAIN  88.3%] step 295934/335261 (9,469,888/10,728,331) | batch=32
+[TRAIN  89.0%] step 298290/335261 (9,545,280/10,728,331) | batch=32
+[TRAIN  89.7%] step 300666/335261 (9,621,312/10,728,331) | batch=32
+[TRAIN  90.4%] step 303037/335261 (9,697,184/10,728,331) | batch=32
+[TRAIN  91.1%] step 305397/335261 (9,772,704/10,728,331) | batch=32
+[TRAIN  91.8%] step 307761/335261 (9,848,352/10,728,331) | batch=32
+[TRAIN  92.5%] step 310142/335261 (9,924,544/10,728,331) | batch=32
+[TRAIN  93.2%] step 312522/335261 (10,000,704/10,728,331) | batch=32
+[TRAIN  93.9%] step 314887/335261 (10,076,384/10,728,331) | batch=32
+[TRAIN  94.6%] step 317245/335261 (10,151,840/10,728,331) | batch=32
+[TRAIN  95.3%] step 319623/335261 (10,227,936/10,728,331) | batch=32
+[TRAIN  96.0%] step 321993/335261 (10,303,776/10,728,331) | batch=32
+[TRAIN  96.7%] step 324364/335261 (10,379,648/10,728,331) | batch=32
+[TRAIN  97.5%] step 326729/335261 (10,455,328/10,728,331) | batch=32
+[TRAIN  98.2%] step 329089/335261 (10,530,848/10,728,331) | batch=32
+[TRAIN  98.9%] step 331458/335261 (10,606,656/10,728,331) | batch=32
+[TRAIN  99.6%] step 333801/335261 (10,681,632/10,728,331) | batch=32
+[TRAIN 100.0%] step 335261/335261 (10,728,331/10,728,331) | batch=32
+[sanitize] 398 valores no finitos en features de usuario -> clip a [-0.000137, 868]
+[EVAL   0.0%] step 1/71226 (32/2,279,220) | batch=32
+[EVAL   4.1%] step 2916/71226 (93,312/2,279,220) | batch=32
+[EVAL   8.0%] step 5706/71226 (182,592/2,279,220) | batch=32
+[EVAL  11.9%] step 8496/71226 (271,872/2,279,220) | batch=32
+[EVAL  15.8%] step 11260/71226 (360,320/2,279,220) | batch=32
+[EVAL  19.7%] step 14014/71226 (448,448/2,279,220) | batch=32
+[EVAL  23.5%] step 16756/71226 (536,192/2,279,220) | batch=32
+[EVAL  27.4%] step 19483/71226 (623,456/2,279,220) | batch=32
+[EVAL  31.1%] step 22179/71226 (709,728/2,279,220) | batch=32
+[EVAL  35.0%] step 24916/71226 (797,312/2,279,220) | batch=32
+[EVAL  38.8%] step 27661/71226 (885,152/2,279,220) | batch=32
+[EVAL  42.6%] step 30363/71226 (971,616/2,279,220) | batch=32
+[EVAL  46.5%] step 33131/71226 (1,060,192/2,279,220) | batch=32
+[EVAL  50.3%] step 35855/71226 (1,147,360/2,279,220) | batch=32
+[EVAL  54.2%] step 38580/71226 (1,234,560/2,279,220) | batch=32
+[EVAL  58.0%] step 41308/71226 (1,321,856/2,279,220) | batch=32
+[EVAL  62.0%] step 44179/71226 (1,413,728/2,279,220) | batch=32
+[EVAL  66.1%] step 47052/71226 (1,505,664/2,279,220) | batch=32
+[EVAL  69.4%] step 49399/71226 (1,580,768/2,279,220) | batch=32
+[EVAL  72.8%] step 51841/71226 (1,658,912/2,279,220) | batch=32
+[EVAL  76.2%] step 54278/71226 (1,736,896/2,279,220) | batch=32
+[EVAL  79.6%] step 56713/71226 (1,814,816/2,279,220) | batch=32
+[EVAL  83.1%] step 59163/71226 (1,893,216/2,279,220) | batch=32
+[EVAL  86.5%] step 61603/71226 (1,971,296/2,279,220) | batch=32
+[EVAL  89.9%] step 64060/71226 (2,049,920/2,279,220) | batch=32
+[EVAL  93.4%] step 66515/71226 (2,128,480/2,279,220) | batch=32
+[EVAL  96.8%] step 68956/71226 (2,206,592/2,279,220) | batch=32
+[EVAL 100.0%] step 71226/71226 (2,279,220/2,279,220) | batch=32
+[TRAIN_TOPACT_EXAMPLES   0.0%] step 1/335261 (32/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   0.9%] step 3086/335261 (98,752/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   1.8%] step 5909/335261 (189,088/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   2.6%] step 8741/335261 (279,712/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   3.4%] step 11510/335261 (368,320/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   4.2%] step 14234/335261 (455,488/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   5.0%] step 16871/335261 (539,872/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   5.8%] step 19604/335261 (627,328/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   6.7%] step 22344/335261 (715,008/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   7.5%] step 25133/335261 (804,256/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   8.3%] step 27765/335261 (888,480/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   9.1%] step 30390/335261 (972,480/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES   9.9%] step 33052/335261 (1,057,664/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  10.7%] step 35778/335261 (1,144,896/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  11.5%] step 38558/335261 (1,233,856/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  12.3%] step 41272/335261 (1,320,704/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  13.1%] step 43958/335261 (1,406,656/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  13.9%] step 46634/335261 (1,492,288/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  14.7%] step 49311/335261 (1,577,952/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  15.5%] step 51855/335261 (1,659,360/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  16.3%] step 54702/335261 (1,750,464/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  17.2%] step 57598/335261 (1,843,136/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  18.0%] step 60320/335261 (1,930,240/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  18.8%] step 63049/335261 (2,017,568/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  19.6%] step 65685/335261 (2,101,920/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  20.4%] step 68457/335261 (2,190,624/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  21.2%] step 71095/335261 (2,275,040/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  22.0%] step 73834/335261 (2,362,688/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  22.8%] step 76567/335261 (2,450,144/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  23.6%] step 79182/335261 (2,533,824/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  24.4%] step 81812/335261 (2,617,984/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  25.2%] step 84480/335261 (2,703,360/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  26.0%] step 87199/335261 (2,790,368/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  26.8%] step 89857/335261 (2,875,424/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  27.6%] step 92512/335261 (2,960,384/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  28.4%] step 95078/335261 (3,042,496/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  29.2%] step 97733/335261 (3,127,456/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  30.0%] step 100482/335261 (3,215,424/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  30.8%] step 103192/335261 (3,302,144/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  31.6%] step 105929/335261 (3,389,728/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  32.4%] step 108608/335261 (3,475,456/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  33.2%] step 111204/335261 (3,558,528/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  34.0%] step 113955/335261 (3,646,560/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  34.8%] step 116682/335261 (3,733,824/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  35.6%] step 119475/335261 (3,823,200/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  36.5%] step 122227/335261 (3,911,264/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  37.2%] step 124809/335261 (3,993,888/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  38.1%] step 127618/335261 (4,083,776/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  38.9%] step 130405/335261 (4,172,960/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  39.7%] step 133165/335261 (4,261,280/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  40.6%] step 135961/335261 (4,350,752/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  41.4%] step 138658/335261 (4,437,056/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  42.1%] step 141305/335261 (4,521,760/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  43.0%] step 144139/335261 (4,612,448/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  43.8%] step 146862/335261 (4,699,584/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  44.6%] step 149643/335261 (4,788,576/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  45.4%] step 152368/335261 (4,875,776/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  46.2%] step 154969/335261 (4,959,008/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  47.1%] step 157743/335261 (5,047,776/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  47.9%] step 160455/335261 (5,134,560/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  48.7%] step 163112/335261 (5,219,584/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  49.4%] step 165773/335261 (5,304,736/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  50.2%] step 168359/335261 (5,387,488/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  51.0%] step 171049/335261 (5,473,568/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  51.8%] step 173781/335261 (5,560,992/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  52.6%] step 176501/335261 (5,648,032/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  53.4%] step 179109/335261 (5,731,488/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  54.2%] step 181742/335261 (5,815,744/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  55.0%] step 184286/335261 (5,897,152/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  55.8%] step 187087/335261 (5,986,784/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  56.6%] step 189775/335261 (6,072,800/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  57.4%] step 192442/335261 (6,158,144/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  58.2%] step 195082/335261 (6,242,624/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  58.9%] step 197610/335261 (6,323,520/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  59.9%] step 200802/335261 (6,425,664/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  60.8%] step 203813/335261 (6,522,016/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  61.7%] step 206788/335261 (6,617,216/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  62.6%] step 209836/335261 (6,714,752/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  63.5%] step 212767/335261 (6,808,544/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  64.2%] step 215381/335261 (6,892,192/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  65.0%] step 218008/335261 (6,976,256/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  65.7%] step 220197/335261 (7,046,304/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  66.3%] step 222383/335261 (7,116,256/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  67.0%] step 224557/335261 (7,185,824/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  67.6%] step 226739/335261 (7,255,648/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  68.3%] step 228916/335261 (7,325,312/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  68.9%] step 231112/335261 (7,395,584/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  69.6%] step 233302/335261 (7,465,664/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  70.3%] step 235597/335261 (7,539,104/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  71.0%] step 237974/335261 (7,615,168/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  71.7%] step 240345/335261 (7,691,040/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  72.4%] step 242708/335261 (7,766,656/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  73.1%] step 245075/335261 (7,842,400/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  73.8%] step 247435/335261 (7,917,920/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  74.5%] step 249794/335261 (7,993,408/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  75.2%] step 252192/335261 (8,070,144/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  75.9%] step 254571/335261 (8,146,272/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  76.7%] step 256985/335261 (8,223,520/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  77.4%] step 259429/335261 (8,301,728/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  78.1%] step 261896/335261 (8,380,672/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  78.8%] step 264337/335261 (8,458,784/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  79.6%] step 266769/335261 (8,536,608/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  80.3%] step 269212/335261 (8,614,784/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  81.0%] step 271664/335261 (8,693,248/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  81.8%] step 274087/335261 (8,770,784/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  82.5%] step 276514/335261 (8,848,448/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  83.2%] step 278909/335261 (8,925,088/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  83.9%] step 281319/335261 (9,002,208/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  84.6%] step 283749/335261 (9,079,968/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  85.4%] step 286207/335261 (9,158,624/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  86.1%] step 288620/335261 (9,235,840/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  86.8%] step 291047/335261 (9,313,504/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  87.5%] step 293488/335261 (9,391,616/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  88.3%] step 295951/335261 (9,470,432/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  89.0%] step 298369/335261 (9,547,808/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  89.7%] step 300819/335261 (9,626,208/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  90.5%] step 303271/335261 (9,704,672/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  91.2%] step 305699/335261 (9,782,368/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  91.9%] step 308148/335261 (9,860,736/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  92.6%] step 310612/335261 (9,939,584/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  93.4%] step 313046/335261 (10,017,472/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  94.1%] step 315489/335261 (10,095,648/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  94.8%] step 317937/335261 (10,173,984/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  95.5%] step 320318/335261 (10,250,176/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  96.3%] step 322709/335261 (10,326,688/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  97.0%] step 325090/335261 (10,402,880/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  97.7%] step 327460/335261 (10,478,720/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  98.4%] step 329834/335261 (10,554,688/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  99.1%] step 332272/335261 (10,632,704/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES  99.8%] step 334688/335261 (10,710,016/10,728,331) | batch=32
+[TRAIN_TOPACT_EXAMPLES 100.0%] step 335261/335261 (10,728,331/10,728,331) | batch=32
+[sanitize] 69 valores no finitos en features de usuario -> clip a [-6.36e-06, 1.02e+03]
+interpretabilidad SAE - intuitive_qwen
+Modo de almacenamiento:streaming_without_feature_cache
+Pooling analizado:mean_of_mean
+Balance analizado:balanceo_manual
+Fuente seleccion SAE: best_per_level.usuario (run='usuario_mean_of_mean_balanceo_manual')
+Comentarios train/eval: 10,728,331 / 2,279,220
+Usuarios train/eval: 6,357 / 1,363
+Latentes SAE: 16,384
+
+Metricas en EVAL (nivel usuario, mean_of_mean, balanceo_manual)
+Exactitud=0.8569 | Balancedexactitud=0.5757 | F1 macro=0.5897 | F1 weighted=0.8392
+0: precision=0.3579 recall=0.2024 f1=0.2586
+1: precision=0.8943 recall=0.9490 f1=0.9208
+
+Ablacion (drops vs baseline)
+Top   BalAccDrop    F1macDrop   BalAccDropRnd   F1macDropRnd
+5       0.0033       0.0069          0.0038         0.0049
+10       0.0101       0.0149          0.0064         0.0065
+20       0.0134       0.0211         -0.0017        -0.0029
+
+Top latentes por clase
+
+[Clase 0] top 10 latentes:
+L  9092  score=+435.6237  coef=-435.6237  palabras=[product, newegg, item, for, amazon, probably, price, raised]
+L  3498  score=+420.5403  coef=-420.5403  palabras=[]
+L  6044  score=+419.6403  coef=-419.6403  palabras=[]
+L 10867  score=+402.7300  coef=-402.7300  palabras=[i'm, time, for, it's, can't, call, stranger, want]
+L  9316  score=+396.8091  coef=-396.8091  palabras=[aristocrats, istp, cistern, law, check, sistern, miss, sisqo]
+L 13234  score=+374.9234  coef=-374.9234  palabras=[single, one, hate, comments, good, luck, female, stereotype]
+L  2824  score=+365.3336  coef=-365.3336  palabras=[amazon, chair, ref, utf, red, pill, instructions, unclear]
+L 10676  score=+362.0483  coef=-362.0483  palabras=[sam, hell, who's, samwise, hire, samurai, samuel, jackson]
+L  7299  score=+354.0531  coef=-354.0531  palabras=[observant, good, observation, observe, god, you're, spectacularly, hoo]
+L   553  score=+344.0466  coef=-344.0466  palabras=[sfeerspons, sfexy, stuf, esfj, maybe, sfj, exists, sgrlosphshch]
+
+[Clase 1] top 10 latentes:
+L  5541  score=+347.7356  coef=+347.7356  palabras=[hunger, hungry, thirsty, games, hungery, catfish, howies]
+L   326  score=+334.7619  coef=+334.7619  palabras=[dark, brotherhood, textbook, intp, inxx]
+L  7056  score=+303.6895  coef=+303.6895  palabras=[brings, back, memories, working, lay, down, spat, soda]
+L  1718  score=+296.8598  coef=+296.8598  palabras=[thumb, shutterstock, display, pic, logo, stock, photo, jpg]
+L  4998  score=+291.7743  coef=+291.7743  palabras=[write, own, book, songs, for, poems, short, stories]
+L   737  score=+286.8564  coef=+286.8564  palabras=[connection, connect, bitconnnnnneeeecccct, stability, wifi, intellectual, connected, only]
+L   788  score=+280.5411  coef=+280.5411  palabras=[lebronto, lebitch, lave, ish, shia, lebouff, lob, liberdade]
+L  8957  score=+267.6313  coef=+267.6313  palabras=[aesthetic, style, syle, stylin, stylish, stylishly, exclusive, css]
+L 16124  score=+261.9536  coef=+261.9536  palabras=[good, feel, free, support, channel, leaving, comment, subscription]
+L  1784  score=+259.2853  coef=+259.2853  palabras=[hokkaido, honk, hakuholyshit, hakai, myp, hekker]
+Top latentes mas activos por clase (independiente del clasificador)
+[Clase 0] top 10 latentes por activacion media:
+L  9655  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh, switch, uploaded]
+L  2608  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh, switch]
+L  1752  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh, switch]
+L 16160  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[thank, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh, switch]
+L 12654  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahais, question, eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeepicrapbattlesofhistory, eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee, switch, thank]
+L  8712  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh, switch, uploaded]
+L  8727  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh]
+L 10241  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh, switch]
+L  7114  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh, switch, uploaded]
+L  1730  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[rip, hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh, switch]
+[Clase 1] top 10 latentes por activacion media:
+L  2128  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+L  2022  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+L  8712  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+L  8727  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+L 11223  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+L   864  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+L  5565  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+L  5532  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+L 16160  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+L 15641  mean_act=+inf  nonzero_rate=1.0000 contrast=+nan palabras=[ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg, yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy, hahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahahah]
+Resumen JSON guardado en: modelos/intuitive_qwen_sae_interpretabilidad/interpretabilidad_sae_resumen.json
+Resumen Markdown guardado en: modelos/intuitive_qwen_sae_interpretabilidad/interpretabilidad_sae_resumen.md

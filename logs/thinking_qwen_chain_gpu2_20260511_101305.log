@@ -1,35 +1,0 @@
-[INICIO] Mon May 11 10:13:05 AM CEST 2026
-=== 1/3 clasificador_thinking_qwen_activaciones ===
-CLASIFICADOR THINKING - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
-Preparación de Dataset para Clasificación de THINKING
-
-1. Cargando comentarios...
-Se eliminaron 198 filas de comentarios con 'body' nulo o vacío.
-17,639,864 comentarios cargados
-
-2. Cargando autores...
-10,295 autores cargados
-
-3. Filtrando autores con 'thinking' conocido...
-9,080 autores con thinking conocido
-(Eliminados 1,215 autores con thinking nulo)
-
-4. Uniendo comentarios con thinking por autor...
-15,581,291 comentarios con info de thinking
-(Eliminados 2,058,573 comentarios sin thinking conocido)
-
-5. Distribución de thinking:
-1: 11,388,118 comentarios (73.1%)
-0: 4,193,173 comentarios (26.9%)
-Dataset de thinking preparado y listo para usar
-Distribucion de thinking: {1: 11388118, 0: 4193173}
-
-Extrayendo activaciones de GPT-2 para 15,581,291 comentarios
-Hookpoint: model.layers.25, batch_size: 128, workers: 16
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-`torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights:   0%|          | 1/398 [00:00<01:14,  5.30it/s]Loading weights:   7%|▋         | 26/398 [00:00<00:03, 108.54it/s]Loading weights:  12%|█▏        | 47/398 [00:00<00:02, 135.28it/s]Loading weights:  18%|█▊        | 70/398 [00:00<00:02, 153.69it/s]Loading weights:  23%|██▎       | 91/398 [00:00<00:01, 165.28it/s]Loading weights:  28%|██▊       | 113/398 [00:00<00:01, 173.87it/s]Loading weights:  33%|███▎      | 132/398 [00:00<00:01, 173.49it/s]Loading weights:  38%|███▊      | 150/398 [00:00<00:01, 172.31it/s]Loading weights:  42%|████▏     | 169/398 [00:01<00:01, 164.48it/s]Loading weights:  48%|████▊     | 190/398 [00:01<00:01, 174.60it/s]Loading weights:  52%|█████▏    | 208/398 [00:01<00:01, 169.68it/s]Loading weights:  57%|█████▋    | 226/398 [00:01<00:01, 162.39it/s]Loading weights:  62%|██████▏   | 247/398 [00:01<00:00, 169.94it/s]Loading weights:  67%|██████▋   | 267/398 [00:01<00:00, 175.85it/s]Loading weights:  73%|███████▎  | 289/398 [00:01<00:00, 184.06it/s]Loading weights:  78%|███████▊  | 311/398 [00:01<00:00, 186.16it/s]Loading weights:  84%|████████▎ | 333/398 [00:02<00:00, 177.98it/s]Loading weights:  88%|████████▊ | 351/398 [00:02<00:00, 171.64it/s]Loading weights:  93%|█████████▎| 369/398 [00:02<00:00, 170.81it/s]Loading weights:  97%|█████████▋| 388/398 [00:02<00:00, 174.24it/s]Loading weights: 100%|██████████| 398/398 [00:02<00:00, 167.37it/s]
-Modelo truncado a las primeras 26 capas para hook 'model.layers.25'
-torch.compile activado (dynamic=True)
-Calculando longitudes y ordenando por longitud (bucketing)
-[  0.0%] step 1/121729 (128/15,581,291 comentarios, seq_len_batch=1)
