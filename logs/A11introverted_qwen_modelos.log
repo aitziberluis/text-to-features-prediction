@@ -6,7 +6,7 @@ nohup: ignoring input
 [2026-05-08 17:34:41] >> introverted_qwen_activaciones
 cmd: python3 -u clasificacion_mbti/introverted/clasificador_introverted_qwen_activaciones.py
 
-CLASIFICADOR INTROVERTED - ACTIVACIONES DIRECTAS GPT-2 (NO SAE)
+CLASIFICADOR INTROVERTED - ACTIVACIONES DIRECTAS QWEN (NO SAE)
 Preparación de Dataset para Clasificación de INTROVERTED
 
 1. Cargando comentarios...

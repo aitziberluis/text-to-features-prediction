@@ -1,23 +1,18 @@
 """
 Clasificador de edad usando representaciones SAE sobre GPT-2.
-
 Extrae las activaciones de una capa intermedia de GPT-2, las codifica
 a traves de la SAE entrenada (representacion sparse), y entrena
 clasificadores lineales (SGD) en multiples configuraciones.
 Todo se mantiene en memoria (no se guardan activaciones ni modelos a disco).
-
 A nivel de COMENTARIO:
   - last_token: representacion SAE del ultimo token real del comentario
   - mean: media de representaciones SAE de todos los tokens reales
   - Cada uno con y sin balanceo de clase
-
 A nivel de USUARIO:
   - mean_of_last: media de last_token SAE de todos los comentarios del usuario
   - mean_of_mean: media de mean SAE de todos los comentarios del usuario
   - Cada uno con y sin balanceo de clase
-
 Rangos de edad: 14_19, 20_29, 30_39, 40_plus
-
 Evaluacion solo en eval set (test reservado para uso futuro).
 """
 
@@ -29,32 +24,21 @@ import sys
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-
 import dotenv
 import numpy as np
 import pandas as pd
 import torch
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import (
-    accuracy_score,
-    balanced_accuracy_score,
-    classification_report,
-    confusion_matrix,
-    f1_score,
-    precision_score,
-    recall_score,
+from sklearn.metrics import (accuracy_score,balanced_accuracy_score,classification_report,confusion_matrix,f1_score,precision_score,recall_score,
 )
 from sklearn.model_selection import train_test_split
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
 # importar desde el directorio raiz del proyecto
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from preprocesamiento import preparar_dataset_para_edad
 from tiny_sae import Sae
-
 dotenv.load_dotenv()
-
 MODEL = "openai-community/gpt2"
 CONTEXT_LEN = 256  # P99 token len ~391; truncamos 2.5% (cola larga)
 # forzar GPU 0 explícitamente
@@ -64,7 +48,6 @@ if torch.cuda.is_available():
     print("cuda0")
 else:
     DEVICE = "cpu"
-
 # ruta a la SAE entrenada sobre todo el corpus
 PATH_SAE = "sae-ckpts/sae-gpt2-comments"
 
@@ -242,7 +225,7 @@ def _pool_sparse_to_dense(
     # mantener dtype consistente con top_acts para evitar errores en index_put_/scatter
     mask = attention_mask.to(device=device, dtype=dtype)
 
-    # last_token
+    # --- last_token ---
     lengths = mask.sum(dim=1).clamp(min=1).long() - 1
     batch_idx = torch.arange(batch_size, device=device)
 
@@ -256,7 +239,7 @@ def _pool_sparse_to_dense(
         last_acts,
     )
 
-    # mean (weighted by attention mask)
+    # --- mean (weighted by attention mask) ---
     mean_pooled = torch.zeros(batch_size, num_latents, device=device, dtype=dtype)
 
     # mask per-token: (batch, seq, 1) para anular padding
@@ -420,7 +403,7 @@ def _extraer_activaciones(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.
     """Extrae representaciones SAE de GPT-2 en memoria (sin guardar a disco)."""
 
     n = len(df)
-    print(f"\nExtrayendo representaciones SAE para {n:,} comentarios", flush=True)
+    print(f"\nExtrayendo representaciones SAE para {n:,} comentarios...", flush=True)
     print(f"SAE: {PATH_SAE}", flush=True)
     print(f"Device: {DEVICE}", flush=True)
     print(f"CUDA disponible: {torch.cuda.is_available()}", flush=True)
@@ -613,7 +596,7 @@ def extraer_activaciones(
         n, num_latents = meta["n"], meta["num_latents"]
 
         if n != len(df):
-            print(f"AVISO: cache tiene {n} filas pero df tiene {len(df)}. Re-extrayendo")
+            print(f"AVISO: cache tiene {n} filas pero df tiene {len(df)}. Re-extrayendo...")
             return _extraer_activaciones(df)
 
         last_token = np.memmap(
@@ -654,7 +637,7 @@ def dividir_comentarios(
             print(f"Cargando split de comentarios (por usuario) desde {split_path}")
             return train_idx, eval_idx, test_idx
 
-        print("Split de comentarios en cache invalido para este dataset. Regenerando")
+        print("Split de comentarios en cache invalido para este dataset. Regenerando...")
 
     # obtener split de usuarios
     train_auth, eval_auth, test_auth = dividir_usuarios(df)
@@ -706,7 +689,7 @@ def dividir_usuarios(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         if total_saved == len(user_df):
             print(f"Splits de usuarios cargados desde {SPLITS_DIR}/")
             return train_auth, eval_auth, test_auth
-        print(f"Num usuarios cambio ({total_saved} -> {len(user_df)}). Regenerando")
+        print(f"Num usuarios cambio ({total_saved} -> {len(user_df)}). Regenerando...")
 
     user_df = df[["author", "age_group"]].drop_duplicates("author")
     authors = user_df["author"].to_numpy()
@@ -917,7 +900,7 @@ def entrenar_usuario(
     """Entrena SGD a nivel usuario y evalua en eval."""
     run_name = f"usuario_{pooling_name}_{balance_name}"
 
-    print(f"\nAgregando features por usuario para {run_name}")
+    print(f"\nAgregando features por usuario para {run_name}...")
     X_train, y_train = _agregar_por_usuario(authors, features, labels, set(train_auth))
     X_eval, y_eval = _agregar_por_usuario(authors, features, labels, set(eval_auth))
 
@@ -1124,7 +1107,7 @@ def main():
 
         for pooling_name in USER_POOLINGS:
             comment_pooling = "last_token" if pooling_name == "mean_of_last" else "mean"
-            print(f"\n  Agregando features por usuario para {pooling_name}")
+            print(f"\n  Agregando features por usuario para {pooling_name}...")
             X_u_train, y_u_train = _build_user_arrays(user_sums_train[comment_pooling], num_latents)
             X_u_eval, y_u_eval = _build_user_arrays(user_sums_eval[comment_pooling], num_latents)
 
@@ -1137,7 +1120,7 @@ def main():
             u_scaler = StandardScaler()
             u_scaler.fit(X_u_train)
 
-            # Configuraciones de balanceo
+            # --- Configuraciones de balanceo ---
             for bal_cfg in BALANCE_CONFIGS:
                 if bal_cfg["name"] == "undersampling":
                     X_u_us, y_u_us = random_undersample(X_u_train, y_u_train)
